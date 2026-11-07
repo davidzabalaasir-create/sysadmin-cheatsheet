@@ -30,6 +30,9 @@ assets/data.js              Dataset de comandos (184)
 assets/app.js               Lógica: filtros, búsqueda, ficha, copiar
 assets/styles.css           Estilos complementarios
 data/commands.example.json  Ejemplo del modelo de datos JSON
+docs/                       Auditoría Ubuntu + Apache + MariaDB
+scripts/validate.js         Validador del dataset
+AGENTS.md                   Guía para agentes de código (Codex, Claude Code)
 ```
 
 ## Añadir un comando
@@ -41,10 +44,17 @@ Añade un objeto a `commands` en `assets/data.js`:
   id: "linux-ejemplo", name: "ejemplo", os: "linux", shell: "bash",
   category: "network", risk: "safe",           // safe | caution | danger
   description: "…", syntax: "…",
+  requires: "sudo apt install …",              // opcional
   flags: [{ flag: "-x", description: "…" }],
   example: { command: "…", explanation: "…" },
   tags: ["…"]
 }
+```
+
+Después, valida el dataset:
+
+```bash
+node scripts/validate.js
 ```
 
 ## Auditoría
