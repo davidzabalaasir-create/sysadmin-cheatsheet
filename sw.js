@@ -1,8 +1,11 @@
 /* Service worker de Sysadmin: guarda la web para usarla sin conexión.
  * IMPORTANTE: sube VERSION en cada publicación para que los navegadores renueven la caché.
  * Estrategia: con conexión, HTML/JS/CSS/datos siempre de la red (versiones coherentes);
- * sin conexión, la copia guardada. Fuentes e imágenes, desde la caché. */
-const VERSION = "1.2.0-r2";
+ * sin conexión, la copia guardada. Fuentes e imágenes, desde la caché.
+ * Las peticiones a la red usan cache: "no-cache" para revalidar con el servidor (ETag) y no
+ * mezclar archivos de dos publicaciones por la caché HTTP de GitHub Pages (max-age=600). */
+const fresh = (request) => fetch(request, { cache: "no-cache" });
+const VERSION = "1.2.0-r3";
 const CACHE = `sysadmin-${VERSION}`;
 
 const ASSETS = [
@@ -30,7 +33,8 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: "reload" evita guardar copias desactualizadas de la caché HTTP
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
@@ -57,13 +61,13 @@ self.addEventListener("fetch", (event) => {
 
   // Páginas: primero la red y, sin conexión, la copia guardada.
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).then((res) => remember("./index.html", res)).catch(() => caches.match("./index.html")));
+    event.respondWith(fresh(request).then((res) => remember("./index.html", res)).catch(() => caches.match("./index.html")));
     return;
   }
 
   // JS, CSS y datos: primero la red (versiones siempre coherentes) y, sin conexión, la caché.
   if (/\.(js|css|json|webmanifest)$/.test(url.pathname)) {
-    event.respondWith(fetch(request).then((res) => remember(request, res)).catch(() => caches.match(request, { ignoreSearch: true })));
+    event.respondWith(fresh(request).then((res) => remember(request, res)).catch(() => caches.match(request, { ignoreSearch: true })));
     return;
   }
 
