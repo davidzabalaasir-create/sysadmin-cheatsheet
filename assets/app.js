@@ -379,7 +379,8 @@
 
     if (d.copy) {
       const c = cmdById[d.copy];
-      await copy(d.field === "example" ? c.example.command : d.field === "syntax" ? c.syntax : c.name);
+      // El nombre puede llevar una aclaración entre paréntesis («nc (transferir archivos)»): se copia solo el comando.
+      await copy(d.field === "example" ? c.example.command : d.field === "syntax" ? c.syntax : c.name.replace(/\s*\(.*\)\s*$/, ""));
       const span = el.querySelector("span"), prev = span.textContent;
       span.textContent = "Copiado"; el.classList.add("!text-amber");
       setTimeout(() => { span.textContent = prev; el.classList.remove("!text-amber"); }, 1200);

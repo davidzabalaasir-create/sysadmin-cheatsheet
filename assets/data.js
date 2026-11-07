@@ -155,6 +155,126 @@ window.CHEATSHEET = {
       tags: ["borrar", "eliminar", "delete", "destructivo"]
     },
 
+    {
+      id: "linux-ls", name: "ls", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Lista el contenido de directorios con permisos, propietario, tamaño y fecha.",
+      syntax: "ls [-lahtrRd] [ruta]",
+      flags: [
+        { flag: "-l", description: "Formato largo: permisos, enlaces, propietario, tamaño, fecha." },
+        { flag: "-a", description: "Incluye archivos ocultos (que empiezan por punto)." },
+        { flag: "-h", description: "Tamaños legibles (K, M, G)." },
+        { flag: "-t / -r", description: "Ordena por fecha / invierte el orden." },
+        { flag: "-S", description: "Ordena por tamaño." },
+        { flag: "-d", description: "Muestra el directorio, no su contenido." }
+      ],
+      example: { command: "ls -lahtr /var/log | tail -n 15", explanation: "Muestra los 15 archivos de log modificados más recientemente: lo primero que se mira al investigar un fallo." },
+      tags: ["listar", "dir", "archivos", "directorio", "permisos"]
+    },
+    {
+      id: "linux-cp", name: "cp", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Copia archivos y directorios. Sobrescribe el destino sin avisar salvo que uses -i o -n.",
+      syntax: "cp [-a] [-r] [-i|-n] [-v] origen destino",
+      flags: [
+        { flag: "-r", description: "Copia directorios recursivamente." },
+        { flag: "-a", description: "Modo archivo: recursivo y conserva permisos, propietario, fechas y enlaces." },
+        { flag: "-i / -n", description: "Pregunta antes de sobrescribir / nunca sobrescribe." },
+        { flag: "-u", description: "Solo copia si el origen es más nuevo." },
+        { flag: "--backup=numbered", description: "Guarda una copia numerada del destino si existe." }
+      ],
+      example: { command: "cp -a /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak-$(date +%F_%H%M)", explanation: "Copia de seguridad fechada de la configuración, conservando permisos, antes de editarla." },
+      tags: ["copiar", "copy", "backup", "archivos", "duplicar"]
+    },
+    {
+      id: "linux-mv", name: "mv", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Mueve o renombra archivos y directorios. Sobrescribe el destino sin preguntar por defecto.",
+      syntax: "mv [-i|-n] [-v] [-b] origen destino",
+      flags: [
+        { flag: "-i", description: "Pregunta antes de sobrescribir." },
+        { flag: "-n", description: "No sobrescribe nunca." },
+        { flag: "-b", description: "Hace copia de seguridad del destino existente." },
+        { flag: "-v", description: "Muestra cada operación." }
+      ],
+      example: { command: "mv -vn /home/compartido/*.pdf /srv/archivo/2026/", explanation: "Archiva los PDF sin pisar ningún archivo que ya exista con el mismo nombre en el destino." },
+      tags: ["mover", "renombrar", "rename", "move", "archivos"]
+    },
+    {
+      id: "linux-mkdir", name: "mkdir / touch", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Crea directorios (incluidos los intermedios) y archivos vacíos o actualiza su fecha.",
+      syntax: "mkdir [-p] [-m modo] dir   |   touch archivo",
+      flags: [
+        { flag: "-p", description: "Crea los directorios padre necesarios; no falla si ya existe." },
+        { flag: "-m 750", description: "Asigna permisos al crear." },
+        { flag: "{a,b,c}", description: "Expansión de llaves para crear varios a la vez." },
+        { flag: "touch -d '2 days ago'", description: "Fija una fecha de modificación concreta." }
+      ],
+      example: { command: "mkdir -p -m 750 /srv/app/{releases,shared/{logs,uploads},backups}", explanation: "Crea de una vez toda la estructura de despliegue de una aplicación con permisos restringidos." },
+      tags: ["crear", "directorio", "carpeta", "archivo", "estructura"]
+    },
+    {
+      id: "linux-ln", name: "ln -s", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Crea enlaces simbólicos (accesos directos) o enlaces duros a archivos y directorios.",
+      syntax: "ln [-s] [-f] [-n] destino nombre_enlace",
+      flags: [
+        { flag: "-s", description: "Enlace simbólico (sin -s crea un enlace duro)." },
+        { flag: "-f", description: "Reemplaza el enlace si ya existe." },
+        { flag: "-n", description: "Trata un enlace a directorio como archivo (para reemplazarlo)." },
+        { flag: "readlink -f", description: "Muestra a dónde apunta realmente un enlace." }
+      ],
+      example: { command: "ln -sfn /srv/app/releases/2026-11-07 /srv/app/current && readlink -f /srv/app/current", explanation: "Despliegue atómico: apunta 'current' a la nueva release. Para hacer rollback basta con volver a apuntar a la anterior." },
+      tags: ["enlace", "symlink", "acceso directo", "link", "despliegue"]
+    },
+    {
+      id: "linux-tail", name: "tail / less / cat", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Lee archivos de texto: final del archivo en tiempo real (tail -f), paginado con búsqueda (less) o completo (cat).",
+      syntax: "tail [-n N] [-F] archivo | less [+F] archivo | cat archivo",
+      flags: [
+        { flag: "tail -n 100", description: "Últimas 100 líneas." },
+        { flag: "tail -F", description: "Sigue el archivo aunque rote o se recree." },
+        { flag: "less +F", description: "Modo seguimiento; Ctrl+C para buscar con /." },
+        { flag: "head -n 20", description: "Primeras 20 líneas." },
+        { flag: "cat -A", description: "Muestra caracteres ocultos (tabs, fin de línea Windows)." }
+      ],
+      example: { command: "tail -F /var/log/nginx/error.log | grep --line-buffered -i 'upstream'", explanation: "Sigue en directo el log de errores de Nginx mostrando solo los fallos de backend mientras reproduces el problema." },
+      tags: ["leer", "log", "ver", "contenido", "seguir", "texto"]
+    },
+    {
+      id: "linux-stat", name: "stat / file", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Metadatos detallados de un archivo (permisos, inodo, fechas de acceso/modificación/cambio) y detección de su tipo real.",
+      syntax: "stat [-c formato] archivo | file archivo",
+      flags: [
+        { flag: "-c '%A %U:%G %s %y'", description: "Formato personalizado: permisos, dueño, tamaño, fecha." },
+        { flag: "file -i", description: "Tipo MIME del archivo." },
+        { flag: "file -s /dev/sdb1", description: "Detecta el sistema de archivos de un dispositivo." }
+      ],
+      example: { command: "stat -c '%n | %A | %U:%G | %y' /etc/passwd /etc/shadow /etc/sudoers", explanation: "Revisa permisos, propietario y última modificación de archivos críticos durante una auditoría." },
+      tags: ["metadatos", "fecha", "inodo", "tipo", "auditoria"]
+    },
+    {
+      id: "linux-sha256sum", name: "sha256sum", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Calcula y verifica hashes SHA-256 para comprobar la integridad de archivos descargados o copiados.",
+      syntax: "sha256sum archivo... | sha256sum -c lista.sha256",
+      flags: [
+        { flag: "-c", description: "Verifica los hashes contra un archivo de sumas." },
+        { flag: "--quiet", description: "Solo muestra los que fallan." },
+        { flag: "md5sum / sha1sum", description: "Algoritmos antiguos (no usar para seguridad)." }
+      ],
+      example: { command: "sha256sum -c SHA256SUMS --ignore-missing", explanation: "Comprueba que la ISO descargada coincide con la suma publicada por el fabricante antes de instalarla." },
+      tags: ["hash", "integridad", "checksum", "verificar", "md5"]
+    },
+    {
+      id: "linux-diff", name: "diff", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Compara archivos o directorios línea a línea y muestra las diferencias.",
+      syntax: "diff [-u] [-r] [-q] archivo1 archivo2",
+      flags: [
+        { flag: "-u", description: "Formato unificado (como los parches de git)." },
+        { flag: "-r", description: "Compara directorios recursivamente." },
+        { flag: "-q", description: "Solo indica qué archivos difieren." },
+        { flag: "--color", description: "Resalta añadidos y eliminados." }
+      ],
+      example: { command: "diff -u --color /etc/ssh/sshd_config.bak /etc/ssh/sshd_config", explanation: "Revisa exactamente qué cambió en la configuración de SSH antes de reiniciar el servicio." },
+      tags: ["comparar", "diferencias", "cambios", "configuracion"]
+    },
+
     // ---- Redes
     {
       id: "linux-ss", name: "ss", os: "linux", shell: "bash", category: "network", risk: "safe",
@@ -223,6 +343,60 @@ window.CHEATSHEET = {
       ],
       example: { command: "curl -sS -o /dev/null -w 'HTTP %{http_code} en %{time_total}s\\n' --resolve app.empresa.com:443:10.0.5.20 https://app.empresa.com/health", explanation: "Prueba el health-check de un nodo concreto detrás del balanceador, saltándose el DNS." },
       tags: ["http", "api", "web", "tls", "wget"]
+    },
+
+    // ---- Netcat (Linux)
+    {
+      id: "linux-nc-scan", name: "nc -zv (comprobar puertos)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Netcat como comprobador de puertos TCP/UDP: verifica si un puerto está abierto sin enviar datos.",
+      syntax: "nc -zv [-u] [-w seg] host puerto|rango",
+      flags: [
+        { flag: "-z", description: "Modo escaneo: conecta y cierra sin enviar datos." },
+        { flag: "-v", description: "Muestra si la conexión tuvo éxito o fue rechazada." },
+        { flag: "-u", description: "Usa UDP en lugar de TCP (resultado menos fiable)." },
+        { flag: "-w 2", description: "Tiempo de espera en segundos." },
+        { flag: "20-25", description: "Rango de puertos." }
+      ],
+      example: { command: "for p in 22 80 443 3306 5432; do nc -zv -w 2 db01.corp.local $p; done 2>&1 | grep -E 'succeeded|open|refused|timed out'", explanation: "Comprueba de un vistazo qué servicios responden en un servidor cuando no tienes nmap instalado." },
+      tags: ["netcat", "nc", "puerto", "escaneo", "telnet", "conectividad"]
+    },
+    {
+      id: "linux-nc-transfer", name: "nc (transferir archivos)", os: "linux", shell: "bash", category: "network", risk: "caution",
+      description: "Envía archivos o directorios entre dos equipos por TCP sin SSH ni SMB. El tráfico viaja SIN cifrar.",
+      syntax: "receptor: nc -l [-p] puerto > archivo   |   emisor: nc host puerto < archivo",
+      flags: [
+        { flag: "-l", description: "Escucha conexiones entrantes." },
+        { flag: "-p puerto", description: "Puerto local (necesario en algunas variantes de nc)." },
+        { flag: "-q 1 / -N", description: "Cierra la conexión al terminar el envío (según variante)." },
+        { flag: "| pv", description: "Muestra progreso de la transferencia." }
+      ],
+      example: { command: "# Receptor (srv02):\nnc -l -p 9000 | tar -xzf - -C /restore\n# Emisor (srv01):\ntar -czf - /srv/data | nc -q 1 srv02 9000", explanation: "Copia un directorio completo comprimido al vuelo entre dos servidores de una red aislada. Úsalo solo en redes de confianza: no hay cifrado." },
+      tags: ["netcat", "nc", "transferir", "copiar", "archivos", "tar"]
+    },
+    {
+      id: "linux-nc-listen", name: "nc -l (escucha de prueba)", os: "linux", shell: "bash", category: "network", risk: "caution",
+      description: "Abre un puerto en escucha temporal para comprobar reglas de firewall o NAT antes de desplegar un servicio.",
+      syntax: "nc -lvk [-u] [-p] puerto",
+      flags: [
+        { flag: "-l", description: "Modo escucha." },
+        { flag: "-k", description: "Sigue escuchando tras cada conexión." },
+        { flag: "-u", description: "Escucha UDP (útil para syslog, SNMP traps…)." },
+        { flag: "-v", description: "Muestra quién se conecta." }
+      ],
+      example: { command: "# Servidor nuevo (antes de instalar la app):\nnc -lvk 8443\n# Desde el cliente:\necho 'hola desde cliente' | nc -w 3 app01.corp.local 8443", explanation: "Valida que el firewall y el balanceador dejan pasar el puerto 8443 antes de instalar la aplicación real." },
+      tags: ["netcat", "nc", "firewall", "puerto", "listener", "udp"]
+    },
+    {
+      id: "linux-nc-banner", name: "nc (banner / probar protocolo)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Habla directamente con un servicio TCP en texto plano (SMTP, HTTP, Redis…) para ver su banner y respuesta.",
+      syntax: "nc [-C] host puerto  |  printf 'petición' | nc host puerto",
+      flags: [
+        { flag: "-C", description: "Envía CRLF como fin de línea (SMTP, HTTP)." },
+        { flag: "-w 5", description: "Cierra tras 5 s de inactividad." },
+        { flag: "ncat --ssl", description: "Variante de Nmap con soporte TLS." }
+      ],
+      example: { command: "printf 'EHLO test.local\\r\\nQUIT\\r\\n' | nc -w 5 mail.corp.local 25", explanation: "Comprueba que el servidor SMTP responde y qué extensiones anuncia (STARTTLS, AUTH…)." },
+      tags: ["netcat", "nc", "banner", "smtp", "http", "diagnostico"]
     },
 
     // ---- Procesos
@@ -580,6 +754,123 @@ window.CHEATSHEET = {
       tags: ["propietario", "acceso denegado", "permisos", "owner"]
     },
 
+    {
+      id: "win-copy-item", name: "Copy-Item", os: "windows", shell: "powershell", category: "filesystem", risk: "caution",
+      description: "Copia archivos y carpetas (alias cp/copy). Con -Force sobrescribe archivos existentes, incluidos los de solo lectura.",
+      syntax: "Copy-Item -Path <origen> -Destination <destino> [-Recurse] [-Force] [-Filter] [-WhatIf]",
+      flags: [
+        { flag: "-Recurse", description: "Copia carpetas con su contenido." },
+        { flag: "-Force", description: "Sobrescribe y copia ocultos/solo lectura." },
+        { flag: "-Filter *.config", description: "Copia solo lo que coincide." },
+        { flag: "-ToSession $s", description: "Copia a un equipo remoto por PowerShell Remoting." },
+        { flag: "copy / xcopy", description: "Alternativas clásicas en CMD." }
+      ],
+      example: { command: "$s = New-PSSession -ComputerName web02; Copy-Item C:\\inetpub\\wwwroot\\web.config -Destination C:\\inetpub\\wwwroot\\ -ToSession $s -Force", explanation: "Replica un web.config a otro servidor IIS a través de WinRM, sin necesidad de recursos compartidos." },
+      tags: ["copiar", "copy", "cp", "archivos", "remoto"]
+    },
+    {
+      id: "win-move-item", name: "Move-Item / Rename-Item", os: "windows", shell: "powershell", category: "filesystem", risk: "caution",
+      description: "Mueve o renombra archivos y carpetas (alias mv/move/ren). Combinado con Get-ChildItem permite renombrados masivos.",
+      syntax: "Move-Item -Path <origen> -Destination <destino> [-Force]  |  Rename-Item -Path <ruta> -NewName <nombre>",
+      flags: [
+        { flag: "-Force", description: "Sobrescribe el destino si existe." },
+        { flag: "-WhatIf", description: "Simula la operación." },
+        { flag: "-NewName { ... }", description: "Calcula el nombre nuevo con un script block." },
+        { flag: "move / ren", description: "Equivalentes en CMD." }
+      ],
+      example: { command: "Get-ChildItem D:\\Escaneos\\*.pdf | Rename-Item -NewName { '{0:yyyy-MM-dd}_{1}' -f $_.LastWriteTime, $_.Name } -WhatIf", explanation: "Prefija cada PDF con su fecha para ordenarlos cronológicamente. Revisa la simulación y quita -WhatIf." },
+      tags: ["mover", "renombrar", "rename", "move", "masivo"]
+    },
+    {
+      id: "win-new-item", name: "New-Item", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Crea archivos, carpetas, enlaces simbólicos y uniones (alias ni / mkdir / md).",
+      syntax: "New-Item -Path <ruta> -ItemType File|Directory|SymbolicLink|Junction [-Value] [-Force]",
+      flags: [
+        { flag: "-ItemType Directory", description: "Crea una carpeta (y las intermedias)." },
+        { flag: "-ItemType File -Value 'texto'", description: "Crea un archivo con contenido." },
+        { flag: "-ItemType SymbolicLink -Target", description: "Crea un enlace simbólico (requiere admin o modo desarrollador)." },
+        { flag: "-Force", description: "No falla si existe (¡en archivos lo vacía!)." }
+      ],
+      example: { command: "'Logs','Backups','Scripts','Temp' | ForEach-Object { New-Item -Path \"D:\\Admin\\$_\" -ItemType Directory -Force | Out-Null }", explanation: "Crea la estructura estándar de carpetas de administración en un servidor recién instalado." },
+      tags: ["crear", "carpeta", "directorio", "archivo", "mkdir"]
+    },
+    {
+      id: "win-get-content", name: "Get-Content -Tail -Wait", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Lee archivos de texto (alias cat/type/gc). Con -Wait sigue el archivo en tiempo real, como tail -f.",
+      syntax: "Get-Content -Path <archivo> [-Tail N] [-Wait] [-TotalCount N] [-Encoding]",
+      flags: [
+        { flag: "-Tail 50", description: "Últimas 50 líneas." },
+        { flag: "-Wait", description: "Sigue mostrando las líneas nuevas." },
+        { flag: "-TotalCount 20", description: "Primeras 20 líneas." },
+        { flag: "type archivo", description: "Equivalente en CMD." }
+      ],
+      example: { command: "Get-Content C:\\inetpub\\logs\\LogFiles\\W3SVC1\\u_ex$(Get-Date -Format yyMMdd).log -Tail 20 -Wait | Select-String ' 500 '", explanation: "Sigue en directo el log de IIS de hoy mostrando solo las peticiones que devuelven error 500." },
+      tags: ["leer", "log", "tail", "cat", "type", "seguir"]
+    },
+    {
+      id: "win-get-filehash", name: "Get-FileHash / certutil", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Calcula el hash (SHA256 por defecto) de archivos para verificar su integridad.",
+      syntax: "Get-FileHash -Path <archivo> [-Algorithm SHA256|SHA1|MD5]  |  certutil -hashfile archivo SHA256",
+      flags: [
+        { flag: "-Algorithm SHA256", description: "Algoritmo (por defecto SHA256)." },
+        { flag: "-Path *.iso", description: "Varios archivos con comodines." },
+        { flag: "certutil -hashfile", description: "Alternativa en CMD disponible en todas las versiones." }
+      ],
+      example: { command: "(Get-FileHash .\\SW_DVD9_Win_Server_2025.iso).Hash -eq '<hash publicado por Microsoft>'", explanation: "Devuelve True si la ISO descargada no está corrupta ni manipulada." },
+      tags: ["hash", "integridad", "checksum", "sha256", "verificar"]
+    },
+    {
+      id: "win-compress-archive", name: "Compress-Archive / tar", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Crea y extrae archivos ZIP. Windows 10/Server 2019+ incluye también tar.exe nativo.",
+      syntax: "Compress-Archive -Path <origen> -DestinationPath <zip> [-Update]  |  Expand-Archive -Path <zip> -DestinationPath <dir>",
+      flags: [
+        { flag: "-Update", description: "Añade o actualiza archivos en un ZIP existente." },
+        { flag: "-CompressionLevel Optimal", description: "Nivel de compresión." },
+        { flag: "Expand-Archive -Force", description: "Extrae sobrescribiendo." },
+        { flag: "tar -czf / -xf", description: "tar.exe nativo; soporta .tar.gz y archivos > 2 GB." }
+      ],
+      example: { command: "Compress-Archive -Path C:\\Logs\\*.log -DestinationPath \"D:\\Archivo\\logs_$(Get-Date -Format yyyy-MM-dd).zip\" -CompressionLevel Optimal", explanation: "Archiva los logs del día en un ZIP fechado antes de purgarlos." },
+      tags: ["zip", "comprimir", "descomprimir", "extraer", "tar"]
+    },
+    {
+      id: "win-attrib", name: "attrib", os: "windows", shell: "cmd", category: "filesystem", risk: "caution",
+      description: "Muestra o cambia los atributos de archivos: solo lectura, oculto, sistema y archivo.",
+      syntax: "attrib [+|-R] [+|-H] [+|-S] [+|-A] [ruta] [/S] [/D]",
+      flags: [
+        { flag: "+R / -R", description: "Pone / quita solo lectura." },
+        { flag: "+H / -H", description: "Oculta / muestra." },
+        { flag: "+S / -S", description: "Marca / desmarca como archivo de sistema." },
+        { flag: "/S /D", description: "Aplica a subcarpetas y a las propias carpetas." }
+      ],
+      example: { command: "attrib -H -S -R E:\\*.* /S /D", explanation: "Recupera archivos que un malware de USB ocultó marcándolos como sistema y ocultos." },
+      tags: ["atributos", "oculto", "solo lectura", "usb", "archivos"]
+    },
+    {
+      id: "win-mklink", name: "mklink", os: "windows", shell: "cmd", category: "filesystem", risk: "caution",
+      description: "Crea enlaces simbólicos, enlaces duros o uniones de directorio (junctions). Requiere CMD como administrador.",
+      syntax: "mklink [/D | /H | /J] enlace destino",
+      flags: [
+        { flag: "(sin opción)", description: "Enlace simbólico a archivo." },
+        { flag: "/D", description: "Enlace simbólico a directorio." },
+        { flag: "/J", description: "Unión de directorio (solo rutas locales)." },
+        { flag: "/H", description: "Enlace duro a archivo." }
+      ],
+      example: { command: "robocopy C:\\ProgramData\\AppCache D:\\AppCache /MIR /COPYALL && rmdir /S /Q C:\\ProgramData\\AppCache && mklink /J C:\\ProgramData\\AppCache D:\\AppCache", explanation: "Libera espacio en C: moviendo una caché enorme a D: sin que la aplicación note el cambio. Detén la aplicación antes." },
+      tags: ["enlace", "symlink", "junction", "acceso directo", "espacio"]
+    },
+    {
+      id: "win-compare-object", name: "Compare-Object / fc", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Compara el contenido de dos archivos o listas y muestra las diferencias.",
+      syntax: "Compare-Object (Get-Content a) (Get-Content b) [-IncludeEqual]  |  fc archivo1 archivo2",
+      flags: [
+        { flag: "<= / =>", description: "Indicador de en qué lado está cada diferencia." },
+        { flag: "-Property", description: "Compara por propiedad (p. ej. Name, Length)." },
+        { flag: "fc /N", description: "En CMD, muestra números de línea." }
+      ],
+      example: { command: "Compare-Object (Get-ChildItem \\\\fs01\\Datos -Recurse -File) (Get-ChildItem \\\\fs02\\Datos -Recurse -File) -Property Name, Length", explanation: "Tras una migración, lista los archivos que faltan o tienen distinto tamaño entre el servidor viejo y el nuevo." },
+      tags: ["comparar", "diferencias", "diff", "fc", "migracion"]
+    },
+
     // ---- Redes
     {
       id: "win-test-netconnection", name: "Test-NetConnection", os: "windows", shell: "powershell", category: "network", risk: "safe",
@@ -657,6 +948,60 @@ window.CHEATSHEET = {
       ],
       example: { command: "pathping -n -q 50 vpn.empresa.com", explanation: "Identifica en qué salto hay pérdida de paquetes cuando la VPN va lenta." },
       tags: ["traceroute", "ruta", "latencia", "perdida"]
+    },
+
+    // ---- Netcat (Windows)
+    {
+      id: "win-ncat-scan", name: "ncat -zv (comprobar puertos)", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Ncat es el netcat moderno de Nmap para Windows (no viene instalado; se instala con Nmap o winget). Comprueba si un puerto TCP/UDP está abierto.",
+      syntax: "ncat -zv [-u] [-w seg] host puerto",
+      flags: [
+        { flag: "-z", description: "Solo comprueba la conexión, sin enviar datos." },
+        { flag: "-v", description: "Muestra el resultado de la conexión." },
+        { flag: "-u", description: "Usa UDP." },
+        { flag: "-w 3", description: "Tiempo de espera de conexión." },
+        { flag: "winget install Insecure.Nmap", description: "Instala Nmap + Ncat." }
+      ],
+      example: { command: "for %p in (53 88 135 389 445 636 3268) do @ncat -zv -w 2 dc01.corp.local %p", explanation: "Verifica desde un cliente que los puertos de Active Directory (DNS, Kerberos, RPC, LDAP, SMB, GC) están abiertos hacia el controlador de dominio." },
+      tags: ["netcat", "ncat", "nc", "puerto", "escaneo", "nmap"]
+    },
+    {
+      id: "win-ncat-transfer", name: "ncat (transferir archivos)", os: "windows", shell: "cmd", category: "network", risk: "caution",
+      description: "Envía archivos entre equipos Windows y/o Linux por TCP. Con --ssl el tráfico va cifrado.",
+      syntax: "receptor: ncat -l puerto > archivo   |   emisor: ncat host puerto < archivo",
+      flags: [
+        { flag: "-l", description: "Escucha conexiones." },
+        { flag: "--ssl", description: "Cifra la conexión con TLS (en ambos extremos)." },
+        { flag: "--send-only / --recv-only", description: "Cierra limpiamente al terminar." },
+        { flag: "--allow IP", description: "Solo acepta conexiones de esa IP." }
+      ],
+      example: { command: "REM Receptor (srv02):\nncat -l 9000 --ssl --recv-only --allow 10.0.0.11 > C:\\Temp\\backup.zip\nREM Emisor (srv01, 10.0.0.11):\nncat srv02 9000 --ssl --send-only < D:\\Backups\\backup.zip", explanation: "Copia un backup entre dos servidores sin carpetas compartidas, cifrado y aceptando solo al emisor esperado." },
+      tags: ["netcat", "ncat", "transferir", "archivos", "ssl", "copiar"]
+    },
+    {
+      id: "win-ncat-listen", name: "ncat -l (escucha de prueba)", os: "windows", shell: "cmd", category: "network", risk: "caution",
+      description: "Abre un puerto en escucha temporal para validar reglas de firewall antes de instalar un servicio. Windows pedirá permitirlo en su firewall.",
+      syntax: "ncat -lvk [-u] puerto",
+      flags: [
+        { flag: "-l", description: "Modo escucha." },
+        { flag: "-k", description: "Acepta varias conexiones." },
+        { flag: "-u", description: "Escucha UDP." },
+        { flag: "--allow red/CIDR", description: "Restringe quién puede conectarse." }
+      ],
+      example: { command: "ncat -lvk 1433 --allow 10.20.0.0/24", explanation: "Simula el puerto de SQL Server en el servidor nuevo para que el equipo de redes valide las reglas desde la VLAN de aplicaciones." },
+      tags: ["netcat", "ncat", "firewall", "listener", "puerto"]
+    },
+    {
+      id: "win-ps-tcpclient", name: "System.Net.Sockets.TcpClient", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Alternativa nativa a netcat en PowerShell (sin instalar nada): comprueba puertos con tiempo de espera controlado o lanza un listener de prueba.",
+      syntax: "(New-Object System.Net.Sockets.TcpClient).ConnectAsync(host, puerto).Wait(ms)",
+      flags: [
+        { flag: "ConnectAsync().Wait(ms)", description: "Devuelve True/False con timeout en milisegundos." },
+        { flag: "[System.Net.Sockets.TcpListener]", description: "Abre un puerto en escucha de prueba." },
+        { flag: "Test-NetConnection -Port", description: "Alternativa más lenta pero más detallada." }
+      ],
+      example: { command: "$hosts = 'web01','web02','web03'; foreach ($h in $hosts) { $c = New-Object System.Net.Sockets.TcpClient; [pscustomobject]@{Host=$h; Port443=$c.ConnectAsync($h,443).Wait(1000)}; $c.Close() }", explanation: "Comprobación rápida (1 s por equipo) del puerto 443 en varios servidores cuando ncat no está instalado y Test-NetConnection es demasiado lento." },
+      tags: ["netcat", "nc", "puerto", "tcp", "powershell", "nativo"]
     },
 
     // ---- Procesos

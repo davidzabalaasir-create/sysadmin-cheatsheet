@@ -26,7 +26,7 @@ python -m http.server 5500
 
 ```
 index.html                  UI (Tailwind CDN)
-assets/data.js              Dataset de comandos (71)
+assets/data.js              Dataset de comandos (97)
 assets/app.js               Lógica: filtros, búsqueda, ficha, copiar
 assets/styles.css           Estilos complementarios
 data/commands.example.json  Ejemplo del modelo de datos JSON
