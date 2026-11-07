@@ -127,6 +127,78 @@
     return out;
   }
 
+  // ------------------------------------------------------------ Variables de usuario
+  /* Cada variable sustituye los valores de ejemplo que usan los comandos del dataset.
+   * Se guardan en localStorage y se aplican al mostrar y al copiar los ejemplos. */
+  const VARS = [
+    { key: "usuario",   label: "Usuario",                    sample: "jlopez",          re: /\b(?:jlopez|aruiz)\b/g,
+      hint: "Sustituye a jlopez y aruiz (también en adm.jlopez)." },
+    { key: "dominio",   label: "Dominio de Active Directory", sample: "corp.local",
+      hint: "Sustituye a corp.local y genera también DC=…,DC=… y el nombre NetBIOS (CORP\\)." },
+    { key: "web",       label: "Dominio web",                sample: "empresa.com",     re: /tu-dominio\.com|empresa\.com/g,
+      hint: "Sustituye a empresa.com y tu-dominio.com (app., web., mail.…)." },
+    { key: "servidor",  label: "Servidor principal",         sample: "srv01",           re: /\bsrv01\b/g },
+    { key: "servidor2", label: "Servidor secundario",        sample: "srv02",           re: /\bsrv02\b/g },
+    { key: "redAdmin",  label: "Red de administración",      sample: "192.168.10.0/24", re: /192\.168\.10\.0\/24/g }
+  ];
+  let userVars = {};
+  try { userVars = JSON.parse(localStorage.getItem("mc.vars") || "{}") || {}; } catch { userVars = {}; }
+  const activeVars = () => VARS.filter((v) => (userVars[v.key] || "").trim());
+
+  /** Sustituye los valores de ejemplo por los del usuario.
+   *  Con `mark`, rodea cada sustitución con \u0001…\u0002 para resaltarla después. */
+  function applyVars(text, mark = false) {
+    let t = text;
+    const wrap = (v) => (mark && !/[\s"']/.test(v) ? `\u0001${v}\u0002` : v);
+    const get = (k) => (userVars[k] || "").trim();
+    const dom = get("dominio");
+    if (dom) {
+      const dn = dom.split(".").filter(Boolean).map((p) => `DC=${p}`).join(",");
+      const netbios = dom.split(".")[0].toUpperCase();
+      t = t.replace(/DC=corp,DC=local/g, () => wrap(dn))
+           .replace(/corp\.local/g, () => wrap(dom))
+           .replace(/\bCORP(?=\\)/g, () => wrap(netbios));
+    }
+    for (const v of VARS) {
+      if (!v.re || !get(v.key)) continue;
+      t = t.replace(v.re, () => wrap(get(v.key)));
+    }
+    return t;
+  }
+
+  /** HTML resaltado de un ejemplo con las variables aplicadas y marcadas. */
+  const exampleHtml = (c) =>
+    code(applyVars(c.example.command, true), c.shell)
+      .replace(/\u0001/g, '<span class="tk-user" title="Tu variable">')
+      .replace(/\u0002/g, "</span>");
+
+  function renderVarsBadge() {
+    const n = activeVars().length, b = $("#varsBadge");
+    b.textContent = n;
+    b.classList.toggle("hidden", !n);
+    b.classList.toggle("grid", !!n);
+  }
+
+  function renderVarsForm() {
+    $("#varsFields").innerHTML = VARS.map((v) => `
+      <label class="block">
+        <span class="flex items-baseline justify-between gap-3">
+          <span class="text-sm text-bone">${v.label}</span>
+          <span class="font-mono text-[10px] text-bone-mute">ejemplo: ${esc(v.sample)}</span>
+        </span>
+        <input data-var="${v.key}" value="${esc(userVars[v.key] || "")}" placeholder="${esc(v.sample)}" autocomplete="off" spellcheck="false"
+          class="mt-1.5 w-full rounded-lg bg-paper border border-paper-line2 focus:border-amber focus:outline-none px-3 py-2 font-mono text-sm text-amber placeholder:text-bone-mute" />
+        ${v.hint ? `<span class="block mt-1 text-xs text-bone-mute">${esc(v.hint)}</span>` : ""}
+      </label>`).join("");
+  }
+
+  function saveVars() {
+    localStorage.setItem("mc.vars", JSON.stringify(userVars));
+    renderVarsBadge();
+    renderList();   // títulos de los botones Copiar
+    renderDetail();
+  }
+
   // ------------------------------------------------------------ Búsqueda
   const index = commands.map((c) => ({
     c,
@@ -168,9 +240,9 @@
       const on = state.os === o.id;
       const n = o.id === "all" ? commands.length : commands.filter((c) => c.os === o.id).length;
       return `<button role="tab" aria-selected="${on}" data-os="${o.id}"
-        class="flex items-center gap-2 px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
+        class="flex flex-1 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
         <span class="${on ? "" : OS_LOGO_COLOR[o.id]}">${OS_LOGO[o.id]}</span>
-        ${o.label} <span class="${on ? "text-paper/60" : "text-bone-mute"}">${n}</span></button>`;
+        ${o.label} <span class="hidden sm:inline ${on ? "text-paper/60" : "text-bone-mute"}">${n}</span></button>`;
     }).join("");
 
     const pool = filter({ ignoreCategory: true });
@@ -279,7 +351,7 @@
         <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider ${r.text}" title="${r.label}">
           ${c.risk === "safe" ? "" : `<span class="hidden sm:inline">${r.label}</span>`}<span class="w-2 h-2 rounded-full ${r.dot}"></span>
         </span>
-        <button data-copy="${c.id}" data-field="example" title="Copiar ejemplo: ${esc(c.example.command.split("\n")[0].slice(0, 80))}" aria-label="Copiar ejemplo de ${esc(c.name)}"
+        <button data-copy="${c.id}" data-field="example" title="Copiar ejemplo: ${esc(applyVars(c.example.command).split("\n")[0].slice(0, 80))}" aria-label="Copiar ejemplo de ${esc(c.name)}"
           class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[10px] uppercase tracking-wider
                  hover:text-amber hover:border-amber/60 transition lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 group-aria-[current=true]:opacity-100">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copiar</span>
@@ -399,8 +471,13 @@
         <section class="mt-9">
           ${sectionTitle("03", "En el mundo real", copyBtn(c.id, "example", "Copiar ejemplo"))}
           <div class="rounded-xl bg-[#0d0c0a] border ${c.risk === "danger" ? "border-blood/40" : "border-paper-line"} overflow-hidden">
-            <div class="px-4 py-2 border-b border-paper-line font-mono text-[11px] text-bone-mute">${prompt}</div>
-            <pre class="px-4 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words"><code>${code(c.example.command, c.shell)}</code></pre>
+            <div class="flex items-center justify-between gap-3 px-4 py-2 border-b border-paper-line font-mono text-[11px] text-bone-mute">
+              <span>${prompt}</span>
+              ${applyVars(c.example.command) !== c.example.command
+                ? `<button data-open-vars class="text-amber hover:underline">✓ con tus variables</button>`
+                : `<button data-open-vars class="hover:text-amber">{x} personalizar</button>`}
+            </div>
+            <pre class="px-4 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words"><code>${exampleHtml(c)}</code></pre>
           </div>
           <p class="mt-4 font-serif text-xl italic leading-snug text-bone">“${hl(c.example.explanation)}”</p>
         </section>
@@ -480,6 +557,7 @@
 
   document.addEventListener("click", async (e) => {
     if (e.target.closest("#btnBack")) return closeSheet();
+    if (e.target.closest("#btnVars, [data-open-vars]")) return openVars();
     const el = e.target.closest("[data-os],[data-cat],[data-risk],[data-copy],[data-tag],[data-id]");
     if (!el) return;
     const d = el.dataset;
@@ -487,7 +565,7 @@
     if (d.copy) {
       const c = cmdById[d.copy];
       // El nombre puede llevar una aclaración entre paréntesis («nc (transferir archivos)»): se copia solo el comando.
-      await copy(d.field === "example" ? c.example.command : d.field === "syntax" ? c.syntax : c.name.replace(/\s*\(.*\)\s*$/, ""));
+      await copy(d.field === "example" ? applyVars(c.example.command) : d.field === "syntax" ? c.syntax : c.name.replace(/\s*\(.*\)\s*$/, ""));
       const span = el.querySelector("span"), prev = span.textContent;
       span.textContent = "Copiado"; el.classList.add("!text-amber");
       setTimeout(() => { span.textContent = prev; el.classList.remove("!text-amber"); }, 1200);
@@ -512,6 +590,7 @@
 
   document.addEventListener("keydown", (e) => {
     const search = $("#search");
+    if (varsDialog.open) return; // el diálogo gestiona su propio teclado (Esc lo cierra)
     const inInput = document.activeElement === search;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); closeSheet(); search.focus(); search.select(); return; }
     if (e.key === "/" && !inInput) { e.preventDefault(); search.focus(); return; }
@@ -534,6 +613,29 @@
     if (e.key === "Enter" && state.selected && !mqDesktop.matches) openSheet();
   });
 
+  // Panel de variables
+  const varsDialog = $("#varsDialog");
+  function openVars() {
+    renderVarsForm();
+    varsDialog.showModal();
+    varsDialog.querySelector("input")?.focus();
+  }
+  $("#varsFields").addEventListener("input", (e) => {
+    const key = e.target.dataset.var;
+    if (!key) return;
+    userVars[key] = e.target.value;
+    if (!e.target.value.trim()) delete userVars[key];
+    saveVars();
+  });
+  $("#varsReset").addEventListener("click", () => {
+    userVars = {};
+    saveVars();
+    renderVarsForm();
+    toast("Variables restablecidas");
+  });
+  // Cerrar al pulsar fuera del panel
+  varsDialog.addEventListener("click", (e) => { if (e.target === varsDialog) varsDialog.close(); });
+
   $("#btnReset").addEventListener("click", () => {
     state.category = "all"; state.query = ""; state.risks = new Set(Object.keys(RISK)); $("#search").value = ""; render();
   });
@@ -550,6 +652,20 @@
   });
 
   // Arranque: si llega un enlace con #comando, se abre su ficha.
+  // Modo sin conexión (PWA). Solo por http/https: abriendo el archivo directamente no aplica.
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    const firstInstall = !navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("./sw.js").then((reg) => {
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        sw?.addEventListener("statechange", () => {
+          if (sw.state === "activated" && firstInstall) toast("Lista para usar sin conexión");
+        });
+      });
+    }).catch(() => { /* sin service worker la web sigue funcionando online */ });
+  }
+
+  renderVarsBadge();
   render();
   if (state.selected && cmdById[state.selected] && location.hash) select(state.selected, { scroll: true });
 })();

@@ -13,7 +13,7 @@ Web estática que funciona como biblioteca y cheat sheet de comandos para admini
 ## Estructura
 
 ```
-index.html                         Maquetación y estilos (Tailwind por CDN, fuentes Google)
+index.html                         Maquetación (clases de Tailwind compiladas en assets/tailwind.css)
 assets/styles.css                  Estilos complementarios (resaltado de sintaxis, franja de peligro…)
 assets/app.js                      Lógica en JavaScript vanilla: filtros, búsqueda, ficha, copiar
 assets/data.js                     Dataset: window.CHEATSHEET = { categories, commands }
@@ -22,14 +22,21 @@ docs/auditoria-ubuntu-apache-mariadb.md   Informe de auditoría del stack web de
 scripts/validate.js                Validador del dataset
 ```
 
-Sin frameworks, sin bundler y sin dependencias npm. Mantenlo así salvo que el usuario pida otra cosa.
+Sin frameworks ni bundler. Las únicas dependencias npm son de desarrollo (Tailwind CLI y fuentes @fontsource); en tiempo de ejecución la web no carga nada externo. **No vuelvas a usar el CDN de Tailwind ni Google Fonts.**
+
+Archivos generados que SÍ se suben al repositorio (GitHub Pages no compila): `assets/tailwind.css`, `assets/fonts/*`, `assets/icons/*`.
 
 ## Ejecutar y validar
 
 ```bash
 python -m http.server 5500     # y abre http://localhost:5500
 node scripts/validate.js       # obligatorio tras tocar assets/data.js
+npm run build:css              # obligatorio tras añadir o cambiar clases en index.html o assets/app.js
+node scripts/make-icons.js     # solo si cambias el diseño del icono (scripts/icon.html)
 ```
+
+- **Sin conexión (PWA):** `sw.js` guarda en caché los archivos de `ASSETS`. Si añades un archivo que la web necesita, añádelo a esa lista. **Sube `VERSION` en `sw.js` en cada publicación.**
+- **Variables de usuario:** `VARS` en `assets/app.js` sustituye valores de ejemplo (jlopez/aruiz, corp.local, empresa.com/tu-dominio.com, srv01, srv02, 192.168.10.0/24). Usa esos mismos valores en los ejemplos nuevos para que sean personalizables.
 
 Abrir `index.html` con doble clic también funciona.
 
@@ -88,6 +95,4 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
 - Favoritos guardados en localStorage y un filtro «Mis favoritos».
 - Tema claro opcional, manteniendo la identidad editorial.
 - Exportar la ficha o la categoría a PDF/Markdown para imprimir.
-- Añadir variables editables en los ejemplos (host, usuario, ruta) antes de copiar.
-- Sacar el dataset a JSON y cargarlo con `fetch`, conservando un respaldo que funcione abriendo el archivo directamente (`file://`).
 - Pruebas automáticas de la interfaz (por ejemplo con Playwright) para la búsqueda, los filtros y el botón de copiar.

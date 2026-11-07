@@ -54,6 +54,7 @@ body {
 .tk-var  { color: #e7a6ff; }
 .tk-op   { color: #ff8a7a; }
 .tk-com  { color: #6f6a5f; font-style: italic; }
+.tk-user { color: #141310; background: #ffb454; border-radius: 3px; padding: 0 3px; font-weight: 600; }
 
 mark { background: transparent; color: #ffb454; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 

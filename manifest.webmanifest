@@ -1,0 +1,17 @@
+{
+  "name": "Sysadmin · Comandos Linux y Windows",
+  "short_name": "Sysadmin",
+  "description": "Biblioteca de comandos para administradores de sistemas: Linux, Windows y Active Directory. Funciona sin conexión.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#141310",
+  "theme_color": "#141310",
+  "categories": ["productivity", "utilities", "developer"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
