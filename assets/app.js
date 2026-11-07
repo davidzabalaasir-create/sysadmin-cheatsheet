@@ -36,7 +36,23 @@
     windows: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M3 5.6l7.4-1v6.9H3zM11.4 4.4L21 3v8.5h-9.6zM3 12.5h7.4v6.9L3 18.4zM11.4 12.5H21V21l-9.6-1.4z"/></svg>`
   };
-  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-amber", windows: "text-sky" };
+  /* Iconos de categoría (trazo, 24×24). La clave coincide con categories[].icon. */
+  const CAT_ICONS = {
+    all:     '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
+    users:   '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',
+    folder:  '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    network: '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5 6.5 17M12 11.5l5.5 5.5"/>',
+    cpu:     '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx=".5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+    shield:  '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+    clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    disk:    '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+    package: '<path d="M12 2.5 3.5 7v10L12 21.5 20.5 17V7z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10M7.8 4.8l8.5 4.5"/>',
+    tree:    '<rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/>'
+  };
+  const catIcon = (name, cls = "w-4 h-4") =>
+    `<svg class="${cls}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">${CAT_ICONS[name] || CAT_ICONS.all}</svg>`;
+
+  const OS_LOGO_COLOR ={ all: "text-bone-dim", linux: "text-amber", windows: "text-sky" };
 
   const SHELL = { bash: "bash", powershell: "PowerShell", cmd: "CMD" };
   const RISK = {
@@ -164,9 +180,10 @@
 
     const tab = (id, num, label, n, winOnly = false) => {
       const on = state.category === id;
-      return `<button data-cat="${id}" class="group shrink-0 flex items-baseline gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
+      return `<button data-cat="${id}" class="group shrink-0 flex items-center gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
         ${on ? "border-amber text-bone" : "border-transparent text-bone-dim hover:text-bone"} ${n ? "" : "opacity-40"}">
         <span class="font-mono text-[10px] ${on ? "text-amber" : "text-bone-mute"}">${num}</span>
+        <span class="${on ? "text-amber" : "text-bone-mute group-hover:text-amber"} transition-colors">${catIcon(catById[id]?.icon || "all")}</span>
         <span class="text-sm">${label}</span>
         ${winOnly ? `<span class="font-mono text-[9px] text-sky border border-sky/40 rounded px-1">WIN</span>` : ""}
         <span class="font-mono text-[10px] text-bone-mute">${n}</span></button>`;
@@ -284,6 +301,7 @@
           const cat = catById[c.category];
           html += `<div class="mb-6"><h2 class="flex items-baseline gap-3 px-3 pb-2 mb-1 border-b border-paper-line">
             <span class="font-mono text-xs text-amber">§${catNum[cat.id]}</span>
+            <span class="self-center text-amber/80">${catIcon(cat.icon, "w-5 h-5")}</span>
             <span class="font-serif text-2xl text-bone">${cat.label}</span>
             <span class="ml-auto font-mono text-[10px] text-bone-mute uppercase tracking-wider hidden sm:inline">${cat.labelEn}</span></h2>`;
         }
