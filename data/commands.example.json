@@ -1,6 +1,6 @@
 {
   "$schema": "https://example.local/sysadmin-cheatsheet.schema.json",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "categories": [
     {
       "id": "users",
@@ -80,6 +80,52 @@
       "os": [
         "linux",
         "windows"
+      ]
+    },
+    {
+      "id": "containers",
+      "label": "Contenedores y Kubernetes",
+      "labelEn": "Containers & Kubernetes",
+      "icon": "container",
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "id": "git",
+      "label": "Git y control de versiones",
+      "labelEn": "Git & Version Control",
+      "icon": "git",
+      "os": [
+        "linux"
+      ]
+    },
+    {
+      "id": "virtualization",
+      "label": "Virtualización",
+      "labelEn": "Virtualization",
+      "icon": "server",
+      "os": [
+        "linux",
+        "windows"
+      ]
+    },
+    {
+      "id": "m365",
+      "label": "Exchange y Microsoft 365",
+      "labelEn": "Exchange & Microsoft 365",
+      "icon": "cloud",
+      "os": [
+        "windows"
+      ]
+    },
+    {
+      "id": "netdevices",
+      "label": "Equipos de red",
+      "labelEn": "Network Devices (Cisco / MikroTik)",
+      "icon": "router",
+      "os": [
+        "network"
       ]
     },
     {
@@ -373,6 +419,8 @@
     }
   ],
   "fieldNotes": {
-    "requires": "Opcional. Herramientas o configuración necesarias si el comando no viene de serie."
+    "requires": "Opcional. Herramientas o configuración necesarias si el comando no viene de serie.",
+    "os": "linux | windows | network (equipos de red: shell ios o routeros)",
+    "translations": "La traducción al inglés de cada comando va en assets/data-en.js: { n?, d, f[], x, r? }"
   }
 }

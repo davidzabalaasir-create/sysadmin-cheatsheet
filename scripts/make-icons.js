@@ -35,3 +35,15 @@ for (const [name, size] of [["icon-192.png", 192], ["icon-512.png", 512], ["appl
   ], { stdio: "ignore" });
   console.log(`${name} (${size}px): ${fs.statSync(out).size} bytes`);
 }
+
+// Imagen para compartir (Open Graph / Twitter), 1200×630
+{
+  const out = path.join(root, "assets", "og-image.png");
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "og-"));
+  execFileSync(browser, [
+    "--headless=new", "--disable-gpu", "--hide-scrollbars", `--user-data-dir=${profile}`,
+    "--allow-file-access-from-files", "--virtual-time-budget=2000", "--force-device-scale-factor=1",
+    "--window-size=1200,630", `--screenshot=${out}`, pathToFileURL(path.join(__dirname, "og.html")).href
+  ], { stdio: "ignore" });
+  console.log(`og-image.png (1200x630): ${fs.statSync(out).size} bytes`);
+}

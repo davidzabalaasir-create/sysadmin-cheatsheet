@@ -1,0 +1,58 @@
+# Integración continua de Sysadmin.
+# En cada push y pull request: valida el dataset y las traducciones, comprueba que el CSS
+# compilado está al día y ejecuta las pruebas de interfaz (escritorio y móvil).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validar:
+    name: Validar datos y CSS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Validar dataset, traducciones y textos de interfaz
+        run: npm run validate
+      - name: Comprobar que assets/tailwind.css está compilado y al día
+        run: |
+          npm run build:css
+          git diff --exit-code assets/tailwind.css || (echo "::error::assets/tailwind.css no está al día. Ejecuta 'npm run build:css' y sube el resultado." && exit 1)
+
+  pruebas:
+    name: Pruebas de interfaz (Playwright)
+    needs: validar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Instalar Chromium para Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Ejecutar pruebas
+        run: npx playwright test
+      - name: Guardar informe si fallan
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-playwright
+          path: playwright-report/
+          retention-days: 7

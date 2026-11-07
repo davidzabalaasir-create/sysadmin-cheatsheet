@@ -8,8 +8,8 @@ global.window = {};
 require(path.join(__dirname, "..", "assets", "data.js"));
 const { categories, commands } = window.CHEATSHEET;
 
-const OS = new Set(["linux", "windows"]);
-const SHELLS = new Set(["bash", "powershell", "cmd"]);
+const OS = new Set(["linux", "windows", "network"]);
+const SHELLS = new Set(["bash", "powershell", "cmd", "ios", "routeros"]);
 const RISKS = new Set(["safe", "caution", "danger"]);
 const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
 const errors = [];
@@ -29,7 +29,8 @@ for (const c of commands) {
   if (!cat) errors.push(`${where}: categoría inexistente '${c.category}'`);
   else if (!cat.os.includes(c.os)) errors.push(`${where}: la categoría '${c.category}' no admite ${c.os}`);
   if (c.os === "linux" && c.shell !== "bash") errors.push(`${where}: Linux debe usar shell 'bash'`);
-  if (c.os === "windows" && c.shell === "bash") errors.push(`${where}: Windows no usa 'bash'`);
+  if (c.os === "windows" && !["powershell", "cmd"].includes(c.shell)) errors.push(`${where}: Windows usa 'powershell' o 'cmd'`);
+  if (c.os === "network" && !["ios", "routeros"].includes(c.shell)) errors.push(`${where}: equipos de red usan 'ios' o 'routeros'`);
   if (!Array.isArray(c.flags) || !c.flags.length) errors.push(`${where}: 'flags' vacío`);
   else c.flags.forEach((f, i) => { if (!f.flag || !f.description) errors.push(`${where}: flags[${i}] incompleto`); });
   if (!c.example?.command || !c.example?.explanation) errors.push(`${where}: 'example' incompleto`);
@@ -37,8 +38,26 @@ for (const c of commands) {
   if (c.requires !== undefined && typeof c.requires !== "string") errors.push(`${where}: 'requires' debe ser texto`);
 }
 
+// ---- Traducción al inglés del contenido (assets/data-en.js)
+require(path.join(__dirname, "..", "assets", "data-en.js"));
+const EN = window.CHEATSHEET_EN || {};
+for (const c of commands) {
+  const e = EN[c.id];
+  if (!e) { errors.push(`${c.id}: falta la traducción al inglés en assets/data-en.js`); continue; }
+  if (!e.d || !e.x) errors.push(`${c.id}: traducción sin descripción (d) o explicación (x)`);
+  if ((e.f || []).length !== c.flags.length) errors.push(`${c.id}: la traducción tiene ${(e.f || []).length} parámetros y el original ${c.flags.length}`);
+  if (c.requires && !e.r) errors.push(`${c.id}: falta traducir 'requires' (r)`);
+}
+for (const id of Object.keys(EN)) if (!seen.has(id)) errors.push(`data-en.js: '${id}' no existe en data.js`);
+
+// ---- Textos de interfaz (assets/i18n.js): mismas claves en español e inglés
+require(path.join(__dirname, "..", "assets", "i18n.js"));
+const es = Object.keys(window.I18N.es), en = Object.keys(window.I18N.en);
+es.filter((k) => !en.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en inglés`));
+en.filter((k) => !es.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en español`));
+
 const count = (f) => commands.filter(f).length;
-console.log(`Comandos: ${commands.length} (linux ${count((c) => c.os === "linux")}, windows ${count((c) => c.os === "windows")})`);
+console.log(`Comandos: ${commands.length} (linux ${count((c) => c.os === "linux")}, windows ${count((c) => c.os === "windows")}, red ${count((c) => c.os === "network")})`);
 for (const cat of categories) console.log(`  ${cat.id.padEnd(11)} ${count((c) => c.category === cat.id)}`);
 
 if (errors.length) {

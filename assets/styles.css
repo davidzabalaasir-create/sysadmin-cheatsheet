@@ -53,7 +53,7 @@ body {
 .tk-str  { color: #9fd8a6; }
 .tk-var  { color: #e7a6ff; }
 .tk-op   { color: #ff8a7a; }
-.tk-com  { color: #6f6a5f; font-style: italic; }
+.tk-com  { color: #8f897c; font-style: italic; }
 .tk-user { color: #141310; background: #ffb454; border-radius: 3px; padding: 0 3px; font-weight: 600; }
 
 mark { background: transparent; color: #ffb454; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
@@ -63,3 +63,62 @@ mark { background: transparent; color: #ffb454; text-decoration: underline; text
 
 body.sheet-open { overflow: hidden; }
 @media (min-width: 1024px) { body.sheet-open { overflow: auto; } }
+
+/* ------------------------------------------------------------ Accesibilidad */
+/* Indicador de foco visible solo al navegar con teclado */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid #ffb454; outline-offset: 2px; border-radius: 4px; }
+input:focus-visible { outline-offset: 4px; }
+.row-main:focus-visible { outline-offset: 4px; }
+
+/* Enlace «saltar a la lista» (visible al recibir el foco) */
+.skip-link {
+  position: absolute; left: 1rem; top: -100px; z-index: 100;
+  background: #ffb454; color: #141310; padding: .6rem 1rem; border-radius: 999px;
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { top: 1rem; }
+
+/* En escritorio, las acciones de la fila aparecen al pasar el ratón, al enfocar o en la fila activa */
+@media (min-width: 1024px) and (hover: hover) {
+  .row .row-actions [data-copy] { opacity: 0; transition: opacity .15s; }
+  .row:hover .row-actions [data-copy],
+  .row:focus-within .row-actions [data-copy],
+  .row[aria-current="true"] .row-actions [data-copy] { opacity: 1; }
+}
+
+/* Respeta la preferencia del sistema de reducir animaciones */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ------------------------------------------------------------ Impresión / PDF */
+.print-only { display: none; }
+@media print {
+  @page { margin: 14mm 12mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  body { background-image: none !important; }
+  .screen-only, dialog, .skip-link { display: none !important; }
+  .print-only { display: block !important; }
+  #printArea { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 10.5pt; line-height: 1.4; color: #111; }
+  #printArea .p-head { border-bottom: 2px solid #111; padding-bottom: 6pt; margin-bottom: 10pt; }
+  #printArea h1 { font-family: "Instrument Serif", Georgia, serif; font-size: 26pt; font-weight: 400; margin: 0; }
+  #printArea h1 em { color: #b36b00; }
+  #printArea h1 small { font-size: 12pt; color: #555; }
+  #printArea .p-head p { margin: 2pt 0 0; color: #555; font-size: 9pt; }
+  #printArea .p-cmd { break-inside: avoid; page-break-inside: avoid; border-bottom: 1px solid #ccc; padding: 7pt 0 9pt; }
+  #printArea h2 { font-family: "IBM Plex Mono", monospace; font-size: 12.5pt; margin: 0 0 3pt; }
+  #printArea .p-tag { font-size: 8pt; font-weight: 400; color: #555; margin-left: 6pt; }
+  #printArea .p-risk { font-size: 7.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; border: 1px solid; border-radius: 3pt; padding: 0 3pt; margin-left: 4pt; }
+  #printArea .p-safe { color: #2e7d32; } #printArea .p-caution { color: #b36b00; } #printArea .p-danger { color: #c62828; }
+  #printArea p { margin: 2pt 0; }
+  #printArea .p-req { font-size: 9pt; color: #333; }
+  #printArea .p-label { font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; color: #777; margin-top: 5pt; }
+  #printArea .p-expl { font-style: italic; color: #333; }
+  #printArea pre { font-family: "IBM Plex Mono", monospace; font-size: 8.8pt; background: #f4f2ee; border: 1px solid #ddd; border-radius: 3pt; padding: 4pt 6pt; margin: 3pt 0; white-space: pre-wrap; word-break: break-word; }
+  #printArea table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 3pt 0; }
+  #printArea td { border-top: 1px solid #eee; padding: 1.5pt 4pt 1.5pt 0; vertical-align: top; }
+  #printArea td:first-child { width: 38%; }
+  #printArea code { font-family: "IBM Plex Mono", monospace; }
+  #printArea .p-foot { margin-top: 10pt; font-size: 8pt; color: #777; }
+}

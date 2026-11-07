@@ -4,7 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sysadmin · Comandos para administradores de sistemas (Linux & Windows)</title>
-  <meta name="description" content="Sysadmin: biblioteca de comandos para administradores de sistemas y redes: Linux (Bash) y Windows (CMD/PowerShell/Active Directory)." />
+  <meta name="description" content="Sysadmin: biblioteca de comandos para administradores de sistemas y redes: Linux (Bash), Windows (CMD/PowerShell/Active Directory), contenedores, Microsoft 365 y equipos de red." />
+  <link rel="canonical" href="https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/" />
+
+  <!-- Tarjeta al compartir (Open Graph / Twitter) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Sysadmin" />
+  <meta property="og:title" content="Sysadmin · Biblioteca de comandos para administradores de sistemas" />
+  <meta property="og:description" content="Más de 200 comandos de Linux, Windows, Active Directory, contenedores, Microsoft 365 y equipos de red, con ejemplos reales, niveles de riesgo y modo práctica. Funciona sin conexión." />
+  <meta property="og:url" content="https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/" />
+  <meta property="og:image" content="https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Sysadmin: biblioteca de comandos para administradores de sistemas" />
+  <meta property="og:locale" content="es_ES" />
+  <meta property="og:locale:alternate" content="en_GB" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Sysadmin · Biblioteca de comandos para administradores de sistemas" />
+  <meta name="twitter:description" content="Comandos de Linux, Windows, AD, contenedores, M365 y equipos de red con ejemplos reales. Funciona sin conexión." />
+  <meta name="twitter:image" content="https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/assets/og-image.png" />
+
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
@@ -15,92 +34,109 @@
 </head>
 <body class="bg-paper text-bone font-sans antialiased">
 
+  <a href="#list" class="skip-link" data-i18n="a11y.skip">Saltar a la lista de comandos</a>
+
   <!-- ===================== MASTHEAD ===================== -->
-  <header class="border-b border-paper-line">
+  <header class="border-b border-paper-line screen-only">
     <div class="max-w-[1500px] mx-auto px-5 lg:px-10 pt-6 lg:pt-10 pb-5">
-      <div class="flex items-start justify-between gap-6">
+      <div class="flex items-start justify-between gap-4">
         <div class="min-w-0">
-          <p class="font-mono text-[11px] tracking-[0.25em] uppercase text-bone-mute">Vol. 1 — Linux · Windows · Active Directory</p>
+          <p class="font-mono text-[11px] tracking-[0.25em] uppercase text-bone-mute" data-i18n="kicker">Vol. 1 — Linux · Windows · Redes</p>
           <h1 class="font-serif text-[2.6rem] leading-[0.95] sm:text-6xl lg:text-7xl text-bone mt-2">
             Sys<em class="text-amber">admin</em>
           </h1>
         </div>
-        <div id="counter" class="hidden md:block text-right shrink-0 pt-2"></div>
+        <div class="flex flex-col items-end gap-3 shrink-0">
+          <div class="flex items-center gap-2">
+            <button id="btnQuiz" type="button" data-i18n-attr="title:quiz.button.title"
+              class="flex items-center gap-2 h-9 px-3.5 rounded-full border border-paper-line2 font-mono text-xs text-bone-dim hover:text-amber hover:border-amber/60 transition">
+              <svg class="w-4 h-4 text-amber" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+              <span data-i18n="quiz.button">Practicar</span>
+            </button>
+            <button id="btnLang" type="button" class="grid place-items-center h-9 w-11 rounded-full border border-paper-line2 font-mono text-xs font-semibold text-bone-dim hover:text-amber hover:border-amber/60 transition">EN</button>
+          </div>
+          <div id="counter" class="hidden md:block text-right"></div>
+        </div>
       </div>
 
       <!-- Barra de control -->
       <div class="mt-7 flex flex-col lg:flex-row lg:items-center gap-4">
-        <!-- Buscador -->
         <label class="relative flex-1 block">
-          <span class="sr-only">Buscar comandos</span>
-          <span class="absolute left-0 top-1/2 -translate-y-1/2 font-mono text-amber text-lg select-none">?</span>
-          <input id="search" type="search" autocomplete="off" spellcheck="false"
+          <span class="sr-only" data-i18n="search.label">Buscar comandos</span>
+          <span class="absolute left-0 top-1/2 -translate-y-1/2 font-mono text-amber text-lg select-none" aria-hidden="true">?</span>
+          <input id="search" type="search" autocomplete="off" spellcheck="false" data-i18n-attr="placeholder:search.placeholder"
             placeholder="Busca por comando, tarea o palabra clave — p. ej. «puerto abierto», «bloquear cuenta»"
-            class="w-full bg-transparent border-0 border-b-2 border-paper-line2 focus:border-amber pl-7 pr-24 py-3 text-lg sm:text-xl font-serif italic placeholder:text-bone-mute placeholder:not-italic placeholder:font-sans placeholder:text-base focus:outline-none transition-colors" />
-          <span class="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:flex gap-1">
+            class="w-full bg-transparent border-0 border-b-2 border-paper-line2 focus:border-amber pl-7 pr-24 py-3 text-lg sm:text-xl font-serif italic placeholder:text-bone-mute placeholder:not-italic placeholder:font-sans placeholder:text-base transition-colors" />
+          <span class="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:flex gap-1" aria-hidden="true">
             <kbd class="key">Ctrl</kbd><kbd class="key">K</kbd>
           </span>
         </label>
 
-        <!-- Selector SO -->
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <div id="osSwitch" class="flex flex-1 min-w-0 border border-paper-line2 rounded-full p-1 font-mono text-[11px] sm:text-xs" role="tablist" aria-label="Sistema operativo"></div>
-          <button id="btnVars" type="button" title="Personaliza usuario, dominio y servidores de los ejemplos"
+          <div id="osSwitch" class="flex flex-1 min-w-0 border border-paper-line2 rounded-full p-1 font-mono text-[11px] sm:text-xs" role="tablist" data-i18n-attr="aria-label:os.label" aria-label="Sistema operativo"></div>
+          <button id="btnVars" type="button" data-i18n-attr="title:vars.button.title"
             class="relative shrink-0 flex items-center gap-2 h-[38px] px-3 sm:px-4 rounded-full border border-paper-line2 font-mono text-xs text-bone-dim hover:text-amber hover:border-amber/60 transition">
-            <span class="font-semibold text-amber">{x}</span><span class="hidden sm:inline">Variables</span>
-            <span id="varsBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-amber text-paper text-[10px] font-semibold"></span>
+            <span class="font-semibold text-amber" aria-hidden="true">{x}</span><span class="hidden sm:inline" data-i18n="vars.button">Variables</span>
+            <span class="sm:hidden sr-only" data-i18n="vars.button">Variables</span>
+            <span id="varsBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 place-items-center rounded-full bg-amber text-paper text-[10px] font-semibold"></span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- Índice de categorías -->
-    <nav class="border-t border-paper-line" aria-label="Categorías">
+    <nav class="border-t border-paper-line" data-i18n-attr="aria-label:cat.nav" aria-label="Categorías">
       <div class="relative max-w-[1500px] mx-auto">
-        <button id="railPrev" type="button" aria-label="Ver categorías anteriores" tabindex="-1"
+        <button id="railPrev" type="button" data-i18n-attr="aria-label:rail.prev" aria-label="Ver categorías anteriores" tabindex="-1"
           class="rail-arrow left-0 pl-2 lg:pl-5 pr-8 bg-gradient-to-r from-paper via-paper/95 to-transparent">
-          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg></span>
+          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg></span>
         </button>
         <div id="catRail" class="relative px-5 lg:px-10 flex gap-1 overflow-x-auto no-scrollbar scroll-smooth cursor-grab select-none"></div>
-        <button id="railNext" type="button" aria-label="Ver más categorías" tabindex="-1"
+        <button id="railNext" type="button" data-i18n-attr="aria-label:rail.next" aria-label="Ver más categorías" tabindex="-1"
           class="rail-arrow right-0 pr-2 lg:pr-5 pl-8 bg-gradient-to-l from-paper via-paper/95 to-transparent">
-          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
+          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
         </button>
       </div>
     </nav>
   </header>
 
   <!-- ===================== CUERPO ===================== -->
-  <div class="max-w-[1500px] mx-auto lg:px-10 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
+  <main class="max-w-[1500px] mx-auto lg:px-10 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10 screen-only">
 
-    <!-- Índice / lista -->
-    <section class="min-w-0 px-5 lg:px-0 py-6" aria-label="Lista de comandos">
+    <section class="min-w-0 px-5 lg:px-0 py-6" data-i18n-attr="aria-label:list.label" aria-label="Lista de comandos">
       <div class="flex items-center justify-between gap-3 mb-4">
-        <p id="listMeta" class="font-mono text-xs text-bone-mute"></p>
-        <div id="riskToggles" class="flex gap-1.5"></div>
+        <p id="listMeta" class="font-mono text-xs text-bone-mute" aria-live="polite"></p>
+        <div class="flex items-center gap-1.5">
+          <div id="riskToggles" class="flex gap-1.5"></div>
+          <button id="btnPrint" type="button" data-i18n-attr="title:print.title;aria-label:print.title"
+            class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-paper-line2 font-mono text-[10px] uppercase tracking-wider text-bone-dim hover:text-amber hover:border-amber/60 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+            <span class="hidden sm:inline">PDF</span>
+          </button>
+        </div>
       </div>
-      <div id="list"></div>
+      <div id="list" tabindex="-1"></div>
       <div id="empty" class="hidden py-20 text-center">
-        <p class="font-serif text-4xl italic text-bone-dim">Nada por aquí.</p>
-        <p class="text-sm text-bone-mute mt-2">Prueba otra palabra, cambia de sistema o restablece los filtros.</p>
-        <button id="btnReset" class="mt-5 font-mono text-xs uppercase tracking-widest text-amber border-b border-amber/40 hover:border-amber pb-0.5">Restablecer filtros</button>
+        <p id="emptyTitle" class="font-serif text-4xl italic text-bone-dim">Nada por aquí.</p>
+        <p id="emptyText" class="text-sm text-bone-mute mt-2">Prueba otra palabra, cambia de sistema o restablece los filtros.</p>
+        <button id="btnReset" type="button" class="mt-5 font-mono text-xs uppercase tracking-widest text-amber border-b border-amber/40 hover:border-amber pb-0.5" data-i18n="empty.reset">Restablecer filtros</button>
       </div>
     </section>
 
-    <!-- Ficha de detalle -->
-    <aside id="detailWrap"
+    <aside id="detailWrap" data-i18n-attr="aria-label:detail.label" aria-label="Ficha del comando"
       class="fixed inset-0 z-50 translate-y-full lg:translate-y-0 transition-transform duration-300 bg-paper
              lg:static lg:z-auto lg:transition-none lg:bg-transparent">
       <div class="h-full lg:h-auto lg:sticky lg:top-0 lg:py-6">
         <div id="detail" class="h-full lg:h-[calc(100vh-3rem)] overflow-y-auto thin-scroll lg:border lg:border-paper-line lg:rounded-2xl bg-paper-2"></div>
       </div>
     </aside>
-  </div>
+  </main>
 
-  <footer class="border-t border-paper-line mt-10">
+  <footer class="border-t border-paper-line mt-10 screen-only">
     <div class="max-w-[1500px] mx-auto px-5 lg:px-10 py-6 flex flex-wrap justify-between gap-3 font-mono text-[11px] text-bone-mute">
-      <span>Lee antes de pulsar Intro. Prueba en laboratorio antes que en producción.</span>
-      <span>↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1/2/3 sistema</span>
+      <span data-i18n="footer.tip">Lee antes de pulsar Intro. Prueba en laboratorio antes que en producción.</span>
+      <span data-i18n="footer.keys">↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1/2/3 sistema</span>
+      <span><a href="https://github.com/davidzabalaasir-create/sysadmin-cheatsheet" class="hover:text-amber underline-offset-2 hover:underline">GitHub</a> · <span data-i18n="footer.license">Código MIT · Contenido CC BY 4.0</span></span>
     </div>
   </footer>
 
@@ -110,26 +146,53 @@
     <form method="dialog" class="flex flex-col max-h-[calc(100vh-2rem)]">
       <header class="flex items-start gap-4 px-6 pt-6 pb-4 border-b border-paper-line">
         <div class="flex-1">
-          <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-amber">Personalizar ejemplos</p>
-          <h2 id="varsTitle" class="font-serif text-3xl mt-1">Tus <em class="text-amber">variables</em></h2>
-          <p class="text-sm text-bone-dim mt-2">Los ejemplos se rellenan con tus datos al verlos y al copiarlos. Se guardan solo en este navegador. Deja un campo vacío para usar el valor de ejemplo.</p>
+          <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-amber" data-i18n="vars.kicker">Personalizar ejemplos</p>
+          <h2 id="varsTitle" class="font-serif text-3xl mt-1" data-i18n-html="vars.title">Tus <em class="text-amber">variables</em></h2>
+          <p class="text-sm text-bone-dim mt-2" data-i18n="vars.intro">Los ejemplos se rellenan con tus datos al verlos, copiarlos e imprimirlos. Se guardan solo en este navegador. Deja un campo vacío para usar el valor de ejemplo.</p>
         </div>
-        <button value="close" class="p-1 text-bone-mute hover:text-bone" aria-label="Cerrar">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+        <button value="close" class="p-1 text-bone-mute hover:text-bone rounded" data-i18n-attr="aria-label:close" aria-label="Cerrar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </header>
       <div id="varsFields" class="px-6 py-5 space-y-4 overflow-y-auto thin-scroll"></div>
       <footer class="flex items-center justify-between gap-3 px-6 py-4 border-t border-paper-line">
-        <button type="button" id="varsReset" class="font-mono text-[11px] uppercase tracking-widest text-bone-mute hover:text-blood">Restablecer</button>
-        <button value="close" class="px-5 py-2 rounded-full bg-bone text-paper font-mono text-xs font-semibold hover:bg-amber transition">Listo</button>
+        <button type="button" id="varsReset" class="font-mono text-[11px] uppercase tracking-widest text-bone-mute hover:text-blood" data-i18n="vars.reset">Restablecer</button>
+        <button value="close" class="px-5 py-2 rounded-full bg-bone text-paper font-mono text-xs font-semibold hover:bg-amber transition" data-i18n="done">Listo</button>
       </footer>
     </form>
   </dialog>
 
-  <div id="toast" role="status" class="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] opacity-0 translate-y-2 transition duration-200
+  <!-- Modo práctica -->
+  <dialog id="quizDialog" aria-labelledby="quizTitle"
+    class="w-[min(680px,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] p-0 rounded-2xl border border-paper-line2 bg-paper-2 text-bone shadow-2xl backdrop:bg-black/70">
+    <form method="dialog" class="flex flex-col max-h-[calc(100vh-2rem)]">
+      <header class="flex items-start gap-4 px-6 pt-6 pb-4 border-b border-paper-line">
+        <div class="flex-1 min-w-0">
+          <p id="quizScope" class="font-mono text-[10px] uppercase tracking-[0.25em] text-amber truncate"></p>
+          <h2 id="quizTitle" class="font-serif text-3xl mt-1" data-i18n-html="quiz.title">Modo <em class="text-amber">práctica</em></h2>
+          <p class="text-sm text-bone-dim mt-2" data-i18n="quiz.intro">¿Qué comando hace esto? Responde con el ratón o con las teclas 1–4. Usa los filtros de sistema y categoría para practicar un tema concreto.</p>
+        </div>
+        <button value="close" class="p-1 text-bone-mute hover:text-bone rounded" data-i18n-attr="aria-label:close" aria-label="Cerrar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div id="quizBody" class="px-6 py-5 overflow-y-auto thin-scroll"></div>
+      <footer class="flex items-center justify-between gap-3 px-6 py-4 border-t border-paper-line">
+        <p id="quizScore" class="font-mono text-[11px] text-bone-mute"></p>
+        <button type="button" id="quizNext" class="px-5 py-2 rounded-full bg-bone text-paper font-mono text-xs font-semibold hover:bg-amber transition">Siguiente</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Contenido para imprimir / exportar a PDF (solo visible al imprimir) -->
+  <div id="printArea" class="print-only"></div>
+
+  <div id="toast" role="status" aria-live="polite" class="screen-only pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] opacity-0 translate-y-2 transition duration-200
        bg-bone text-paper font-mono text-xs px-4 py-2.5 rounded-full shadow-2xl"></div>
 
   <script src="assets/data.js"></script>
+  <script src="assets/data-en.js"></script>
+  <script src="assets/i18n.js"></script>
   <script src="assets/app.js"></script>
 </body>
 </html>

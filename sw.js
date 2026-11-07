@@ -1,6 +1,6 @@
 /* Service worker de Sysadmin: guarda la web para usarla sin conexión.
  * IMPORTANTE: sube VERSION en cada publicación para que los navegadores renueven la caché. */
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const CACHE = `sysadmin-${VERSION}`;
 
 const ASSETS = [
@@ -10,6 +10,8 @@ const ASSETS = [
   "./assets/tailwind.css",
   "./assets/styles.css",
   "./assets/data.js",
+  "./assets/data-en.js",
+  "./assets/i18n.js",
   "./assets/app.js",
   "./assets/icons/favicon.svg",
   "./assets/icons/icon-192.png",

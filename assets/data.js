@@ -13,7 +13,12 @@ window.CHEATSHEET = {
     { id: "automation", label: "Automatización y Tareas",  labelEn: "Automation & Crons",          icon: "clock",   os: ["linux", "windows"] },
     { id: "storage",    label: "Almacenamiento y Discos",  labelEn: "Storage & Disks",             icon: "disk",    os: ["linux", "windows"] },
     { id: "packages",   label: "Paquetes y Actualizaciones", labelEn: "Packages & Updates",       icon: "package", os: ["linux", "windows"] },
-    { id: "ad",        label: "Active Directory / LDAP",  labelEn: "Active Directory / LDAP",     icon: "tree",    os: ["windows"] }
+    { id: "containers",     label: "Contenedores y Kubernetes",  labelEn: "Containers & Kubernetes",          icon: "container", os: ["linux"] },
+    { id: "git",            label: "Git y control de versiones", labelEn: "Git & Version Control",            icon: "git",       os: ["linux"] },
+    { id: "virtualization", label: "Virtualización",             labelEn: "Virtualization",                   icon: "server",    os: ["linux", "windows"] },
+    { id: "m365",           label: "Exchange y Microsoft 365",   labelEn: "Exchange & Microsoft 365",         icon: "cloud",     os: ["windows"] },
+    { id: "netdevices",     label: "Equipos de red",             labelEn: "Network Devices (Cisco / MikroTik)", icon: "router",  os: ["network"] },
+    { id: "ad",       label: "Active Directory / LDAP",  labelEn: "Active Directory / LDAP",     icon: "tree",    os: ["windows"] }
   ],
 
   commands: [
@@ -2493,6 +2498,601 @@ window.CHEATSHEET = {
       ],
       example: { command: "sudo apt update && sudo apt upgrade -y && sudo needrestart -r l", explanation: "Después de parchear OpenSSL o glibc, Apache y MariaDB siguen con la versión vulnerable en memoria hasta reiniciarlos: needrestart te dice cuáles." },
       tags: ["actualizaciones", "reinicio", "servicios", "kernel", "parches"]
+    },
+
+    /* ===================== CONTENEDORES Y KUBERNETES ===================== */
+    {
+      id: "linux-docker-ps", name: "docker ps / logs / exec", os: "linux", shell: "bash", category: "containers", risk: "safe",
+      description: "Lista los contenedores, muestra sus logs y abre una shell dentro de uno en ejecución para diagnosticarlo.",
+      syntax: "docker ps [-a] | docker logs [-f] [--since] contenedor | docker exec -it contenedor sh",
+      requires: "Docker Engine (sudo apt install docker.io o el repositorio oficial de Docker).",
+      flags: [
+        { flag: "ps -a", description: "Incluye los contenedores detenidos." },
+        { flag: "logs -f --since 10m", description: "Sigue los logs de los últimos 10 minutos." },
+        { flag: "exec -it … sh", description: "Shell interactiva dentro del contenedor." },
+        { flag: "--format '{{.Names}}\\t{{.Status}}'", description: "Columnas personalizadas." }
+      ],
+      example: { command: "docker ps -a --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}' && docker logs --since 10m --tail 50 web && docker exec -it web sh", explanation: "Un contenedor se reinicia en bucle: revisa su estado, sus últimos logs y entra a inspeccionarlo por dentro." },
+      tags: ["docker", "contenedores", "logs", "shell", "diagnostico"]
+    },
+    {
+      id: "linux-docker-run", name: "docker run", os: "linux", shell: "bash", category: "containers", risk: "caution",
+      description: "Crea y arranca un contenedor a partir de una imagen, con puertos, volúmenes, variables y política de reinicio.",
+      syntax: "docker run -d --name n [-p host:cont] [-v vol:/ruta] [-e VAR=valor] [--restart unless-stopped] imagen",
+      requires: "Docker Engine.",
+      flags: [
+        { flag: "-d --name", description: "En segundo plano y con nombre fijo." },
+        { flag: "-p 8080:80", description: "Publica el puerto 80 del contenedor en el 8080 del host." },
+        { flag: "-v datos:/var/lib/mysql", description: "Volumen persistente." },
+        { flag: "--restart unless-stopped", description: "Arranca solo tras reiniciar el servidor." }
+      ],
+      example: { command: "docker run -d --name uptime-kuma --restart unless-stopped -p 127.0.0.1:3001:3001 -v kuma-data:/app/data louislam/uptime-kuma:1", explanation: "Despliega un monitor de servicios escuchando solo en localhost (para publicarlo después tras Apache/Nginx con HTTPS)." },
+      tags: ["docker", "contenedor", "desplegar", "puertos", "volumenes"]
+    },
+    {
+      id: "linux-docker-compose", name: "docker compose", os: "linux", shell: "bash", category: "containers", risk: "caution",
+      description: "Gestiona aplicaciones de varios contenedores definidas en compose.yaml: arrancar, actualizar, ver logs y parar.",
+      syntax: "docker compose [-f compose.yaml] up -d | pull | logs -f | ps | down",
+      requires: "Plugin docker compose v2 (incluido en Docker Engine moderno).",
+      flags: [
+        { flag: "up -d", description: "Crea o actualiza los servicios en segundo plano." },
+        { flag: "pull", description: "Descarga las versiones nuevas de las imágenes." },
+        { flag: "logs -f servicio", description: "Logs en directo de un servicio." },
+        { flag: "down -v", description: "Para y BORRA también los volúmenes (¡datos!)." }
+      ],
+      example: { command: "cd /opt/stack && docker compose pull && docker compose up -d && docker compose ps && docker image prune -f", explanation: "Actualiza una pila a las últimas imágenes con un corte mínimo y limpia las imágenes antiguas." },
+      tags: ["docker", "compose", "stack", "actualizar", "servicios"]
+    },
+    {
+      id: "linux-docker-prune", name: "docker system df / prune", os: "linux", shell: "bash", category: "containers", risk: "danger",
+      description: "Muestra cuánto disco ocupan imágenes, contenedores y volúmenes, y libera espacio borrando lo que no se usa.",
+      syntax: "docker system df | docker system prune [-a] [--volumes] [-f]",
+      requires: "Docker Engine.",
+      flags: [
+        { flag: "system df -v", description: "Uso de disco detallado." },
+        { flag: "prune", description: "Borra contenedores parados, redes y capas huérfanas." },
+        { flag: "-a", description: "Borra también imágenes sin contenedor asociado." },
+        { flag: "--volumes", description: "Borra volúmenes sin usar: ¡puede eliminar datos!" }
+      ],
+      example: { command: "docker system df && docker system prune -a -f --filter 'until=168h'", explanation: "/var/lib/docker ha llenado el disco: borra imágenes y restos de más de 7 días sin tocar los volúmenes de datos." },
+      tags: ["docker", "espacio", "limpieza", "disco", "imagenes"]
+    },
+    {
+      id: "linux-docker-stats", name: "docker stats / inspect", os: "linux", shell: "bash", category: "containers", risk: "safe",
+      description: "Consumo de CPU, memoria y red de cada contenedor en tiempo real, y su configuración completa en JSON.",
+      syntax: "docker stats [--no-stream] | docker inspect [-f plantilla] contenedor",
+      requires: "Docker Engine.",
+      flags: [
+        { flag: "--no-stream", description: "Una sola lectura (para scripts)." },
+        { flag: "inspect -f '{{.State.Health.Status}}'", description: "Extrae un campo concreto." },
+        { flag: "inspect … .NetworkSettings", description: "IPs y redes del contenedor." }
+      ],
+      example: { command: "docker stats --no-stream --format 'table {{.Name}}\\t{{.CPUPerc}}\\t{{.MemUsage}}' && docker inspect -f '{{.Name}} {{.State.Status}} reinicios={{.RestartCount}}' $(docker ps -aq)", explanation: "Qué contenedor consume más y cuáles se están reiniciando solos." },
+      tags: ["docker", "rendimiento", "memoria", "cpu", "inspeccionar"]
+    },
+    {
+      id: "linux-podman", name: "podman / podman generate systemd", os: "linux", shell: "bash", category: "containers", risk: "caution",
+      description: "Motor de contenedores sin demonio y compatible con la sintaxis de Docker; puede ejecutarse sin root y crear servicios systemd.",
+      syntax: "podman run|ps|logs ... (igual que docker) | podman generate systemd --new --name contenedor",
+      requires: "sudo apt install podman (incluido por defecto en RHEL/Alma/Rocky).",
+      flags: [
+        { flag: "alias docker=podman", description: "La mayoría de comandos son idénticos." },
+        { flag: "--userns=keep-id", description: "Contenedores sin root con tu UID." },
+        { flag: "generate systemd --new", description: "Genera una unidad systemd para el contenedor." },
+        { flag: "Quadlet (.container)", description: "Alternativa moderna en Podman 4.4+." }
+      ],
+      example: { command: "podman generate systemd --new --name web --files && mv container-web.service ~/.config/systemd/user/ && systemctl --user enable --now container-web.service && loginctl enable-linger $USER", explanation: "Convierte un contenedor sin root en un servicio que arranca solo con el sistema, sin necesidad de un demonio Docker." },
+      tags: ["podman", "contenedores", "rootless", "systemd", "rhel"]
+    },
+    {
+      id: "linux-kubectl-get", name: "kubectl get / describe", os: "linux", shell: "bash", category: "containers", risk: "safe",
+      description: "Lista recursos del clúster (pods, servicios, nodos…) y muestra el detalle y los eventos de uno concreto.",
+      syntax: "kubectl get recurso [-n ns|-A] [-o wide|yaml] | kubectl describe recurso nombre",
+      requires: "kubectl configurado con acceso al clúster (~/.kube/config).",
+      flags: [
+        { flag: "-A", description: "Todos los namespaces." },
+        { flag: "-o wide", description: "Más columnas: nodo, IP." },
+        { flag: "--field-selector status.phase!=Running", description: "Filtra pods que no están en marcha." },
+        { flag: "describe pod", description: "Eventos: ImagePullBackOff, OOMKilled, scheduling…" }
+      ],
+      example: { command: "kubectl get pods -A --field-selector status.phase!=Running && kubectl describe pod -n produccion api-7d9f8c6b5-x2k4p | tail -n 25", explanation: "Localiza los pods con problemas en todo el clúster y lee sus eventos para ver la causa." },
+      tags: ["kubernetes", "k8s", "pods", "cluster", "diagnostico"]
+    },
+    {
+      id: "linux-kubectl-logs", name: "kubectl logs / exec", os: "linux", shell: "bash", category: "containers", risk: "safe",
+      description: "Lee los logs de un pod (incluido el contenedor anterior si se reinició) y ejecuta comandos dentro de él.",
+      syntax: "kubectl logs [-f] [--previous] [-c contenedor] pod | kubectl exec -it pod -- sh",
+      requires: "kubectl configurado.",
+      flags: [
+        { flag: "--previous", description: "Logs del contenedor que murió (CrashLoopBackOff)." },
+        { flag: "-l app=api", description: "Logs de todos los pods con esa etiqueta." },
+        { flag: "--since=15m --tail=100", description: "Limita por tiempo y líneas." },
+        { flag: "exec -it … -- sh", description: "Shell dentro del pod." }
+      ],
+      example: { command: "kubectl logs -n produccion deploy/api --previous --tail=100", explanation: "Un pod está en CrashLoopBackOff: ve por qué falló el arranque anterior." },
+      tags: ["kubernetes", "logs", "crashloop", "pods", "exec"]
+    },
+    {
+      id: "linux-kubectl-rollout", name: "kubectl rollout / scale", os: "linux", shell: "bash", category: "containers", risk: "caution",
+      description: "Reinicia, escala o revierte un Deployment, y sigue el estado del despliegue.",
+      syntax: "kubectl rollout restart|status|undo deploy/nombre | kubectl scale deploy/nombre --replicas=N",
+      requires: "kubectl configurado con permisos sobre el namespace.",
+      flags: [
+        { flag: "rollout restart", description: "Recrea los pods de forma escalonada." },
+        { flag: "rollout status", description: "Espera a que termine el despliegue." },
+        { flag: "rollout undo", description: "Vuelve a la versión anterior." },
+        { flag: "scale --replicas=0", description: "Detiene la aplicación (sin borrarla)." }
+      ],
+      example: { command: "kubectl -n produccion rollout undo deploy/api && kubectl -n produccion rollout status deploy/api --timeout=120s", explanation: "La versión recién desplegada da errores: vuelve a la anterior y confirma que los pods arrancan bien." },
+      tags: ["kubernetes", "despliegue", "rollback", "escalar", "reiniciar"]
+    },
+    {
+      id: "linux-kubectl-top", name: "kubectl top", os: "linux", shell: "bash", category: "containers", risk: "safe",
+      description: "Consumo de CPU y memoria de nodos y pods del clúster.",
+      syntax: "kubectl top nodes | kubectl top pods [-A] [--sort-by=memory|cpu]",
+      requires: "metrics-server instalado en el clúster.",
+      flags: [
+        { flag: "top nodes", description: "Carga de cada nodo." },
+        { flag: "--sort-by=memory", description: "Ordena los pods por memoria." },
+        { flag: "--containers", description: "Desglose por contenedor." }
+      ],
+      example: { command: "kubectl top nodes && kubectl top pods -A --sort-by=memory | head -n 15", explanation: "Un nodo va al límite: identifica qué pods consumen más memoria antes de que el OOM killer actúe." },
+      tags: ["kubernetes", "rendimiento", "memoria", "cpu", "nodos"]
+    },
+    {
+      id: "linux-kubectl-drain", name: "kubectl cordon / drain", os: "linux", shell: "bash", category: "containers", risk: "danger",
+      description: "Saca un nodo del clúster para mantenimiento: impide nuevos pods y desaloja los existentes a otros nodos.",
+      syntax: "kubectl cordon nodo | kubectl drain nodo --ignore-daemonsets --delete-emptydir-data | kubectl uncordon nodo",
+      requires: "kubectl con permisos de administrador del clúster.",
+      flags: [
+        { flag: "cordon", description: "No se programan pods nuevos en el nodo." },
+        { flag: "drain --ignore-daemonsets", description: "Desaloja los pods respetando los PodDisruptionBudgets." },
+        { flag: "--delete-emptydir-data", description: "Acepta perder datos temporales emptyDir." },
+        { flag: "uncordon", description: "Devuelve el nodo al servicio." }
+      ],
+      example: { command: "kubectl drain k8s-worker-02 --ignore-daemonsets --delete-emptydir-data --timeout=10m && echo 'Parchear y reiniciar el nodo' && kubectl uncordon k8s-worker-02", explanation: "Mantenimiento de un nodo sin cortar el servicio: los pods se mueven a otros nodos antes de reiniciarlo." },
+      tags: ["kubernetes", "mantenimiento", "nodo", "drain", "parches"]
+    },
+
+    /* ===================== GIT ===================== */
+    {
+      id: "linux-git-status", name: "git status / log / diff", os: "linux", shell: "bash", category: "git", risk: "safe",
+      description: "Estado del repositorio, historial resumido y diferencias pendientes: lo primero antes de tocar una configuración versionada.",
+      syntax: "git status [-sb] | git log --oneline --graph [-n N] | git diff [--staged] [archivo]",
+      requires: "sudo apt install git (en Windows: Git for Windows; los comandos son iguales en PowerShell).",
+      flags: [
+        { flag: "status -sb", description: "Estado compacto con la rama." },
+        { flag: "log --oneline --graph --all", description: "Historial en árbol." },
+        { flag: "diff --staged", description: "Lo que va a entrar en el próximo commit." },
+        { flag: "log -p -- archivo", description: "Historial de cambios de un archivo." }
+      ],
+      example: { command: "cd /etc/ansible && git status -sb && git log --oneline --graph -n 10 && git diff", explanation: "Antes de desplegar, revisa qué ha cambiado en el repositorio de configuración y quién hizo los últimos cambios." },
+      tags: ["git", "historial", "cambios", "diff", "repositorio"]
+    },
+    {
+      id: "linux-git-commit", name: "git add / commit / push", os: "linux", shell: "bash", category: "git", risk: "caution",
+      description: "Registra cambios en el historial y los sube al repositorio remoto.",
+      syntax: "git add archivo|-p | git commit -m 'mensaje' | git push [origin rama]",
+      requires: "git; credenciales o clave SSH para el remoto.",
+      flags: [
+        { flag: "add -p", description: "Elige por fragmentos qué cambios incluir." },
+        { flag: "commit -m", description: "Mensaje en línea." },
+        { flag: "commit --amend", description: "Corrige el último commit (no si ya está subido)." },
+        { flag: "push -u origin rama", description: "Primera subida de una rama nueva." }
+      ],
+      example: { command: "git switch -c fix/apache-headers && git add -p apache/security.conf && git commit -m 'Apache: añade cabeceras HSTS y X-Content-Type-Options' && git push -u origin fix/apache-headers", explanation: "Trabaja cada cambio de infraestructura en su propia rama para revisarlo en un pull request antes de aplicarlo." },
+      tags: ["git", "commit", "push", "rama", "subir"]
+    },
+    {
+      id: "linux-git-pull", name: "git fetch / pull --rebase", os: "linux", shell: "bash", category: "git", risk: "caution",
+      description: "Trae los cambios del remoto y los integra en tu rama manteniendo un historial lineal.",
+      syntax: "git fetch [--prune] | git pull --rebase [origin rama]",
+      requires: "git.",
+      flags: [
+        { flag: "fetch --prune", description: "Descarga cambios y limpia ramas remotas borradas." },
+        { flag: "pull --rebase", description: "Reaplica tus commits encima de los del remoto." },
+        { flag: "--autostash", description: "Guarda y restaura cambios sin confirmar." },
+        { flag: "status tras fetch", description: "Indica si vas por delante o por detrás." }
+      ],
+      example: { command: "git fetch --prune && git status -sb && git pull --rebase --autostash", explanation: "Actualiza tu copia del repositorio de scripts sin crear commits de merge innecesarios." },
+      tags: ["git", "actualizar", "pull", "rebase", "sincronizar"]
+    },
+    {
+      id: "linux-git-stash", name: "git stash / restore", os: "linux", shell: "bash", category: "git", risk: "caution",
+      description: "Aparta cambios a medias para cambiar de tarea, o descarta cambios locales de un archivo.",
+      syntax: "git stash [push -m msg] | git stash list|pop | git restore [--staged] archivo",
+      requires: "git.",
+      flags: [
+        { flag: "stash push -m", description: "Guarda los cambios con descripción." },
+        { flag: "stash pop", description: "Recupera el último stash." },
+        { flag: "restore archivo", description: "Descarta cambios locales (irreversible)." },
+        { flag: "restore --staged", description: "Saca un archivo del área de preparación." }
+      ],
+      example: { command: "git stash push -m 'pruebas vhost' && git switch main && git pull --rebase && git switch - && git stash pop", explanation: "Una urgencia en main mientras estabas a medias: apartas tu trabajo, actualizas y vuelves a recuperarlo." },
+      tags: ["git", "stash", "descartar", "cambios", "deshacer"]
+    },
+    {
+      id: "linux-git-revert", name: "git revert / reset", os: "linux", shell: "bash", category: "git", risk: "danger",
+      description: "Deshace commits: revert crea un commit inverso (seguro); reset --hard reescribe la rama y borra cambios locales.",
+      syntax: "git revert commit | git reset [--soft|--hard] commit",
+      requires: "git.",
+      flags: [
+        { flag: "revert", description: "Deshace un commit ya publicado de forma segura." },
+        { flag: "reset --soft HEAD~1", description: "Deshace el último commit conservando los cambios." },
+        { flag: "reset --hard", description: "Descarta commits y cambios locales. Irreversible." },
+        { flag: "reflog", description: "Recupera commits «perdidos» tras un reset." }
+      ],
+      example: { command: "git log --oneline -n 5 && git revert --no-edit a1b2c3d && git push", explanation: "Un cambio de firewall publicado ha roto el acceso: lo deshaces con un commit nuevo sin reescribir el historial compartido." },
+      tags: ["git", "deshacer", "revert", "reset", "rollback"]
+    },
+    {
+      id: "linux-git-blame", name: "git blame / log -S", os: "linux", shell: "bash", category: "git", risk: "safe",
+      description: "Averigua quién y en qué commit cambió cada línea de un archivo, o cuándo apareció un texto concreto.",
+      syntax: "git blame [-L inicio,fin] archivo | git log -S 'texto' [--oneline]",
+      requires: "git.",
+      flags: [
+        { flag: "blame -L 10,30", description: "Solo un rango de líneas." },
+        { flag: "log -S 'cadena'", description: "Commits que añadieron o quitaron ese texto." },
+        { flag: "show commit", description: "Detalle completo de un commit." }
+      ],
+      example: { command: "git log -S 'PermitRootLogin yes' --oneline -- ssh/sshd_config && git blame -L '/PermitRootLogin/,+1' ssh/sshd_config", explanation: "Auditoría: descubre cuándo y quién habilitó el login de root por SSH en la configuración versionada." },
+      tags: ["git", "auditoria", "blame", "historial", "quien"]
+    },
+
+    // ---- Bash scripting (automatización)
+    {
+      id: "linux-bash-strict", name: "set -euo pipefail", os: "linux", shell: "bash", category: "automation", risk: "safe",
+      description: "Modo estricto para scripts Bash: aborta ante errores, variables sin definir y fallos dentro de tuberías.",
+      syntax: "#!/usr/bin/env bash\nset -euo pipefail",
+      requires: "Nativo (Bash).",
+      flags: [
+        { flag: "-e", description: "Sale si un comando falla." },
+        { flag: "-u", description: "Error si se usa una variable sin definir." },
+        { flag: "-o pipefail", description: "Una tubería falla si falla cualquiera de sus comandos." },
+        { flag: "trap '…' ERR", description: "Ejecuta algo al producirse un error." }
+      ],
+      example: { command: "#!/usr/bin/env bash\nset -euo pipefail\ntrap 'echo \"Error en la línea $LINENO\" >&2' ERR\nBACKUP_DIR=\"${1:?Uso: $0 <directorio_destino>}\"\nmariadb-dump --single-transaction --all-databases | gzip > \"$BACKUP_DIR/db-$(date +%F).sql.gz\"", explanation: "Plantilla de script de backup que nunca sigue adelante tras un fallo silencioso y avisa de la línea exacta del error." },
+      tags: ["bash", "scripting", "errores", "plantilla", "robusto"]
+    },
+    {
+      id: "linux-bash-loop", name: "bucles while read / for", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Recorre listas de servidores, usuarios o archivos línea a línea de forma segura (con espacios y caracteres raros).",
+      syntax: "while IFS= read -r linea; do …; done < archivo | for x in lista; do …; done",
+      requires: "Nativo (Bash).",
+      flags: [
+        { flag: "IFS= read -r", description: "Lee la línea completa, sin interpretar barras invertidas." },
+        { flag: "< archivo", description: "Entrada del bucle." },
+        { flag: "ssh -n", description: "Evita que ssh se coma la entrada del bucle." },
+        { flag: "[[ -z $l || $l == \\#* ]] && continue", description: "Salta líneas vacías y comentarios." }
+      ],
+      example: { command: "while IFS= read -r host; do [[ -z $host || $host == \\#* ]] && continue; printf '%-20s %s\\n' \"$host\" \"$(ssh -n -o ConnectTimeout=5 \"$host\" 'uptime -p' 2>&1)\"; done < servidores.txt", explanation: "Recorre un inventario de servidores (ignorando comentarios) y muestra cuánto tiempo lleva encendido cada uno." },
+      tags: ["bash", "bucle", "scripting", "inventario", "masivo"]
+    },
+    {
+      id: "linux-bash-functions", name: "funciones, getopts y códigos de salida", os: "linux", shell: "bash", category: "automation", risk: "safe",
+      description: "Estructura scripts reutilizables con funciones, parámetros con opciones (-h, -v…) y códigos de salida para la monitorización.",
+      syntax: "funcion() { …; return N; } | while getopts 'hv:' opt; do case $opt in …; esac; done",
+      requires: "Nativo (Bash).",
+      flags: [
+        { flag: "local var", description: "Variables locales a la función." },
+        { flag: "getopts 'hu:'", description: "Opciones -h y -u con argumento." },
+        { flag: "exit 0/1/2", description: "OK / aviso / crítico (convención Nagios/Zabbix)." },
+        { flag: "$?", description: "Código de salida del último comando." }
+      ],
+      example: { command: "check_disk() { local uso; uso=$(df --output=pcent \"$1\" | tail -1 | tr -dc '0-9'); if (( uso >= 90 )); then echo \"CRÍTICO $1 ${uso}%\"; return 2; elif (( uso >= 80 )); then echo \"AVISO $1 ${uso}%\"; return 1; fi; echo \"OK $1 ${uso}%\"; }; check_disk /; echo \"código: $?\"", explanation: "Comprobación de disco con la convención de códigos de salida de Nagios/Zabbix, lista para usarla como check personalizado." },
+      tags: ["bash", "funciones", "getopts", "monitorizacion", "nagios"]
+    },
+    {
+      id: "linux-bash-parallel", name: "xargs -P / wait (paralelismo)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Ejecuta tareas en paralelo desde Bash: trabajos en segundo plano con wait, o un número limitado de procesos con xargs -P.",
+      syntax: "comando & … wait | printf '%s\\n' lista | xargs -P N -I{} comando {}",
+      requires: "Nativo (Bash, xargs).",
+      flags: [
+        { flag: "&", description: "Lanza en segundo plano." },
+        { flag: "wait", description: "Espera a que terminen todos." },
+        { flag: "xargs -P 10", description: "Como máximo 10 a la vez." },
+        { flag: "parallel", description: "GNU parallel: más opciones (sudo apt install parallel)." }
+      ],
+      example: { command: "xargs -a servidores.txt -P 10 -I{} sh -c 'rsync -az /opt/scripts/ {}:/opt/scripts/ && echo \"OK {}\" || echo \"FALLO {}\"'", explanation: "Distribuye los scripts de administración a todos los servidores, 10 a la vez, indicando cuáles fallan." },
+      tags: ["bash", "paralelo", "xargs", "rapido", "masivo"]
+    },
+
+    /* ===================== VIRTUALIZACIÓN ===================== */
+    {
+      id: "win-hyperv-vm", name: "Get-VM / Start-VM / Stop-VM", os: "windows", shell: "powershell", category: "virtualization", risk: "caution",
+      description: "Gestiona máquinas virtuales de Hyper-V: estado, encendido, apagado ordenado y recursos asignados.",
+      syntax: "Get-VM [-ComputerName host] | Start-VM -Name vm | Stop-VM -Name vm [-Force|-TurnOff]",
+      requires: "Rol Hyper-V con el módulo de PowerShell (Install-WindowsFeature Hyper-V-PowerShell).",
+      flags: [
+        { flag: "-ComputerName", description: "Gestiona un host Hyper-V remoto." },
+        { flag: "Stop-VM", description: "Apagado ordenado desde el sistema invitado." },
+        { flag: "-TurnOff", description: "Equivale a desenchufar (posible pérdida de datos)." },
+        { flag: "Set-VM -MemoryStartupBytes", description: "Cambia la memoria asignada." }
+      ],
+      example: { command: "Get-VM -ComputerName hv01 | Select-Object Name, State, CPUUsage, @{n='RAM GB';e={[math]::Round($_.MemoryAssigned/1GB,1)}}, Uptime | Sort-Object State", explanation: "Inventario rápido de las VMs de un host: cuáles están encendidas y cuánta memoria consume cada una." },
+      tags: ["hyper-v", "vm", "maquinas virtuales", "virtualizacion"]
+    },
+    {
+      id: "win-hyperv-checkpoint", name: "Checkpoint-VM", os: "windows", shell: "powershell", category: "virtualization", risk: "caution",
+      description: "Crea, lista, restaura y elimina puntos de control (snapshots) de VMs de Hyper-V.",
+      syntax: "Checkpoint-VM -Name vm -SnapshotName nombre | Get-VMSnapshot | Restore-VMSnapshot | Remove-VMSnapshot",
+      requires: "Módulo Hyper-V.",
+      flags: [
+        { flag: "-SnapshotName", description: "Nombre descriptivo del punto de control." },
+        { flag: "Restore-VMSnapshot", description: "Vuelve al estado guardado (se pierde lo posterior)." },
+        { flag: "Remove-VMSnapshot", description: "Fusiona y elimina el punto de control." },
+        { flag: "Set-VM -CheckpointType Production", description: "Puntos de control coherentes con VSS." }
+      ],
+      example: { command: "Checkpoint-VM -Name srv01 -SnapshotName \"Antes de parches $(Get-Date -Format yyyy-MM-dd)\"; Get-VMSnapshot -VMName srv01 | Select-Object Name, CreationTime", explanation: "Punto de control antes de parchear. Elimínalo al terminar: los checkpoints antiguos degradan el rendimiento y llenan el disco." },
+      tags: ["hyper-v", "snapshot", "checkpoint", "parches", "rollback"]
+    },
+    {
+      id: "win-hyperv-replication", name: "Get-VMReplication / Measure-VM", os: "windows", shell: "powershell", category: "virtualization", risk: "safe",
+      description: "Estado de la réplica de Hyper-V y consumo de recursos de las VMs para la planificación de capacidad.",
+      syntax: "Get-VMReplication [-VMName] | Measure-VMReplication | Enable-VMResourceMetering; Measure-VM",
+      requires: "Módulo Hyper-V; réplica configurada para Get-VMReplication.",
+      flags: [
+        { flag: "Health", description: "Normal / Warning / Critical." },
+        { flag: "Measure-VMReplication", description: "Último ciclo de réplica y tamaño." },
+        { flag: "Enable-VMResourceMetering", description: "Activa la medición de CPU, RAM, disco y red." }
+      ],
+      example: { command: "Get-VMReplication | Where-Object Health -ne 'Normal' | Select-Object VMName, State, Health, PrimaryServer, ReplicaServer", explanation: "Revisión diaria del plan de recuperación ante desastres: VMs cuya réplica tiene avisos o errores." },
+      tags: ["hyper-v", "replica", "dr", "capacidad", "salud"]
+    },
+    {
+      id: "win-powercli-connect", name: "Connect-VIServer / Get-VM (PowerCLI)", os: "windows", shell: "powershell", category: "virtualization", risk: "safe",
+      description: "Conecta con vCenter o ESXi mediante VMware PowerCLI y consulta las VMs y su estado.",
+      syntax: "Connect-VIServer -Server vcenter | Get-VM [nombre] | Get-VMHost",
+      requires: "Install-Module VMware.PowerCLI -Scope CurrentUser (PowerShell 7 recomendado).",
+      flags: [
+        { flag: "-Server vcenter.corp.local", description: "vCenter o host ESXi." },
+        { flag: "Get-VMHost", description: "Hosts ESXi, estado y versión." },
+        { flag: "Get-Datastore", description: "Espacio en los almacenes de datos." },
+        { flag: "Disconnect-VIServer -Confirm:$false", description: "Cierra la sesión." }
+      ],
+      example: { command: "Connect-VIServer -Server vcenter.corp.local; Get-VM | Where-Object PowerState -eq 'PoweredOn' | Select-Object Name, NumCpu, MemoryGB, @{n='SO';e={$_.Guest.OSFullName}} | Sort-Object MemoryGB -Descending | Select-Object -First 15", explanation: "Las 15 VMs encendidas que más memoria tienen asignada: punto de partida para recuperar recursos." },
+      tags: ["vmware", "powercli", "vcenter", "esxi", "vm"]
+    },
+    {
+      id: "win-powercli-snapshots", name: "Get-Snapshot (PowerCLI)", os: "windows", shell: "powershell", category: "virtualization", risk: "caution",
+      description: "Localiza y elimina snapshots antiguos de VMware, causa habitual de lentitud y de datastores llenos.",
+      syntax: "Get-VM | Get-Snapshot | Where-Object Created -lt fecha | Remove-Snapshot",
+      requires: "VMware.PowerCLI y sesión con Connect-VIServer.",
+      flags: [
+        { flag: "SizeGB", description: "Espacio que ocupa el snapshot." },
+        { flag: "Created", description: "Fecha de creación." },
+        { flag: "Remove-Snapshot -RunAsync", description: "Consolida en segundo plano." },
+        { flag: "-WhatIf", description: "Simula el borrado." }
+      ],
+      example: { command: "Get-VM | Get-Snapshot | Where-Object Created -lt (Get-Date).AddDays(-7) | Select-Object VM, Name, Created, @{n='GB';e={[math]::Round($_.SizeGB,1)}} | Sort-Object GB -Descending", explanation: "Informe de snapshots de más de una semana: candidatos a eliminar (añade | Remove-Snapshot -WhatIf para simularlo)." },
+      tags: ["vmware", "snapshot", "datastore", "espacio", "powercli"]
+    },
+    {
+      id: "linux-virsh", name: "virsh (KVM / libvirt)", os: "linux", shell: "bash", category: "virtualization", risk: "caution",
+      description: "Gestiona máquinas virtuales KVM desde la terminal: listar, arrancar, apagar, consola y snapshots.",
+      syntax: "virsh list [--all] | start|shutdown|destroy vm | console vm | snapshot-create-as vm nombre",
+      requires: "sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients",
+      flags: [
+        { flag: "list --all", description: "Todas las VMs, también apagadas." },
+        { flag: "shutdown / destroy", description: "Apagado ordenado / forzado." },
+        { flag: "autostart vm", description: "Arranca la VM con el host." },
+        { flag: "dominfo / domblklist", description: "Recursos y discos de la VM." }
+      ],
+      example: { command: "virsh list --all && virsh snapshot-create-as srv01 antes-actualizacion --disk-only --atomic && virsh shutdown srv01", explanation: "Snapshot de disco consistente de una VM KVM antes de una intervención y apagado ordenado." },
+      tags: ["kvm", "libvirt", "virsh", "vm", "virtualizacion"]
+    },
+
+    /* ===================== EXCHANGE Y MICROSOFT 365 ===================== */
+    {
+      id: "win-connect-exo", name: "Connect-ExchangeOnline", os: "windows", shell: "powershell", category: "m365", risk: "safe",
+      description: "Conecta con Exchange Online para administrar buzones, permisos y reglas de correo desde PowerShell.",
+      syntax: "Connect-ExchangeOnline -UserPrincipalName admin@dominio | Disconnect-ExchangeOnline",
+      requires: "Install-Module ExchangeOnlineManagement -Scope CurrentUser",
+      flags: [
+        { flag: "-UserPrincipalName", description: "Cuenta de administración (con MFA)." },
+        { flag: "-ShowBanner:$false", description: "Oculta el mensaje de bienvenida." },
+        { flag: "Get-EXOMailbox", description: "Versión rápida de Get-Mailbox (REST)." },
+        { flag: "Disconnect-ExchangeOnline -Confirm:$false", description: "Cierra la sesión." }
+      ],
+      example: { command: "Connect-ExchangeOnline -UserPrincipalName admin@empresa.com -ShowBanner:$false; Get-EXOMailbox -ResultSize Unlimited | Group-Object RecipientTypeDetails | Select-Object Name, Count", explanation: "Inventario de buzones por tipo (usuario, compartido, sala…) al hacerte cargo de un tenant." },
+      tags: ["exchange", "office 365", "m365", "correo", "conectar"]
+    },
+    {
+      id: "win-mailboxpermission", name: "Add-MailboxPermission", os: "windows", shell: "powershell", category: "m365", risk: "caution",
+      description: "Da acceso completo o permiso «enviar como» sobre un buzón (por ejemplo, un buzón compartido).",
+      syntax: "Add-MailboxPermission -Identity buzón -User usuario -AccessRights FullAccess [-AutoMapping $false]",
+      requires: "ExchangeOnlineManagement conectado (o Exchange Management Shell en local).",
+      flags: [
+        { flag: "-AccessRights FullAccess", description: "Abrir y gestionar el buzón." },
+        { flag: "-AutoMapping $false", description: "No lo añade automáticamente a Outlook." },
+        { flag: "Add-RecipientPermission -AccessRights SendAs", description: "Enviar como el buzón." },
+        { flag: "Get-MailboxPermission", description: "Revisa quién tiene acceso." }
+      ],
+      example: { command: "Add-MailboxPermission -Identity soporte@empresa.com -User jlopez@empresa.com -AccessRights FullAccess -AutoMapping $true; Add-RecipientPermission -Identity soporte@empresa.com -Trustee jlopez@empresa.com -AccessRights SendAs -Confirm:$false", explanation: "Alta de un técnico en el buzón compartido de soporte con permiso para leer y responder como soporte@." },
+      tags: ["exchange", "buzon compartido", "permisos", "sendas", "m365"]
+    },
+    {
+      id: "win-message-trace", name: "Get-MessageTraceV2", os: "windows", shell: "powershell", category: "m365", risk: "safe",
+      description: "Rastrea un correo en Exchange Online: si llegó, si se entregó, si fue a cuarentena o se rechazó.",
+      syntax: "Get-MessageTraceV2 [-SenderAddress] [-RecipientAddress] [-StartDate] [-EndDate]",
+      requires: "ExchangeOnlineManagement 3.7+ conectado (en versiones anteriores: Get-MessageTrace).",
+      flags: [
+        { flag: "-SenderAddress / -RecipientAddress", description: "Filtra por remitente o destinatario." },
+        { flag: "-StartDate (Get-Date).AddDays(-2)", description: "Ventana de búsqueda (máx. 10 días)." },
+        { flag: "Status", description: "Delivered, FilteredAsSpam, Quarantined, Failed…" },
+        { flag: "Get-MessageTraceDetailV2", description: "Pasos detallados de un mensaje." }
+      ],
+      example: { command: "Get-MessageTraceV2 -RecipientAddress jlopez@empresa.com -SenderAddress facturas@proveedor.com -StartDate (Get-Date).AddDays(-3) -EndDate (Get-Date) | Select-Object Received, Subject, Status", explanation: "«No me ha llegado la factura»: comprueba si el correo entró, se entregó o acabó en cuarentena." },
+      tags: ["exchange", "rastreo", "correo", "cuarentena", "spam"]
+    },
+    {
+      id: "win-mailbox-forwarding", name: "Set-Mailbox (reenvío / respuesta automática)", os: "windows", shell: "powershell", category: "m365", risk: "caution",
+      description: "Configura reenvíos y respuestas automáticas de un buzón; útil en bajas y vacaciones, y para auditar reenvíos sospechosos.",
+      syntax: "Set-Mailbox -Identity u -ForwardingSmtpAddress dir -DeliverToMailboxAndForward $true | Set-MailboxAutoReplyConfiguration",
+      requires: "ExchangeOnlineManagement conectado.",
+      flags: [
+        { flag: "-ForwardingSmtpAddress", description: "Dirección a la que reenviar." },
+        { flag: "-DeliverToMailboxAndForward $true", description: "Conserva también una copia en el buzón." },
+        { flag: "Set-MailboxAutoReplyConfiguration -AutoReplyState Enabled", description: "Respuesta automática." },
+        { flag: "Get-Mailbox | Where ForwardingSmtpAddress", description: "Audita reenvíos externos." }
+      ],
+      example: { command: "Get-EXOMailbox -ResultSize Unlimited -Properties ForwardingSmtpAddress, ForwardingAddress | Where-Object { $_.ForwardingSmtpAddress -or $_.ForwardingAddress } | Select-Object UserPrincipalName, ForwardingSmtpAddress, ForwardingAddress", explanation: "Auditoría de seguridad: los reenvíos ocultos a direcciones externas son un indicio clásico de cuenta comprometida." },
+      tags: ["exchange", "reenvio", "vacaciones", "seguridad", "auditoria"]
+    },
+    {
+      id: "win-mggraph-users", name: "Connect-MgGraph / Get-MgUser", os: "windows", shell: "powershell", category: "m365", risk: "safe",
+      description: "Microsoft Graph PowerShell: consulta usuarios, licencias y actividad de inicio de sesión en Entra ID (Azure AD).",
+      syntax: "Connect-MgGraph -Scopes 'User.Read.All' | Get-MgUser [-All] [-Property ...] [-Filter ...]",
+      requires: "Install-Module Microsoft.Graph -Scope CurrentUser (sustituye a los módulos MSOnline y AzureAD, retirados).",
+      flags: [
+        { flag: "-Scopes", description: "Permisos que solicita la sesión." },
+        { flag: "-All -Property", description: "Todos los usuarios con las propiedades indicadas." },
+        { flag: "signInActivity", description: "Último inicio de sesión (requiere AuditLog.Read.All)." },
+        { flag: "Get-MgSubscribedSku", description: "Licencias contratadas y usadas." }
+      ],
+      example: { command: "Connect-MgGraph -Scopes 'User.Read.All','AuditLog.Read.All' -NoWelcome; Get-MgUser -All -Property DisplayName,UserPrincipalName,AccountEnabled,SignInActivity | Where-Object { $_.AccountEnabled -and $_.SignInActivity.LastSignInDateTime -lt (Get-Date).AddDays(-90) } | Select-Object DisplayName, UserPrincipalName, @{n='Último acceso';e={$_.SignInActivity.LastSignInDateTime}}", explanation: "Cuentas activas sin iniciar sesión en 90 días: licencias que se pueden recuperar y riesgo de seguridad." },
+      tags: ["graph", "entra id", "azure ad", "usuarios", "licencias"]
+    },
+    {
+      id: "win-mg-license", name: "Set-MgUserLicense", os: "windows", shell: "powershell", category: "m365", risk: "caution",
+      description: "Asigna o retira licencias de Microsoft 365 a usuarios mediante Microsoft Graph.",
+      syntax: "Set-MgUserLicense -UserId upn -AddLicenses @(@{SkuId=id}) -RemoveLicenses @()",
+      requires: "Microsoft.Graph conectado con el ámbito User.ReadWrite.All; el usuario debe tener UsageLocation.",
+      flags: [
+        { flag: "Get-MgSubscribedSku", description: "SkuId y licencias disponibles." },
+        { flag: "-AddLicenses", description: "Licencias que se añaden." },
+        { flag: "-RemoveLicenses", description: "SkuId de las licencias que se quitan." },
+        { flag: "Update-MgUser -UsageLocation ES", description: "País obligatorio antes de licenciar." }
+      ],
+      example: { command: "$sku = Get-MgSubscribedSku | Where-Object SkuPartNumber -eq 'O365_BUSINESS_PREMIUM'; Update-MgUser -UserId jlopez@empresa.com -UsageLocation ES; Set-MgUserLicense -UserId jlopez@empresa.com -AddLicenses @(@{SkuId = $sku.SkuId}) -RemoveLicenses @()", explanation: "Alta de licencia Microsoft 365 Business Standard a un usuario nuevo (con el país configurado, que es obligatorio)." },
+      tags: ["licencias", "m365", "graph", "alta", "office"]
+    },
+
+    /* ===================== EQUIPOS DE RED (CISCO / MIKROTIK) ===================== */
+    {
+      id: "net-cisco-show-int", name: "show ip interface brief / show interfaces", os: "network", shell: "ios", category: "netdevices", risk: "safe",
+      description: "Cisco IOS: estado de todas las interfaces (IP, up/down) y contadores de errores de un puerto.",
+      syntax: "show ip interface brief | show interfaces Gi1/0/1 | show interfaces status",
+      requires: "Acceso por SSH/consola a un equipo Cisco IOS/IOS-XE (modo privilegiado para algunos comandos).",
+      flags: [
+        { flag: "show ip interface brief", description: "Resumen de IPs y estado." },
+        { flag: "show interfaces status", description: "Puertos de switch: VLAN, dúplex, velocidad." },
+        { flag: "| include errors|CRC", description: "Filtra la salida (como grep)." },
+        { flag: "show interfaces counters errors", description: "Errores por puerto." }
+      ],
+      example: { command: "show interfaces GigabitEthernet1/0/24 | include line protocol|errors|CRC|duplex", explanation: "Un usuario se queja de lentitud: comprueba si su puerto tiene errores CRC o negociación de dúplex incorrecta (cable o tarjeta defectuosos)." },
+      tags: ["cisco", "ios", "interfaces", "switch", "errores"]
+    },
+    {
+      id: "net-cisco-show-run", name: "show running-config / copy run start", os: "network", shell: "ios", category: "netdevices", risk: "caution",
+      description: "Cisco IOS: muestra la configuración activa y la guarda en la memoria de arranque para que sobreviva a un reinicio.",
+      syntax: "show running-config [| section texto] | copy running-config startup-config | write memory",
+      requires: "Modo privilegiado (enable).",
+      flags: [
+        { flag: "| section interface", description: "Solo un bloque de la configuración." },
+        { flag: "show startup-config", description: "Configuración guardada." },
+        { flag: "copy run start", description: "Guarda los cambios (si no, se pierden al reiniciar)." },
+        { flag: "copy run tftp:", description: "Copia de seguridad a un servidor TFTP." }
+      ],
+      example: { command: "show running-config | section interface GigabitEthernet1/0/24\ncopy running-config startup-config", explanation: "Revisa la configuración de un puerto tras modificarlo y guárdala. Olvidar el copy run start es el error más típico en Cisco." },
+      tags: ["cisco", "configuracion", "guardar", "backup", "ios"]
+    },
+    {
+      id: "net-cisco-vlan", name: "switchport access vlan", os: "network", shell: "ios", category: "netdevices", risk: "caution",
+      description: "Cisco IOS: asigna un puerto de switch a una VLAN de acceso y lo describe.",
+      syntax: "configure terminal → interface Gi1/0/N → switchport mode access → switchport access vlan N",
+      requires: "Modo de configuración (configure terminal) en un switch Cisco.",
+      flags: [
+        { flag: "show vlan brief", description: "VLANs y puertos asignados." },
+        { flag: "switchport mode access", description: "Puerto de acceso (no troncal)." },
+        { flag: "spanning-tree portfast", description: "Arranque rápido para equipos finales." },
+        { flag: "description", description: "Documenta el puerto." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet1/0/24\n description PC-Contabilidad-03\n switchport mode access\n switchport access vlan 30\n spanning-tree portfast\nend\nshow vlan brief | include 30", explanation: "Mueve un puesto a la VLAN de contabilidad y comprueba la asignación." },
+      tags: ["cisco", "vlan", "switch", "puerto", "acceso"]
+    },
+    {
+      id: "net-cisco-mac", name: "show mac address-table / show cdp neighbors", os: "network", shell: "ios", category: "netdevices", risk: "safe",
+      description: "Cisco IOS: localiza en qué puerto está conectado un equipo por su MAC y qué dispositivos Cisco hay al lado.",
+      syntax: "show mac address-table address xxxx.xxxx.xxxx | show cdp neighbors [detail]",
+      requires: "Acceso a un switch Cisco.",
+      flags: [
+        { flag: "address 0011.2233.4455", description: "Busca una MAC concreta (formato Cisco)." },
+        { flag: "interface Gi1/0/24", description: "MACs aprendidas en un puerto." },
+        { flag: "show cdp neighbors detail", description: "Vecinos: modelo, IP y puerto remoto." },
+        { flag: "show lldp neighbors", description: "Equivalente estándar multimarca." }
+      ],
+      example: { command: "show mac address-table address 3c52.82a1.9f07\nshow cdp neighbors GigabitEthernet1/0/48 detail", explanation: "Encuentra la boca exacta de una impresora por su MAC; si sale por un enlace troncal, CDP te dice a qué switch saltar." },
+      tags: ["cisco", "mac", "localizar", "cdp", "lldp"]
+    },
+    {
+      id: "net-cisco-logging", name: "show logging / show version", os: "network", shell: "ios", category: "netdevices", risk: "safe",
+      description: "Cisco IOS: registro de eventos del equipo (caídas de enlaces, errores) y versión de firmware, tiempo encendido y motivo del último reinicio.",
+      syntax: "show logging [| include texto] | show version",
+      requires: "Acceso a un equipo Cisco IOS.",
+      flags: [
+        { flag: "| include LINK|UPDOWN", description: "Caídas de enlaces." },
+        { flag: "show version | include uptime|reason", description: "Tiempo encendido y causa del último reinicio." },
+        { flag: "show environment", description: "Temperatura, ventiladores y fuentes." }
+      ],
+      example: { command: "show version | include uptime|System returned|reason\nshow logging | include UPDOWN", explanation: "Tras un corte de red, averigua si el switch se reinició (y por qué) o si un enlace estuvo cayendo." },
+      tags: ["cisco", "logs", "version", "reinicio", "eventos"]
+    },
+    {
+      id: "net-mikrotik-print", name: "/interface print / /ip address print", os: "network", shell: "routeros", category: "netdevices", risk: "safe",
+      description: "MikroTik RouterOS: estado de interfaces, direcciones IP y tráfico en tiempo real.",
+      syntax: "/interface print [stats] | /ip address print | /interface monitor-traffic ether1",
+      requires: "Acceso por SSH, Winbox o terminal a un router MikroTik (RouterOS 7).",
+      flags: [
+        { flag: "print stats", description: "Contadores de tráfico y errores." },
+        { flag: "where running=no", description: "Filtra interfaces caídas." },
+        { flag: "monitor-traffic ether1", description: "Tráfico en tiempo real." },
+        { flag: "/ip route print", description: "Tabla de rutas." }
+      ],
+      example: { command: "/interface print where running=no\n/ip address print\n/interface monitor-traffic ether1 once", explanation: "Comprobación rápida de un router de sede: enlaces caídos, IPs configuradas y tráfico actual de la WAN." },
+      tags: ["mikrotik", "routeros", "interfaces", "router", "ip"]
+    },
+    {
+      id: "net-mikrotik-firewall", name: "/ip firewall filter", os: "network", shell: "routeros", category: "netdevices", risk: "danger",
+      description: "MikroTik RouterOS: consulta y añade reglas de firewall. Una regla mal colocada puede dejarte sin acceso al router.",
+      syntax: "/ip firewall filter print | add chain=input ... action=accept|drop place-before=N",
+      requires: "Acceso de administrador a RouterOS. Usa el modo seguro (Ctrl+X) antes de tocar el firewall.",
+      flags: [
+        { flag: "chain=input", description: "Tráfico dirigido al propio router." },
+        { flag: "src-address-list=", description: "Usa una lista de direcciones." },
+        { flag: "place-before=0", description: "Coloca la regla la primera." },
+        { flag: "Ctrl+X (safe mode)", description: "Revierte los cambios si pierdes la conexión." }
+      ],
+      example: { command: "/ip firewall address-list add list=admin address=192.168.10.0/24\n/ip firewall filter add chain=input src-address-list=admin protocol=tcp dst-port=22,8291 action=accept place-before=0 comment=\"Gestion solo desde red admin\"", explanation: "Limita SSH y Winbox a la red de administración. Activa el modo seguro antes por si te bloqueas." },
+      tags: ["mikrotik", "firewall", "seguridad", "winbox", "reglas"]
+    },
+    {
+      id: "net-mikrotik-backup", name: "/export / /system backup", os: "network", shell: "routeros", category: "netdevices", risk: "safe",
+      description: "MikroTik RouterOS: exporta la configuración en texto legible y crea una copia de seguridad binaria completa.",
+      syntax: "/export [show-sensitive] file=nombre | /system backup save name=nombre",
+      requires: "Acceso de administrador a RouterOS.",
+      flags: [
+        { flag: "/export file=", description: "Configuración en texto (.rsc), comparable con diff." },
+        { flag: "show-sensitive", description: "Incluye contraseñas y claves (RouterOS 7)." },
+        { flag: "/system backup save", description: "Backup binario completo (mismo modelo)." },
+        { flag: "/file print", description: "Lista los archivos generados." }
+      ],
+      example: { command: "/export file=cfg-sede-madrid\n/system backup save name=backup-sede-madrid\n/file print where name~\"sede-madrid\"", explanation: "Copia de seguridad antes de un cambio: el .rsc sirve para revisar y versionar; el .backup para restaurar en el mismo equipo." },
+      tags: ["mikrotik", "backup", "exportar", "configuracion", "routeros"]
+    },
+    {
+      id: "net-mikrotik-tools", name: "/ping / /tool torch", os: "network", shell: "routeros", category: "netdevices", risk: "safe",
+      description: "MikroTik RouterOS: ping desde el router y «torch», que muestra en tiempo real qué IPs y puertos consumen el ancho de banda.",
+      syntax: "/ping dirección [count=N] [src-address=IP] | /tool torch interface=ether1 [src-address=0.0.0.0/0]",
+      requires: "Acceso a RouterOS.",
+      flags: [
+        { flag: "/ping count=5", description: "Ping con número de paquetes." },
+        { flag: "src-address=", description: "Prueba desde una IP concreta (VPN, VLAN)." },
+        { flag: "/tool torch interface=", description: "Tráfico por IP y protocolo." },
+        { flag: "/tool traceroute", description: "Traceroute desde el router." }
+      ],
+      example: { command: "/tool torch interface=ether1 src-address=0.0.0.0/0 port=any", explanation: "«Internet va lento en la oficina»: descubre en directo qué equipo está saturando la conexión." },
+      tags: ["mikrotik", "torch", "ancho de banda", "ping", "diagnostico"]
     }
   ]
 };

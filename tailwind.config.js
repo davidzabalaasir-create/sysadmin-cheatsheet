@@ -11,7 +11,7 @@ module.exports = {
       },
       colors: {
         paper: { DEFAULT: "#141310", 2: "#1b1a16", 3: "#23211c", line: "#2f2c25", line2: "#3d3930" },
-        bone:  { DEFAULT: "#ece6d9", dim: "#a39d90", mute: "#6f6a5f" },
+        bone:  { DEFAULT: "#ece6d9", dim: "#a39d90", mute: "#8f897c" },
         amber: { DEFAULT: "#ffb454", soft: "#ffb45422" },
         sky:   { DEFAULT: "#8cc4ff", soft: "#8cc4ff22" },
         sage:  { DEFAULT: "#9fd8a6" },
