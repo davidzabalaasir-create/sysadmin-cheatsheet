@@ -71,14 +71,14 @@ test("los favoritos se guardan y tienen su propia pestaña", async ({ page }) =>
   await expect(page.locator("#emptyTitle")).toContainText("favoritos");
 });
 
-test("las variables sustituyen los valores de ejemplo", async ({ page, isMobile }) => {
+test("las variables sustituyen los valores de ejemplo", async ({ page }) => {
   await page.locator("#btnVars").click();
   await page.locator('[data-var="dominio"]').fill("miempresa.lan");
   await page.locator('[data-var="usuario"]').fill("dzabala");
   await page.locator("#varsDialog button[value=close]").last().click();
   await expect(page.locator("#varsBadge")).toHaveText("2");
-  await page.goto("/#win-runas");
-  if (isMobile) await row(page, "win-runas").locator(".row-main").click();
+  await page.goto("/#win-runas"); // en móvil, el enlace directo abre la ficha como hoja
+  await expect(page.locator("#detailTitle")).toHaveText("runas");
   const ex = page.locator("#detail pre").last();
   await expect(ex).toContainText("MIEMPRESA\\adm.dzabala");
   await expect(page.locator("#detail .tk-user").first()).toBeVisible();

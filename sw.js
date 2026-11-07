@@ -1,6 +1,8 @@
 /* Service worker de Sysadmin: guarda la web para usarla sin conexión.
- * IMPORTANTE: sube VERSION en cada publicación para que los navegadores renueven la caché. */
-const VERSION = "1.2.0";
+ * IMPORTANTE: sube VERSION en cada publicación para que los navegadores renueven la caché.
+ * Estrategia: con conexión, HTML/JS/CSS/datos siempre de la red (versiones coherentes);
+ * sin conexión, la copia guardada. Fuentes e imágenes, desde la caché. */
+const VERSION = "1.2.0-r2";
 const CACHE = `sysadmin-${VERSION}`;
 
 const ASSETS = [
@@ -39,28 +41,34 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/** Guarda una copia de la respuesta (la copia se hace antes de que el navegador consuma el cuerpo). */
+function remember(key, res) {
+  if (res && res.ok) {
+    const copy = res.clone();
+    caches.open(CACHE).then((c) => c.put(key, copy));
+  }
+  return res;
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // Páginas: primero la red (para ver siempre la última versión) y, sin conexión, la copia guardada.
+  // Páginas: primero la red y, sin conexión, la copia guardada.
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request)
-        .then((res) => { caches.open(CACHE).then((c) => c.put("./index.html", res.clone())); return res; })
-        .catch(() => caches.match("./index.html"))
-    );
+    event.respondWith(fetch(request).then((res) => remember("./index.html", res)).catch(() => caches.match("./index.html")));
     return;
   }
 
-  // Recursos: responde al instante desde la caché y la actualiza en segundo plano.
+  // JS, CSS y datos: primero la red (versiones siempre coherentes) y, sin conexión, la caché.
+  if (/\.(js|css|json|webmanifest)$/.test(url.pathname)) {
+    event.respondWith(fetch(request).then((res) => remember(request, res)).catch(() => caches.match(request, { ignoreSearch: true })));
+    return;
+  }
+
+  // Fuentes e imágenes (no cambian entre versiones): desde la caché y, si no están, de la red.
   event.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(request, { ignoreSearch: true });
-      const network = fetch(request)
-        .then((res) => { if (res.ok) cache.put(request, res.clone()); return res; })
-        .catch(() => cached);
-      return cached || network;
-    })
+    caches.match(request, { ignoreSearch: true }).then((cached) => cached || fetch(request).then((res) => remember(request, res)))
   );
 });

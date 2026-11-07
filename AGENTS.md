@@ -41,7 +41,8 @@ npm run build:css              # obligatorio tras añadir o cambiar clases en in
 node scripts/make-icons.js     # iconos y assets/og-image.png (scripts/icon.html, scripts/og.html)
 ```
 
-- **Sin conexión (PWA):** `sw.js` guarda en caché los archivos de `ASSETS`. Si añades un archivo que la web necesita, añádelo a esa lista. **Sube `VERSION` en `sw.js` en cada publicación.**
+- **Sin conexión (PWA):** `sw.js` guarda en caché los archivos de `ASSETS` (con conexión siempre pide JS/CSS/datos a la red). Si añades un archivo que la web necesita, añádelo a esa lista.
+- **Al publicar una versión:** sube a la vez `VERSION` en `sw.js`, `version` en `assets/data.js` y `APP_VERSION` en `index.html` (estas dos últimas deben coincidir; la validación lo comprueba). Si no coinciden en el navegador, la página limpia la caché antigua y recarga una vez.
 - **Idioma:** todo texto de interfaz nuevo va en `assets/i18n.js` (en `es` y `en`) y se usa con `t("clave")`; en HTML con `data-i18n`, `data-i18n-html` o `data-i18n-attr="atributo:clave"`. Todo comando nuevo necesita su traducción en `data-en.js` o la validación falla.
 - **Favoritos y recientes:** se guardan en localStorage (`mc.favs`, `mc.recent`) y son pseudo-categorías `fav` y `recent`.
 - **Variables de usuario:** `VARS` en `assets/app.js` sustituye valores de ejemplo (jlopez/aruiz, corp.local, empresa.com/tu-dominio.com, srv01, srv02, 192.168.10.0/24). Usa esos mismos valores en los ejemplos nuevos para que sean personalizables.

@@ -56,6 +56,12 @@ const es = Object.keys(window.I18N.es), en = Object.keys(window.I18N.en);
 es.filter((k) => !en.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en inglés`));
 en.filter((k) => !es.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en español`));
 
+// ---- Versión: data.js e index.html deben coincidir (evita mezclar versiones con cachés antiguas)
+const html = require("fs").readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const appVersion = (html.match(/APP_VERSION = "([^"]+)"/) || [])[1];
+if (!window.CHEATSHEET.version) errors.push("data.js: falta 'version' en window.CHEATSHEET");
+else if (appVersion !== window.CHEATSHEET.version) errors.push(`versión: data.js tiene ${window.CHEATSHEET.version} e index.html (APP_VERSION) tiene ${appVersion}`);
+
 const count = (f) => commands.filter(f).length;
 console.log(`Comandos: ${commands.length} (linux ${count((c) => c.os === "linux")}, windows ${count((c) => c.os === "windows")}, red ${count((c) => c.os === "network")})`);
 for (const cat of categories) console.log(`  ${cat.id.padEnd(11)} ${count((c) => c.category === cat.id)}`);
