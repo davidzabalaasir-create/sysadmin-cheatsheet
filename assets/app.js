@@ -1,5 +1,5 @@
 /* =========================================================================
- * Manual de campo del SysAdmin — lógica (JavaScript vanilla)
+ * Sysadmin — lógica (JavaScript vanilla)
  * Diseño maestro-detalle: índice de comandos a la izquierda y ficha completa
  * a la derecha (en móvil, la ficha se abre como hoja a pantalla completa).
  * ========================================================================= */
@@ -20,6 +20,24 @@
     linux:   { letter: "L", ring: "border-amber/60 text-amber", name: "Linux" },
     windows: { letter: "W", ring: "border-sky/60 text-sky",     name: "Windows" }
   };
+  /* Logos del selector de sistema (SVG en línea, usan currentColor). */
+  const OS_LOGO = {
+    // Terminal genérico para «Todo»
+    all: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 9.5l3 2.5-3 2.5M12.5 15H17"/></svg>`,
+    // Tux simplificado: barriga, ojos y pico recortados en hueco
+    linux: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path fill-rule="evenodd" d="M12 2.5c-2.6 0-4.3 2.1-4.3 5 0 1.2.2 2.1-.4 3.3C6 13 4.8 15 4.8 17.3c0 2.6 3.2 4.2 7.2 4.2s7.2-1.6 7.2-4.2c0-2.3-1.2-4.3-2.5-6.5-.6-1.2-.4-2.1-.4-3.3 0-2.9-1.7-5-4.3-5z
+        M8.3 15.8a3.7 4.4 0 1 0 7.4 0a3.7 4.4 0 1 0-7.4 0z
+        M9.5 7.2a1 1 0 1 0 2 0a1 1 0 1 0-2 0z M12.5 7.2a1 1 0 1 0 2 0a1 1 0 1 0-2 0z
+        M10.6 9.6a1.4 .75 0 1 0 2.8 0a1.4 .75 0 1 0-2.8 0z"/>
+      <ellipse cx="7.9" cy="21" rx="2.7" ry="1.25"/><ellipse cx="16.1" cy="21" rx="2.7" ry="1.25"/></svg>`,
+    // Ventana de cuatro paneles
+    windows: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3 5.6l7.4-1v6.9H3zM11.4 4.4L21 3v8.5h-9.6zM3 12.5h7.4v6.9L3 18.4zM11.4 12.5H21V21l-9.6-1.4z"/></svg>`
+  };
+  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-amber", windows: "text-sky" };
+
   const SHELL = { bash: "bash", powershell: "PowerShell", cmd: "CMD" };
   const RISK = {
     safe:    { label: "Seguro",     text: "text-sage",  dot: "bg-sage",  border: "border-sage/40" },
@@ -134,7 +152,8 @@
       const on = state.os === o.id;
       const n = o.id === "all" ? commands.length : commands.filter((c) => c.os === o.id).length;
       return `<button role="tab" aria-selected="${on}" data-os="${o.id}"
-        class="px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
+        class="flex items-center gap-2 px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
+        <span class="${on ? "" : OS_LOGO_COLOR[o.id]}">${OS_LOGO[o.id]}</span>
         ${o.label} <span class="${on ? "text-paper/60" : "text-bone-mute"}">${n}</span></button>`;
     }).join("");
 

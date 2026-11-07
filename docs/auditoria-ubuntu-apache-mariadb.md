@@ -1,6 +1,6 @@
 # Auditoría SysAdmin · Ubuntu + Apache + MariaDB
 
-**Alcance:** revisión de la documentación de comandos del *Manual de campo* (153 comandos) frente a un servidor **Ubuntu LTS + Apache 2.4 + MariaDB**, y ampliación con comandos específicos para ese stack.
+**Alcance:** revisión de la documentación de comandos de la web *Sysadmin* (153 comandos en el momento de la auditoría) frente a un servidor **Ubuntu LTS + Apache 2.4 + MariaDB**, y ampliación con comandos específicos para ese stack.
 
 > **Limitación importante:** no se han aportado logs, salidas de terminal ni configuración real del servidor. Este análisis no diagnostica *tu* servidor: identifica riesgos habituales en este stack y lagunas en la documentación, y para cada uno indica el comando que lo verifica. Pega la salida de esos comandos para un diagnóstico concreto.
 

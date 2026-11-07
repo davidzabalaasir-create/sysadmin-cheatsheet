@@ -1,4 +1,4 @@
-# AGENTS.md — Manual de campo del SysAdmin
+# AGENTS.md — Sysadmin
 
 Instrucciones para agentes de código (Codex, Claude Code…) que continúen este proyecto.
 
@@ -70,7 +70,8 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
 
 ## Convenciones de interfaz
 
-- Diseño «manual de campo»: negro cálido (`paper`), texto hueso (`bone`), acento ámbar, Instrument Serif para títulos e IBM Plex Sans/Mono para el resto. **No vuelvas al estilo terminal neón**: el usuario lo descartó porque ya lo usa en otros proyectos.
+- Nombre de la web: **Sysadmin** (título «Sys» en hueso + «admin» en ámbar cursiva).
+- Diseño editorial de manual impreso: negro cálido (`paper`), texto hueso (`bone`), acento ámbar, Instrument Serif para títulos e IBM Plex Sans/Mono para el resto. **No vuelvas al estilo terminal neón**: el usuario lo descartó porque ya lo usa en otros proyectos.
 - Distribución en dos columnas: índice a la izquierda y ficha a la derecha. En móvil (<1024 px) la ficha se abre como hoja a pantalla completa.
 - Cada fila del índice tiene un botón «Copiar» que copia el ejemplo. En la ficha se puede copiar el comando, la sintaxis y el ejemplo.
 - Enlaces directos `#id-del-comando`, navegación con ↑ ↓, `Ctrl+K` o `/` para buscar y `Alt+1/2/3` para elegir sistema.
@@ -85,7 +86,7 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
 ## Ideas pendientes (backlog)
 
 - Favoritos guardados en localStorage y un filtro «Mis favoritos».
-- Tema claro opcional, manteniendo la identidad «manual de campo».
+- Tema claro opcional, manteniendo la identidad editorial.
 - Exportar la ficha o la categoría a PDF/Markdown para imprimir.
 - Añadir variables editables en los ejemplos (host, usuario, ruta) antes de copiar.
 - Sacar el dataset a JSON y cargarlo con `fetch`, conservando un respaldo que funcione abriendo el archivo directamente (`file://`).

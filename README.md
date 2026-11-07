@@ -1,4 +1,4 @@
-# Manual de campo del SysAdmin
+# Sysadmin
 
 🌐 **Web:** https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/
 
