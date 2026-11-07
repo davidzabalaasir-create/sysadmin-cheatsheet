@@ -1,0 +1,153 @@
+{
+  "$schema": "https://example.local/sysadmin-cheatsheet.schema.json",
+  "version": "1.0.0",
+  "categories": [
+    { "id": "users",      "label": "Usuarios y Permisos",         "labelEn": "User & Privilege Management",       "icon": "users",   "os": ["linux", "windows"] },
+    { "id": "filesystem", "label": "Archivos y Directorios",      "labelEn": "File System",                       "icon": "folder",  "os": ["linux", "windows"] },
+    { "id": "network",    "label": "Redes y Diagnóstico",         "labelEn": "Networking & Troubleshooting",      "icon": "network", "os": ["linux", "windows"] },
+    { "id": "processes",  "label": "Procesos y Rendimiento",      "labelEn": "Process & System Monitoring",       "icon": "cpu",     "os": ["linux", "windows"] },
+    { "id": "security",   "label": "Seguridad, Auditoría y Firewall", "labelEn": "Security & Logs",               "icon": "shield",  "os": ["linux", "windows"] },
+    { "id": "automation", "label": "Automatización y Tareas",     "labelEn": "Automation & Crons",                "icon": "clock",   "os": ["linux", "windows"] },
+    { "id": "storage",    "label": "Almacenamiento y Discos",     "labelEn": "Storage & Disks",                   "icon": "disk",    "os": ["linux", "windows"] },
+    { "id": "ad",         "label": "Active Directory / LDAP",     "labelEn": "Active Directory / LDAP",           "icon": "tree",    "os": ["windows"] }
+  ],
+  "riskLevels": {
+    "safe":    { "label": "Seguro",     "description": "Solo lectura o sin efectos destructivos." },
+    "caution": { "label": "Precaución", "description": "Modifica configuración o estado; revisar antes de ejecutar." },
+    "danger":  { "label": "Peligroso",  "description": "Puede destruir datos o cortar el acceso. Irreversible." }
+  },
+  "commands": [
+    {
+      "id": "linux-find",
+      "name": "find",
+      "os": "linux",
+      "shell": "bash",
+      "category": "filesystem",
+      "risk": "caution",
+      "description": "Busca archivos y directorios recursivamente por nombre, tipo, tamaño, fecha o permisos, y puede ejecutar acciones sobre los resultados.",
+      "syntax": "find [ruta] [expresión] [acción]",
+      "flags": [
+        { "flag": "-name / -iname", "description": "Coincidencia por nombre (iname ignora mayúsculas). Admite comodines." },
+        { "flag": "-type f|d|l",    "description": "Filtra por archivo, directorio o enlace simbólico." },
+        { "flag": "-mtime -N|+N",   "description": "Modificados hace menos/más de N días." },
+        { "flag": "-size +100M",    "description": "Filtra por tamaño (k, M, G)." },
+        { "flag": "-exec cmd {} +", "description": "Ejecuta un comando sobre los resultados en lote." },
+        { "flag": "-delete",        "description": "Borra los resultados. ¡Prueba antes sin -delete!" }
+      ],
+      "example": {
+        "command": "find /var/log -type f -name \"*.log\" -mtime +30 -size +50M -exec gzip {} +",
+        "explanation": "Comprime los logs de más de 30 días y más de 50 MB en /var/log para liberar espacio sin borrarlos."
+      },
+      "tags": ["buscar", "archivos", "limpieza", "logs", "espacio", "search"]
+    },
+    {
+      "id": "linux-iptables",
+      "name": "iptables",
+      "os": "linux",
+      "shell": "bash",
+      "category": "security",
+      "risk": "danger",
+      "description": "Administra las reglas del firewall de netfilter del kernel (tablas filter, nat, mangle). Una regla mal puesta puede dejarte sin acceso SSH.",
+      "syntax": "iptables [-t tabla] -A|-I|-D|-L CADENA [match] -j OBJETIVO",
+      "flags": [
+        { "flag": "-L -n -v --line-numbers", "description": "Lista reglas en formato numérico con contadores y número de línea." },
+        { "flag": "-A / -I CADENA",          "description": "Añade al final / inserta al principio de la cadena (INPUT, OUTPUT, FORWARD)." },
+        { "flag": "-p tcp --dport 22",       "description": "Coincidencia por protocolo y puerto destino." },
+        { "flag": "-s 10.0.0.0/8",           "description": "Coincidencia por IP o red de origen." },
+        { "flag": "-j ACCEPT|DROP|REJECT",   "description": "Acción a aplicar al paquete." },
+        { "flag": "-P CADENA DROP",          "description": "Cambia la política por defecto de una cadena." }
+      ],
+      "example": {
+        "command": "iptables -I INPUT -p tcp -s 192.168.10.0/24 --dport 22 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT",
+        "explanation": "Permite SSH solo desde la red de administración 192.168.10.0/24. Añádela ANTES de cambiar la política INPUT a DROP."
+      },
+      "tags": ["firewall", "netfilter", "puertos", "nat", "bloquear", "ssh"]
+    },
+    {
+      "id": "linux-ss",
+      "name": "ss",
+      "os": "linux",
+      "shell": "bash",
+      "category": "network",
+      "risk": "safe",
+      "description": "Muestra estadísticas de sockets: puertos en escucha, conexiones establecidas y el proceso propietario. Sustituto moderno de netstat.",
+      "syntax": "ss [opciones] [filtro]",
+      "flags": [
+        { "flag": "-t / -u",  "description": "Solo sockets TCP / UDP." },
+        { "flag": "-l",       "description": "Solo sockets en escucha (LISTEN)." },
+        { "flag": "-n",       "description": "No resuelve nombres de host ni servicios." },
+        { "flag": "-p",       "description": "Muestra el proceso (PID/nombre) que usa el socket. Requiere root." },
+        { "flag": "state X",  "description": "Filtra por estado: established, time-wait, syn-sent..." }
+      ],
+      "example": {
+        "command": "ss -tunlp | grep -E ':(80|443|3306)\\b'",
+        "explanation": "Comprueba qué procesos escuchan en los puertos web y MySQL, útil cuando un servicio no arranca por 'address already in use'."
+      },
+      "tags": ["puertos", "sockets", "netstat", "conexiones", "listen"]
+    },
+    {
+      "id": "win-get-service",
+      "name": "Get-Service",
+      "os": "windows",
+      "shell": "powershell",
+      "category": "processes",
+      "risk": "safe",
+      "description": "Obtiene los servicios de Windows (local o remoto) con su estado y tipo de inicio. Se combina con Start/Stop/Restart-Service.",
+      "syntax": "Get-Service [-Name <string[]>] [-ComputerName <string[]>] [-DependentServices]",
+      "flags": [
+        { "flag": "-Name",              "description": "Nombre del servicio; admite comodines (*sql*)." },
+        { "flag": "-DisplayName",       "description": "Busca por nombre visible." },
+        { "flag": "-DependentServices", "description": "Muestra los servicios que dependen del indicado." },
+        { "flag": "| Where-Object",     "description": "Filtra por Status o StartType." }
+      ],
+      "example": {
+        "command": "Get-Service | Where-Object { $_.StartType -eq 'Automatic' -and $_.Status -ne 'Running' } | Select-Object Name, DisplayName, Status",
+        "explanation": "Lista los servicios configurados como automáticos que están detenidos: primer paso tras un reinicio problemático."
+      },
+      "tags": ["servicios", "services", "estado", "arranque", "powershell"]
+    },
+    {
+      "id": "win-netsh",
+      "name": "netsh",
+      "os": "windows",
+      "shell": "cmd",
+      "category": "network",
+      "risk": "caution",
+      "description": "Utilidad de configuración de red de Windows: interfaces, IP, Wi-Fi, proxy WinHTTP y firewall (advfirewall).",
+      "syntax": "netsh <contexto> [subcontexto] <comando> [parámetros]",
+      "flags": [
+        { "flag": "interface ip show config",  "description": "Muestra la configuración IP de todas las interfaces." },
+        { "flag": "interface ip set address",  "description": "Asigna IP estática o DHCP a una interfaz." },
+        { "flag": "advfirewall firewall add rule", "description": "Crea reglas en el Firewall de Windows." },
+        { "flag": "winhttp show proxy",        "description": "Muestra el proxy a nivel de sistema." },
+        { "flag": "int ip reset",              "description": "Restablece la pila TCP/IP (requiere reinicio)." }
+      ],
+      "example": {
+        "command": "netsh interface ip set address name=\"Ethernet\" static 192.168.1.50 255.255.255.0 192.168.1.1",
+        "explanation": "Asigna una IP estática al adaptador 'Ethernet'. Si lo haces por RDP en ese mismo adaptador, perderás la sesión."
+      },
+      "tags": ["red", "ip", "estatica", "firewall", "proxy", "interfaz"]
+    },
+    {
+      "id": "win-test-netconnection",
+      "name": "Test-NetConnection",
+      "os": "windows",
+      "shell": "powershell",
+      "category": "network",
+      "risk": "safe",
+      "description": "Diagnóstico de conectividad todo-en-uno: ping ICMP, prueba de puerto TCP, traceroute y detalles de la ruta usada.",
+      "syntax": "Test-NetConnection [-ComputerName] <string> [-Port <int> | -CommonTCPPort <HTTP|RDP|SMB|WINRM>] [-TraceRoute] [-InformationLevel Detailed]",
+      "flags": [
+        { "flag": "-Port",              "description": "Comprueba si un puerto TCP está abierto." },
+        { "flag": "-CommonTCPPort",     "description": "Atajo para HTTP, RDP, SMB o WINRM." },
+        { "flag": "-TraceRoute",        "description": "Ejecuta un traceroute hacia el destino." },
+        { "flag": "-InformationLevel",  "description": "Quiet devuelve solo True/False; Detailed muestra todo." }
+      ],
+      "example": {
+        "command": "Test-NetConnection sql01.corp.local -Port 1433 -InformationLevel Detailed",
+        "explanation": "Verifica si el servidor SQL acepta conexiones en 1433, y desde qué interfaz/IP de origen sale el tráfico. Ideal para descartar firewall."
+      },
+      "tags": ["tnc", "ping", "puerto", "telnet", "conectividad", "traceroute"]
+    }
+  ]
+}
