@@ -1,14 +1,18 @@
-# sysadmin.cheat — Biblioteca de comandos para SysAdmins
+# Manual de campo del SysAdmin
+
+🌐 **Web:** https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/
 
 Cheat sheet web de comandos para administradores de sistemas y redes: **Linux (Bash)** y **Windows (CMD / PowerShell)**, incluido **Active Directory / LDAP**.
 
 ## Características
 
-- Pestañas **Todos / Linux / Windows** y menú lateral con 8 categorías y contadores.
+- Diseño **maestro-detalle** estilo manual impreso: índice de comandos a la izquierda y ficha completa a la derecha (en móvil, hoja a pantalla completa).
+- Selector **Todo / Linux / Windows** e índice de 8 categorías numeradas con contadores.
+- Navegación con teclado (↑ ↓) y enlaces directos a cada comando (`#linux-find`).
 - **Búsqueda en tiempo real** (`Ctrl+K` o `/`) por comando, descripción, flags o etiqueta, sin importar los acentos.
-- Tarjetas con sintaxis resaltada, parámetros comunes, ejemplo real y botón de **copiar al portapapeles**.
+- Fichas con sintaxis resaltada, parámetros habituales, ejemplo real, comandos relacionados y botón de **copiar al portapapeles**.
 - Niveles de riesgo: **Seguro**, **Precaución** y **Peligroso** (los destructivos van resaltados en rojo).
-- Modo oscuro estilo terminal, 100 % responsivo.
+- Tema oscuro cálido con acento ámbar y tipografía editorial (Instrument Serif + IBM Plex), 100 % responsivo.
 
 ## Uso
 
@@ -23,7 +27,8 @@ python -m http.server 5500
 ```
 index.html                  UI (Tailwind CDN)
 assets/data.js              Dataset de comandos (71)
-assets/app.js               Lógica: filtros, búsqueda, copiar
+assets/app.js               Lógica: filtros, búsqueda, ficha, copiar
+assets/styles.css           Estilos complementarios
 data/commands.example.json  Ejemplo del modelo de datos JSON
 ```
 

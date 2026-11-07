@@ -1,155 +1,114 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SysAdmin Cheat Sheet · Biblioteca de Comandos Linux & Windows</title>
-  <meta name="description" content="Biblioteca y cheat sheet de comandos para administradores de sistemas y redes: Linux (Bash) y Windows (CMD/PowerShell)." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230a0f0d'/><text x='5' y='22' font-family='monospace' font-size='16' fill='%2339ff88'>&gt;_</text></svg>" />
+  <title>Manual de Campo · Comandos para SysAdmins (Linux & Windows)</title>
+  <meta name="description" content="Manual de campo de comandos para administradores de sistemas y redes: Linux (Bash) y Windows (CMD/PowerShell/Active Directory)." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23141310'/><text x='16' y='23' text-anchor='middle' font-family='Georgia,serif' font-size='20' fill='%23ffb454'>§</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: "class",
       theme: {
         extend: {
           fontFamily: {
-            sans: ["Inter", "system-ui", "sans-serif"],
-            mono: ["JetBrains Mono", "ui-monospace", "Consolas", "monospace"]
+            serif: ['"Instrument Serif"', "Georgia", "serif"],
+            sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
+            mono: ['"IBM Plex Mono"', "ui-monospace", "Consolas", "monospace"]
           },
           colors: {
-            ink: { 950: "#07090c", 900: "#0b0f14", 850: "#10151c", 800: "#151b24", 700: "#1e2632", 600: "#2a3442" },
-            neon: { green: "#39ff88", cyan: "#22d3ee", violet: "#a78bfa" }
-          },
-          boxShadow: {
-            glow: "0 0 0 1px rgba(57,255,136,.25), 0 0 24px -4px rgba(57,255,136,.25)"
+            paper: { DEFAULT: "#141310", 2: "#1b1a16", 3: "#23211c", line: "#2f2c25", line2: "#3d3930" },
+            bone:  { DEFAULT: "#ece6d9", dim: "#a39d90", mute: "#6f6a5f" },
+            amber: { DEFAULT: "#ffb454", soft: "#ffb45422" },
+            sky:   { DEFAULT: "#8cc4ff", soft: "#8cc4ff22" },
+            sage:  { DEFAULT: "#9fd8a6" },
+            blood: { DEFAULT: "#ff6b5e", soft: "#ff6b5e1f" }
           }
         }
       }
     };
   </script>
-  <style>
-    body { background-image: radial-gradient(circle at 20% -10%, rgba(34,211,238,.08), transparent 40%), radial-gradient(circle at 110% 10%, rgba(167,139,250,.08), transparent 40%); }
-    .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
-    .scroll-thin::-webkit-scrollbar-thumb { background: #2a3442; border-radius: 8px; }
-    .scroll-thin::-webkit-scrollbar-track { background: transparent; }
-    /* Resaltado de sintaxis */
-    .tk-cmd  { color: #39ff88; font-weight: 600; }
-    .tk-flag { color: #a78bfa; }
-    .tk-str  { color: #fbbf24; }
-    .tk-var  { color: #22d3ee; }
-    .tk-op   { color: #f472b6; }
-    .tk-com  { color: #64748b; font-style: italic; }
-    mark { background: rgba(57,255,136,.18); color: inherit; border-radius: 3px; padding: 0 1px; }
-    .card-enter { animation: cardIn .25s ease both; }
-    @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-    .caret::after { content: "▌"; color: #39ff88; animation: blink 1s steps(1) infinite; margin-left: 2px; }
-    @keyframes blink { 50% { opacity: 0; } }
-  </style>
+  <link rel="stylesheet" href="assets/styles.css" />
 </head>
-<body class="bg-ink-950 text-slate-300 font-sans antialiased min-h-screen">
+<body class="bg-paper text-bone font-sans antialiased">
 
-  <!-- ============================== HEADER ============================== -->
-  <header class="sticky top-0 z-40 border-b border-ink-700/70 bg-ink-950/85 backdrop-blur">
-    <div class="flex items-center gap-3 px-4 lg:px-6 h-16">
-      <button id="btnMenu" class="lg:hidden p-2 -ml-2 rounded-md text-slate-400 hover:text-white hover:bg-ink-800" aria-label="Abrir menú">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-
-      <a href="#" class="flex items-center gap-2 shrink-0" id="logo">
-        <span class="grid place-items-center w-9 h-9 rounded-lg bg-ink-850 border border-neon-green/30 font-mono text-neon-green text-sm shadow-glow">&gt;_</span>
-        <span class="hidden sm:block leading-tight">
-          <span class="block font-mono font-bold text-white tracking-tight caret">sysadmin.cheat</span>
-          <span class="block text-[11px] text-slate-500">Linux · Windows · AD</span>
-        </span>
-      </a>
-
-      <!-- Buscador -->
-      <div class="flex-1 max-w-2xl mx-auto">
-        <label class="relative block group">
-          <span class="sr-only">Buscar comandos</span>
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-neon-green" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
-          <input id="search" type="search" autocomplete="off" spellcheck="false"
-            placeholder="Buscar comando, descripción o etiqueta…  (ej. puerto, firewall, robocopy)"
-            class="w-full h-10 pl-9 pr-20 rounded-lg bg-ink-850 border border-ink-700 text-sm text-slate-100 placeholder:text-slate-500 font-mono
-                   focus:outline-none focus:border-neon-green/60 focus:ring-2 focus:ring-neon-green/20 transition" />
-          <kbd class="absolute right-2 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded border border-ink-600 bg-ink-800 text-[11px] font-mono text-slate-400">Ctrl K</kbd>
-        </label>
+  <!-- ===================== MASTHEAD ===================== -->
+  <header class="border-b border-paper-line">
+    <div class="max-w-[1500px] mx-auto px-5 lg:px-10 pt-6 lg:pt-10 pb-5">
+      <div class="flex items-start justify-between gap-6">
+        <div class="min-w-0">
+          <p class="font-mono text-[11px] tracking-[0.25em] uppercase text-bone-mute">Vol. 1 — Linux · Windows · Active Directory</p>
+          <h1 class="font-serif text-[2.6rem] leading-[0.95] sm:text-6xl lg:text-7xl text-bone mt-2">
+            Manual de campo <em class="text-amber">del SysAdmin</em>
+          </h1>
+        </div>
+        <div id="counter" class="hidden md:block text-right shrink-0 pt-2"></div>
       </div>
 
-      <!-- Tabs OS (escritorio) -->
-      <nav id="osTabsDesktop" class="hidden md:flex items-center p-1 rounded-lg bg-ink-850 border border-ink-700 font-mono text-xs" role="tablist" aria-label="Sistema operativo"></nav>
+      <!-- Barra de control -->
+      <div class="mt-7 flex flex-col lg:flex-row lg:items-center gap-4">
+        <!-- Buscador -->
+        <label class="relative flex-1 block">
+          <span class="sr-only">Buscar comandos</span>
+          <span class="absolute left-0 top-1/2 -translate-y-1/2 font-mono text-amber text-lg select-none">?</span>
+          <input id="search" type="search" autocomplete="off" spellcheck="false"
+            placeholder="Busca por comando, tarea o palabra clave — p. ej. «puerto abierto», «bloquear cuenta»"
+            class="w-full bg-transparent border-0 border-b-2 border-paper-line2 focus:border-amber pl-7 pr-24 py-3 text-lg sm:text-xl font-serif italic placeholder:text-bone-mute placeholder:not-italic placeholder:font-sans placeholder:text-base focus:outline-none transition-colors" />
+          <span class="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:flex gap-1">
+            <kbd class="key">Ctrl</kbd><kbd class="key">K</kbd>
+          </span>
+        </label>
+
+        <!-- Selector SO -->
+        <div id="osSwitch" class="flex shrink-0 border border-paper-line2 rounded-full p-1 font-mono text-xs" role="tablist" aria-label="Sistema operativo"></div>
+      </div>
     </div>
 
-    <!-- Tabs OS (móvil) -->
-    <nav id="osTabsMobile" class="md:hidden flex items-center gap-1 px-4 pb-3 font-mono text-xs" role="tablist" aria-label="Sistema operativo"></nav>
+    <!-- Índice de categorías -->
+    <nav class="border-t border-paper-line">
+      <div id="catRail" class="max-w-[1500px] mx-auto px-5 lg:px-10 flex gap-1 overflow-x-auto no-scrollbar" aria-label="Categorías"></div>
+    </nav>
   </header>
 
-  <div class="flex">
-    <!-- ============================== SIDEBAR ============================== -->
-    <div id="overlay" class="fixed inset-0 z-40 bg-black/60 hidden lg:hidden"></div>
-    <aside id="sidebar"
-      class="fixed lg:sticky top-0 lg:top-16 z-50 lg:z-0 h-screen lg:h-[calc(100vh-4rem)] w-72 shrink-0 -translate-x-full lg:translate-x-0
-             transition-transform duration-200 bg-ink-900 lg:bg-transparent border-r border-ink-700/70 overflow-y-auto scroll-thin">
-      <div class="flex items-center justify-between px-4 h-16 lg:hidden border-b border-ink-700">
-        <span class="font-mono text-neon-green">~/categorias</span>
-        <button id="btnClose" class="p-2 rounded-md hover:bg-ink-800" aria-label="Cerrar menú">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
+  <!-- ===================== CUERPO ===================== -->
+  <div class="max-w-[1500px] mx-auto lg:px-10 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-10">
+
+    <!-- Índice / lista -->
+    <section class="min-w-0 px-5 lg:px-0 py-6" aria-label="Lista de comandos">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <p id="listMeta" class="font-mono text-xs text-bone-mute"></p>
+        <div id="riskToggles" class="flex gap-1.5"></div>
       </div>
+      <div id="list"></div>
+      <div id="empty" class="hidden py-20 text-center">
+        <p class="font-serif text-4xl italic text-bone-dim">Nada por aquí.</p>
+        <p class="text-sm text-bone-mute mt-2">Prueba otra palabra, cambia de sistema o restablece los filtros.</p>
+        <button id="btnReset" class="mt-5 font-mono text-xs uppercase tracking-widest text-amber border-b border-amber/40 hover:border-amber pb-0.5">Restablecer filtros</button>
+      </div>
+    </section>
 
-      <div class="p-4 space-y-6">
-        <div>
-          <p class="px-2 mb-2 text-[11px] uppercase tracking-widest text-slate-500 font-semibold">Categorías</p>
-          <ul id="categoryList" class="space-y-0.5"></ul>
-        </div>
-
-        <div>
-          <p class="px-2 mb-2 text-[11px] uppercase tracking-widest text-slate-500 font-semibold">Nivel de riesgo</p>
-          <div id="riskFilters" class="flex flex-wrap gap-2 px-2"></div>
-        </div>
-
-        <div class="mx-2 p-3 rounded-lg border border-ink-700 bg-ink-850/60 text-xs text-slate-400 space-y-1.5">
-          <p class="font-mono text-slate-300">Atajos</p>
-          <p><kbd class="kbd">Ctrl</kbd>+<kbd class="kbd">K</kbd> o <kbd class="kbd">/</kbd> buscar</p>
-          <p><kbd class="kbd">Esc</kbd> limpiar búsqueda</p>
-          <p><kbd class="kbd">Alt</kbd>+<kbd class="kbd">1/2/3</kbd> Todos / Linux / Windows</p>
-        </div>
+    <!-- Ficha de detalle -->
+    <aside id="detailWrap"
+      class="fixed inset-0 z-50 translate-y-full lg:translate-y-0 transition-transform duration-300 bg-paper
+             lg:static lg:z-auto lg:transition-none lg:bg-transparent">
+      <div class="h-full lg:h-auto lg:sticky lg:top-0 lg:py-6">
+        <div id="detail" class="h-full lg:h-[calc(100vh-3rem)] overflow-y-auto thin-scroll lg:border lg:border-paper-line lg:rounded-2xl bg-paper-2"></div>
       </div>
     </aside>
-
-    <!-- ============================== MAIN ============================== -->
-    <main class="flex-1 min-w-0 px-4 lg:px-8 py-6 lg:py-8">
-      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
-        <div>
-          <p id="breadcrumb" class="font-mono text-xs text-slate-500 mb-1"></p>
-          <h1 id="pageTitle" class="text-2xl lg:text-3xl font-bold text-white tracking-tight"></h1>
-          <p id="pageSubtitle" class="text-sm text-slate-500 mt-1"></p>
-        </div>
-        <div id="stats" class="font-mono text-xs text-slate-500"></div>
-      </div>
-
-      <section id="grid" class="grid gap-4 grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3" aria-live="polite"></section>
-
-      <div id="empty" class="hidden text-center py-24">
-        <p class="font-mono text-neon-green text-lg">$ grep: sin resultados</p>
-        <p class="text-slate-500 mt-2 text-sm">Prueba con otra palabra clave, cambia de sistema operativo o limpia los filtros.</p>
-        <button id="btnReset" class="mt-5 px-4 py-2 rounded-lg border border-ink-600 hover:border-neon-green/60 hover:text-white text-sm font-mono transition">reset --filtros</button>
-      </div>
-
-      <footer class="mt-16 pt-6 border-t border-ink-800 text-xs text-slate-600 font-mono flex flex-wrap gap-x-6 gap-y-2 justify-between">
-        <span>// Revisa siempre un comando antes de ejecutarlo en producción.</span>
-        <span id="footerCount"></span>
-      </footer>
-    </main>
   </div>
 
-  <!-- Toast -->
-  <div id="toast" class="pointer-events-none fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] opacity-0 translate-y-3 transition-all duration-200
-       px-4 py-2 rounded-lg bg-ink-800 border border-neon-green/40 text-sm font-mono text-neon-green shadow-glow">✓ Copiado al portapapeles</div>
+  <footer class="border-t border-paper-line mt-10">
+    <div class="max-w-[1500px] mx-auto px-5 lg:px-10 py-6 flex flex-wrap justify-between gap-3 font-mono text-[11px] text-bone-mute">
+      <span>Lee antes de pulsar Intro. Prueba en laboratorio antes que en producción.</span>
+      <span>↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1/2/3 sistema</span>
+    </div>
+  </footer>
 
-  <style>.kbd{display:inline-block;padding:0 .35rem;border:1px solid #2a3442;border-radius:4px;background:#151b24;font-family:"JetBrains Mono",monospace;font-size:10px;color:#cbd5e1}</style>
+  <div id="toast" role="status" class="pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] opacity-0 translate-y-2 transition duration-200
+       bg-bone text-paper font-mono text-xs px-4 py-2.5 rounded-full shadow-2xl"></div>
 
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>

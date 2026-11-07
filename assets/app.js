@@ -1,450 +1,445 @@
 /* =========================================================================
- * SysAdmin Cheat Sheet — Lógica de la aplicación (JavaScript vanilla)
- * - Pestañas Linux / Windows / Todos
- * - Sidebar de categorías con contadores
- * - Búsqueda en tiempo real (Ctrl+K / "/"), insensible a acentos
- * - Filtro por nivel de riesgo
- * - Copiar al portapapeles con fallback
+ * Manual de campo del SysAdmin — lógica (JavaScript vanilla)
+ * Diseño maestro-detalle: índice de comandos a la izquierda y ficha completa
+ * a la derecha (en móvil, la ficha se abre como hoja a pantalla completa).
  * ========================================================================= */
 (() => {
   "use strict";
 
   const { categories, commands } = window.CHEATSHEET;
-  const $ = (sel) => document.querySelector(sel);
+  const $ = (s) => document.querySelector(s);
+  const mqDesktop = window.matchMedia("(min-width: 1024px)");
 
-  // ---------------------------------------------------------------- Config
-  const OS_TABS = [
-    { id: "all",     label: "Todos",   icon: "◆" },
-    { id: "linux",   label: "Linux",   icon: "🐧" },
-    { id: "windows", label: "Windows", icon: "⊞" }
+  // ------------------------------------------------------------ Config
+  const OS = [
+    { id: "all",     label: "Todo" },
+    { id: "linux",   label: "Linux" },
+    { id: "windows", label: "Windows" }
   ];
-
+  const OS_STYLE = {
+    linux:   { letter: "L", ring: "border-amber/60 text-amber", name: "Linux" },
+    windows: { letter: "W", ring: "border-sky/60 text-sky",     name: "Windows" }
+  };
+  const SHELL = { bash: "bash", powershell: "PowerShell", cmd: "CMD" };
   const RISK = {
-    safe:    { label: "Seguro",     dot: "bg-emerald-400", chip: "text-emerald-300 bg-emerald-400/10 border-emerald-400/30" },
-    caution: { label: "Precaución", dot: "bg-amber-400",   chip: "text-amber-300 bg-amber-400/10 border-amber-400/30" },
-    danger:  { label: "Peligroso",  dot: "bg-red-500",     chip: "text-red-300 bg-red-500/15 border-red-500/50" }
+    safe:    { label: "Seguro",     text: "text-sage",  dot: "bg-sage",  border: "border-sage/40" },
+    caution: { label: "Precaución", text: "text-amber", dot: "bg-amber", border: "border-amber/50" },
+    danger:  { label: "Peligroso",  text: "text-blood", dot: "bg-blood", border: "border-blood/60" }
   };
-
-  const SHELL = {
-    bash:       { label: "bash",       cls: "text-neon-green border-neon-green/30" },
-    powershell: { label: "PowerShell", cls: "text-neon-cyan border-neon-cyan/30" },
-    cmd:        { label: "CMD",        cls: "text-slate-300 border-slate-500/40" }
-  };
-
-  const ICONS = {
-    all:     '<path d="M4 5h16M4 12h16M4 19h16"/>',
-    users:   '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',
-    folder:  '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-    network: '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5 6.5 17M12 11.5l5.5 5.5"/>',
-    cpu:     '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
-    shield:  '<path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
-    clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-    disk:    '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
-    tree:    '<rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/>'
-  };
-  const icon = (name, cls = "w-4 h-4") =>
-    `<svg class="${cls} shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">${ICONS[name] || ICONS.all}</svg>`;
 
   const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
-  const catOrder = Object.fromEntries(categories.map((c, i) => [c.id, i]));
+  const catNum = Object.fromEntries(categories.map((c, i) => [c.id, String(i + 1).padStart(2, "0")]));
+  const cmdById = Object.fromEntries(commands.map((c) => [c.id, c]));
 
-  // ---------------------------------------------------------------- Estado
+  // ------------------------------------------------------------ Estado
   const state = {
-    os: localStorage.getItem("cs.os") || "all",
+    os: localStorage.getItem("mc.os") || "all",
     category: "all",
-    risks: new Set(["safe", "caution", "danger"]),
-    query: ""
+    risks: new Set(Object.keys(RISK)),
+    query: "",
+    selected: decodeURIComponent(location.hash.slice(1)) || null,
+    visible: []
   };
 
-  // ---------------------------------------------------------------- Utils
-  const escapeHtml = (s) =>
-    String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // ------------------------------------------------------------ Utils
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const terms = () => norm(state.query).split(/\s+/).filter(Boolean);
 
-  const normalize = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
-  const queryTerms = () => normalize(state.query).split(/\s+/).filter(Boolean);
-
-  /** Resalta los términos de búsqueda en texto plano (ya escapado). */
-  function highlight(text) {
-    const safe = escapeHtml(text);
-    const terms = queryTerms();
-    if (!terms.length) return safe;
-    // Construimos un mapa de índices sobre la versión normalizada (misma longitud
-    // carácter a carácter para la mayoría de textos en español).
-    const plain = String(text);
-    const norm = normalize(plain);
-    if (norm.length !== plain.length) return safe;
+  /** Subraya los términos buscados en texto plano. */
+  function hl(text) {
+    const plain = String(text), n = norm(plain), ts = terms();
+    if (!ts.length || n.length !== plain.length) return esc(plain);
     const ranges = [];
-    terms.forEach((t) => {
-      let i = norm.indexOf(t);
-      while (i !== -1) { ranges.push([i, i + t.length]); i = norm.indexOf(t, i + t.length); }
-    });
-    if (!ranges.length) return safe;
+    ts.forEach((t) => { for (let i = n.indexOf(t); i !== -1; i = n.indexOf(t, i + t.length)) ranges.push([i, i + t.length]); });
+    if (!ranges.length) return esc(plain);
     ranges.sort((a, b) => a[0] - b[0]);
     const merged = [];
-    for (const r of ranges) {
-      const last = merged[merged.length - 1];
-      if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]); else merged.push([...r]);
-    }
-    let out = "", pos = 0;
-    for (const [a, b] of merged) {
-      out += escapeHtml(plain.slice(pos, a)) + "<mark>" + escapeHtml(plain.slice(a, b)) + "</mark>";
-      pos = b;
-    }
-    return out + escapeHtml(plain.slice(pos));
+    ranges.forEach((r) => { const l = merged.at(-1); l && r[0] <= l[1] ? (l[1] = Math.max(l[1], r[1])) : merged.push([...r]); });
+    let out = "", p = 0;
+    merged.forEach(([a, b]) => { out += esc(plain.slice(p, a)) + "<mark>" + esc(plain.slice(a, b)) + "</mark>"; p = b; });
+    return out + esc(plain.slice(p));
   }
 
   /** Resaltado de sintaxis ligero para bash / PowerShell / CMD. */
-  function highlightCode(code, shell) {
+  function code(src, shell) {
     const re = /(\r?\n)|([ \t]+)|("(?:[^"\\]|\\.)*"|'[^']*')|(2>&1|\|\||&&|>>|[|;>])|([^\s|;"'>]+)|(.)/g;
     let out = "", m, expectCmd = true;
-    while ((m = re.exec(code))) {
+    while ((m = re.exec(src))) {
       const [tok, nl, ws, str, op, word, other] = m;
       if (nl) { out += "\n"; expectCmd = true; continue; }
       if (ws) { out += ws; continue; }
-      if (str) {
-        out += `<span class="tk-str">${escapeHtml(str)}</span>`;
-        expectCmd = false; continue;
-      }
-      if (op) {
-        out += `<span class="tk-op">${escapeHtml(op)}</span>`;
-        expectCmd = op !== ">" && op !== ">>" && op !== "2>&1";
-        continue;
-      }
+      if (str) { out += `<span class="tk-str">${esc(str)}</span>`; expectCmd = false; continue; }
+      if (op) { out += `<span class="tk-op">${esc(op)}</span>`; expectCmd = ![">", ">>", "2>&1"].includes(op); continue; }
       if (word) {
-        // Comentarios estilo bash/PowerShell
-        if (word.startsWith("#") && (shell === "bash" || shell === "powershell")) {
-          const end = code.indexOf("\n", m.index);
-          const rest = end === -1 ? code.slice(m.index) : code.slice(m.index, end);
-          out += `<span class="tk-com">${escapeHtml(rest)}</span>`;
+        if (word.startsWith("#") && shell !== "cmd") {
+          const end = src.indexOf("\n", m.index);
+          const rest = end === -1 ? src.slice(m.index) : src.slice(m.index, end);
+          out += `<span class="tk-com">${esc(rest)}</span>`;
           re.lastIndex = m.index + rest.length;
           continue;
         }
         let cls = "";
-        if (/^\$/.test(word)) cls = "tk-var";
+        if (word.startsWith("$")) cls = "tk-var";
         else if (expectCmd && !/^[{}()@]/.test(word)) cls = "tk-cmd";
         else if (/^--?[A-Za-z]/.test(word)) cls = "tk-flag";
         else if (shell === "cmd" && /^\/[A-Za-z?]/.test(word)) cls = "tk-flag";
-        out += cls ? `<span class="${cls}">${escapeHtml(word)}</span>` : escapeHtml(word);
+        out += cls ? `<span class="${cls}">${esc(word)}</span>` : esc(word);
         if (!/^[{(]$/.test(word)) expectCmd = false;
         continue;
       }
-      out += escapeHtml(other || tok);
+      out += esc(other || tok);
     }
     return out;
   }
 
-  // ---------------------------------------------------------------- Búsqueda
-  const index = commands.map((c) => {
-    const cat = catById[c.category];
-    return {
-      cmd: c,
-      name: normalize(c.name),
-      hay: normalize([
-        c.name, c.description, c.syntax, c.shell, c.os, cat?.label, cat?.labelEn,
-        (c.tags || []).join(" "),
-        (c.flags || []).map((f) => f.flag + " " + f.description).join(" "),
-        c.example?.command, c.example?.explanation, RISK[c.risk]?.label
-      ].join(" "))
-    };
-  });
+  // ------------------------------------------------------------ Búsqueda
+  const index = commands.map((c) => ({
+    c,
+    name: norm(c.name),
+    tags: (c.tags || []).map(norm),
+    hay: norm([
+      c.name, c.description, c.syntax, SHELL[c.shell], c.os, catById[c.category].label, catById[c.category].labelEn,
+      (c.tags || []).join(" "), (c.flags || []).map((f) => `${f.flag} ${f.description}`).join(" "),
+      c.example.command, c.example.explanation, RISK[c.risk].label
+    ].join(" "))
+  }));
 
-  function score(entry, terms) {
+  function score(e, ts) {
     let s = 0;
-    for (const t of terms) {
-      if (!entry.hay.includes(t)) return -1;
-      if (entry.name === t) s += 100;
-      else if (entry.name.startsWith(t)) s += 50;
-      else if (entry.name.includes(t)) s += 25;
-      else if ((entry.cmd.tags || []).some((tag) => normalize(tag).includes(t))) s += 10;
-      else s += 1;
+    for (const t of ts) {
+      if (!e.hay.includes(t)) return -1;
+      s += e.name === t ? 100 : e.name.startsWith(t) ? 50 : e.name.includes(t) ? 25 : e.tags.some((x) => x.includes(t)) ? 10 : 1;
     }
     return s;
   }
 
-  /** Aplica filtros. `ignoreCategory` se usa para calcular los contadores del sidebar. */
   function filter({ ignoreCategory = false } = {}) {
-    const terms = queryTerms();
-    const res = [];
+    const ts = terms(), out = [];
     for (const e of index) {
-      const c = e.cmd;
+      const c = e.c;
       if (state.os !== "all" && c.os !== state.os) continue;
       if (!ignoreCategory && state.category !== "all" && c.category !== state.category) continue;
       if (!state.risks.has(c.risk)) continue;
-      const s = terms.length ? score(e, terms) : 0;
-      if (s < 0) continue;
-      res.push({ c, s });
+      const s = ts.length ? score(e, ts) : 0;
+      if (s >= 0) out.push({ c, s });
     }
-    res.sort((a, b) =>
-      b.s - a.s ||
-      catOrder[a.c.category] - catOrder[b.c.category] ||
-      a.c.os.localeCompare(b.c.os) ||
-      a.c.name.localeCompare(b.c.name)
-    );
-    return res.map((r) => r.c);
+    out.sort((a, b) => b.s - a.s || catNum[a.c.category].localeCompare(catNum[b.c.category]) || a.c.os.localeCompare(b.c.os) || a.c.name.localeCompare(b.c.name));
+    return out.map((x) => x.c);
   }
 
-  // ---------------------------------------------------------------- Render
-  function renderOsTabs() {
-    const html = OS_TABS.map((t) => {
-      const active = state.os === t.id;
-      const n = t.id === "all" ? commands.length : commands.filter((c) => c.os === t.id).length;
-      return `<button role="tab" aria-selected="${active}" data-os="${t.id}"
-        class="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md transition
-        ${active ? "bg-ink-700 text-white shadow-glow" : "text-slate-400 hover:text-white md:hover:bg-ink-800 bg-ink-850 md:bg-transparent border border-ink-700 md:border-0"}">
-        <span aria-hidden="true">${t.icon}</span>${t.label}<span class="text-[10px] ${active ? "text-neon-green" : "text-slate-500"}">${n}</span>
-      </button>`;
+  // ------------------------------------------------------------ Render: cabecera
+  function renderHeader() {
+    $("#osSwitch").innerHTML = OS.map((o) => {
+      const on = state.os === o.id;
+      const n = o.id === "all" ? commands.length : commands.filter((c) => c.os === o.id).length;
+      return `<button role="tab" aria-selected="${on}" data-os="${o.id}"
+        class="px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
+        ${o.label} <span class="${on ? "text-paper/60" : "text-bone-mute"}">${n}</span></button>`;
     }).join("");
-    $("#osTabsDesktop").innerHTML = html;
-    $("#osTabsMobile").innerHTML = html;
-  }
 
-  function renderSidebar() {
     const pool = filter({ ignoreCategory: true });
-    const counts = pool.reduce((acc, c) => ((acc[c.category] = (acc[c.category] || 0) + 1), acc), {});
-    const visibleCats = categories.filter((c) => state.os === "all" || c.os.includes(state.os));
+    const counts = pool.reduce((a, c) => ((a[c.category] = (a[c.category] || 0) + 1), a), {});
+    const cats = categories.filter((c) => state.os === "all" || c.os.includes(state.os));
+    if (state.category !== "all" && !cats.some((c) => c.id === state.category)) state.category = "all";
 
-    // Si la categoría activa no existe en este SO (p. ej. AD en Linux), volvemos a "todas".
-    if (state.category !== "all" && !visibleCats.some((c) => c.id === state.category)) state.category = "all";
-
-    const item = (id, label, sub, iconName, n, extra = "") => {
-      const active = state.category === id;
-      return `<li><button data-cat="${id}" class="w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left text-sm transition group
-        ${active ? "bg-ink-800 text-white ring-1 ring-neon-green/30" : "text-slate-400 hover:bg-ink-850 hover:text-slate-100"}">
-        <span class="${active ? "text-neon-green" : "text-slate-500 group-hover:text-neon-cyan"}">${icon(iconName)}</span>
-        <span class="flex-1 min-w-0">
-          <span class="block truncate">${label}${extra}</span>
-          ${sub ? `<span class="block truncate text-[11px] text-slate-600 font-mono">${sub}</span>` : ""}
-        </span>
-        <span class="font-mono text-[11px] px-1.5 rounded ${n ? (active ? "bg-neon-green/15 text-neon-green" : "bg-ink-800 text-slate-400") : "text-slate-700"}">${n}</span>
-      </button></li>`;
+    const tab = (id, num, label, n, winOnly = false) => {
+      const on = state.category === id;
+      return `<button data-cat="${id}" class="group shrink-0 flex items-baseline gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
+        ${on ? "border-amber text-bone" : "border-transparent text-bone-dim hover:text-bone"} ${n ? "" : "opacity-40"}">
+        <span class="font-mono text-[10px] ${on ? "text-amber" : "text-bone-mute"}">${num}</span>
+        <span class="text-sm">${label}</span>
+        ${winOnly ? `<span class="font-mono text-[9px] text-sky border border-sky/40 rounded px-1">WIN</span>` : ""}
+        <span class="font-mono text-[10px] text-bone-mute">${n}</span></button>`;
     };
+    $("#catRail").innerHTML = tab("all", "§", "Todo", pool.length) +
+      cats.map((c) => tab(c.id, catNum[c.id], c.label, counts[c.id] || 0, c.os.length === 1)).join("");
 
-    $("#categoryList").innerHTML =
-      item("all", "Todas las categorías", "", "all", pool.length) +
-      visibleCats.map((c) =>
-        item(c.id, c.label, c.labelEn, c.icon, counts[c.id] || 0,
-          c.os.length === 1 ? ` <span class="ml-1 text-[10px] px-1 rounded border border-neon-cyan/30 text-neon-cyan font-mono">WIN</span>` : "")
-      ).join("");
-
-    $("#riskFilters").innerHTML = Object.entries(RISK).map(([id, r]) => {
+    $("#riskToggles").innerHTML = Object.entries(RISK).map(([id, r]) => {
       const on = state.risks.has(id);
-      return `<button data-risk="${id}" aria-pressed="${on}" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium transition
-        ${on ? r.chip : "border-ink-700 text-slate-600 line-through"}">
-        <span class="w-1.5 h-1.5 rounded-full ${on ? r.dot : "bg-slate-700"}"></span>${r.label}</button>`;
+      return `<button data-risk="${id}" aria-pressed="${on}" title="${on ? "Ocultar" : "Mostrar"} comandos: ${r.label}"
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition
+        ${on ? `${r.border} ${r.text}` : "border-paper-line text-bone-mute line-through"}">
+        <span class="w-1.5 h-1.5 rounded-full ${on ? r.dot : "bg-bone-mute/40"}"></span><span class="hidden sm:inline">${r.label}</span></button>`;
     }).join("");
+
+    const linux = commands.filter((c) => c.os === "linux").length;
+    $("#counter").innerHTML = `
+      <p class="font-serif text-5xl leading-none text-bone">${commands.length}</p>
+      <p class="font-mono text-[10px] uppercase tracking-widest text-bone-mute mt-1">comandos · ${linux} linux / ${commands.length - linux} windows</p>`;
   }
 
-  function riskBadge(risk) {
-    const r = RISK[risk];
-    const pulse = risk === "danger" ? `<span class="absolute inset-0 rounded-full ${r.dot} animate-ping opacity-60"></span>` : "";
-    return `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[11px] font-semibold uppercase tracking-wide ${r.chip}">
-      <span class="relative w-1.5 h-1.5"><span class="absolute inset-0 rounded-full ${r.dot}"></span>${pulse}</span>${r.label}</span>`;
-  }
-
-  const copyBtn = (id, field, label = "Copiar") => `
-    <button data-copy="${id}" data-field="${field}" title="Copiar al portapapeles"
-      class="copy-btn shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md border border-ink-600 bg-ink-800/80 text-[11px] font-mono text-slate-400
-             hover:text-neon-green hover:border-neon-green/50 transition">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-      <span>${label}</span>
+  // ------------------------------------------------------------ Render: lista
+  function row(c) {
+    const r = RISK[c.risk], o = OS_STYLE[c.os];
+    const sel = c.id === state.selected;
+    return `<button data-id="${c.id}" class="row w-full text-left grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-3 py-3 rounded-lg hover:bg-paper-2 transition" aria-current="${sel}">
+      <span class="mt-0.5 grid place-items-center w-7 h-7 rounded-full border font-mono text-[11px] ${o.ring}" title="${o.name}">${o.letter}</span>
+      <span class="min-w-0">
+        <span class="flex items-baseline gap-2 flex-wrap">
+          <code class="font-mono text-[15px] font-medium ${sel ? "text-amber" : "text-bone"}">${hl(c.name)}</code>
+          <span class="font-mono text-[10px] text-bone-mute">${SHELL[c.shell]}</span>
+        </span>
+        <span class="block text-[13px] text-bone-dim leading-snug mt-0.5 line-clamp-2">${hl(c.description)}</span>
+      </span>
+      <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider ${r.text}" title="${r.label}">
+        ${c.risk === "safe" ? "" : `<span class="hidden sm:inline">${r.label}</span>`}<span class="w-2 h-2 rounded-full ${r.dot}"></span>
+      </span>
     </button>`;
-
-  function card(c, i) {
-    const cat = catById[c.category];
-    const sh = SHELL[c.shell];
-    const danger = c.risk === "danger";
-    return `
-    <article class="card-enter flex flex-col rounded-xl border ${danger ? "border-red-500/40 bg-gradient-to-b from-red-950/30 to-ink-900" : "border-ink-700 bg-ink-900/80"}
-      hover:border-ink-600 transition overflow-hidden" style="animation-delay:${Math.min(i, 12) * 25}ms">
-      <!-- Cabecera -->
-      <header class="flex items-start gap-3 p-4 pb-3">
-        <div class="flex-1 min-w-0">
-          <div class="flex flex-wrap items-center gap-2 mb-1.5">
-            <span class="text-[11px] font-mono px-1.5 py-0.5 rounded border ${sh.cls}">${c.os === "linux" ? "🐧" : "⊞"} ${sh.label}</span>
-            ${riskBadge(c.risk)}
-          </div>
-          <h2 class="font-mono text-lg font-bold text-white break-words"><code>${highlight(c.name)}</code></h2>
-          <p class="mt-1 text-sm text-slate-400 leading-relaxed">${highlight(c.description)}</p>
-        </div>
-        ${copyBtn(c.id, "name", "")}
-      </header>
-
-      <!-- Sintaxis -->
-      <div class="px-4">
-        <p class="text-[10px] uppercase tracking-widest text-slate-500 font-semibold mb-1">Sintaxis</p>
-        <div class="flex items-start gap-2 rounded-lg bg-ink-950 border border-ink-700 p-2.5">
-          <pre class="flex-1 min-w-0 overflow-x-auto scroll-thin text-[12.5px] leading-relaxed font-mono text-slate-300"><code>${highlightCode(c.syntax, c.shell)}</code></pre>
-          ${copyBtn(c.id, "syntax", "")}
-        </div>
-      </div>
-
-      <!-- Flags -->
-      ${c.flags?.length ? `
-      <details class="px-4 mt-3 group/f" ${c.flags.length <= 4 ? "open" : ""}>
-        <summary class="cursor-pointer select-none text-[10px] uppercase tracking-widest text-slate-500 font-semibold hover:text-slate-300 list-none flex items-center gap-1">
-          <svg class="w-3 h-3 transition group-open/f:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M7 5l6 5-6 5z"/></svg>
-          Parámetros comunes <span class="text-slate-600">(${c.flags.length})</span>
-        </summary>
-        <dl class="mt-2 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1.5 text-[13px]">
-          ${c.flags.map((f) => `
-            <dt class="font-mono text-neon-violet whitespace-nowrap">${escapeHtml(f.flag)}</dt>
-            <dd class="text-slate-400">${highlight(f.description)}</dd>`).join("")}
-        </dl>
-      </details>` : ""}
-
-      <!-- Ejemplo -->
-      <div class="px-4 mt-4">
-        <div class="flex items-center justify-between mb-1">
-          <p class="text-[10px] uppercase tracking-widest text-neon-cyan/80 font-semibold">▸ Ejemplo real</p>
-          ${copyBtn(c.id, "example", "Copiar ejemplo")}
-        </div>
-        <div class="rounded-lg bg-black/60 border ${danger ? "border-red-500/30" : "border-ink-700"}">
-          <div class="flex items-center gap-1.5 px-3 py-1.5 border-b border-ink-800">
-            <span class="w-2 h-2 rounded-full bg-red-500/70"></span><span class="w-2 h-2 rounded-full bg-amber-400/70"></span><span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
-            <span class="ml-2 text-[10px] font-mono text-slate-600">${c.os === "linux" ? "root@srv01:~#" : c.shell === "powershell" ? "PS C:\\>" : "C:\\>"}</span>
-          </div>
-          <pre class="p-3 overflow-x-auto scroll-thin text-[12.5px] leading-relaxed font-mono text-slate-300 whitespace-pre-wrap break-all"><code>${highlightCode(c.example.command, c.shell)}</code></pre>
-        </div>
-        <p class="mt-2 text-[13px] text-slate-400 leading-relaxed">${highlight(c.example.explanation)}</p>
-      </div>
-
-      <!-- Footer -->
-      <footer class="mt-auto px-4 py-3 border-t border-ink-800 flex flex-wrap items-center gap-1.5">
-        <button data-cat-jump="${c.category}" class="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-neon-cyan mr-1">${icon(cat.icon, "w-3.5 h-3.5")}${cat.label}</button>
-        ${(c.tags || []).slice(0, 6).map((t) => `<button data-tag="${escapeHtml(t)}" class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-ink-800 text-slate-400 hover:text-neon-green hover:bg-ink-700">#${highlight(t)}</button>`).join("")}
-      </footer>
-    </article>`;
   }
 
-  function renderMain(list) {
-    const cat = state.category === "all" ? null : catById[state.category];
-    const osLabel = OS_TABS.find((t) => t.id === state.os).label;
-    $("#breadcrumb").textContent = `~/${state.os}/${cat ? cat.id : "*"}${state.query ? ` | grep "${state.query}"` : ""}`;
-    $("#pageTitle").textContent = cat ? cat.label : state.query ? "Resultados de búsqueda" : "Todos los comandos";
-    $("#pageSubtitle").textContent = cat ? `${cat.labelEn} · ${osLabel}` : `${osLabel} · Bash, PowerShell y CMD`;
-
-    const byRisk = list.reduce((a, c) => ((a[c.risk] = (a[c.risk] || 0) + 1), a), {});
-    $("#stats").innerHTML = `<span class="text-white">${list.length}</span> comandos · ` +
-      Object.keys(RISK).map((k) => `<span class="inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full ${RISK[k].dot}"></span>${byRisk[k] || 0}</span>`).join(" ");
-
-    $("#grid").innerHTML = list.map(card).join("");
+  function renderList() {
+    const list = (state.visible = filter());
+    const grouped = !state.query;
+    let html = "";
+    if (grouped) {
+      let current = null;
+      list.forEach((c) => {
+        if (c.category !== current) {
+          if (current) html += "</div>";
+          current = c.category;
+          const cat = catById[c.category];
+          html += `<div class="mb-6"><h2 class="flex items-baseline gap-3 px-3 pb-2 mb-1 border-b border-paper-line">
+            <span class="font-mono text-xs text-amber">§${catNum[cat.id]}</span>
+            <span class="font-serif text-2xl text-bone">${cat.label}</span>
+            <span class="ml-auto font-mono text-[10px] text-bone-mute uppercase tracking-wider hidden sm:inline">${cat.labelEn}</span></h2>`;
+        }
+        html += row(c);
+      });
+      if (current) html += "</div>";
+    } else {
+      html = list.map(row).join("");
+    }
+    $("#list").innerHTML = html;
     $("#empty").classList.toggle("hidden", list.length > 0);
-    $("#footerCount").textContent = `${commands.length} comandos · ${categories.length} categorías`;
+    $("#listMeta").innerHTML = state.query
+      ? `<span class="text-bone">${list.length}</span> resultado${list.length === 1 ? "" : "s"} para «${esc(state.query)}»`
+      : `<span class="text-bone">${list.length}</span> entradas`;
+  }
+
+  // ------------------------------------------------------------ Render: ficha
+  const copyBtn = (id, field, label) => `
+    <button data-copy="${id}" data-field="${field}" class="shrink-0 font-mono text-[10px] uppercase tracking-widest text-bone-mute hover:text-amber transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>${label}</span></button>`;
+
+  const sectionTitle = (n, t, extra = "") =>
+    `<div class="flex items-center gap-3 mb-3"><span class="font-mono text-[10px] text-amber">${n}</span>
+     <h3 class="font-mono text-[11px] uppercase tracking-[0.2em] text-bone-dim">${t}</h3>
+     <span class="flex-1 h-px bg-paper-line"></span>${extra}</div>`;
+
+  function renderDetail() {
+    const box = $("#detail");
+    const c = cmdById[state.selected];
+    if (!c) {
+      box.innerHTML = `<div class="h-full grid place-items-center p-10 text-center">
+        <div><p class="font-serif text-6xl text-amber">§</p><p class="font-serif text-3xl italic text-bone-dim mt-3">Elige un comando del índice</p>
+        <p class="text-sm text-bone-mute mt-2">Su ficha completa aparecerá aquí.</p></div></div>`;
+      return;
+    }
+    const cat = catById[c.category], r = RISK[c.risk], o = OS_STYLE[c.os];
+    const related = commands.filter((x) => x.category === c.category && x.id !== c.id && (state.os === "all" || x.os === state.os)).slice(0, 5);
+    const prompt = c.os === "linux" ? "root@srv01:~#" : c.shell === "powershell" ? "PS C:\\>" : "C:\\>";
+
+    box.innerHTML = `<article class="fade-in">
+      <!-- barra superior -->
+      <div class="sticky top-0 z-10 flex items-center gap-3 px-5 sm:px-8 py-3 bg-paper-2/95 backdrop-blur border-b border-paper-line">
+        <button id="btnBack" class="lg:hidden -ml-1 p-1 text-bone-dim hover:text-bone" aria-label="Volver al índice">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <p class="font-mono text-[11px] text-bone-mute truncate">
+          <span class="${o.ring.split(" ")[1]}">${o.name}</span> / <button data-cat="${cat.id}" class="hover:text-bone">§${catNum[cat.id]} ${cat.label}</button>
+        </p>
+        <span class="ml-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest ${r.text}">
+          <span class="w-2 h-2 rounded-full ${r.dot}"></span>${r.label}</span>
+      </div>
+
+      <div class="px-5 sm:px-8 py-7">
+        <p class="font-mono text-[11px] text-bone-mute mb-2">${SHELL[c.shell]}</p>
+        <div class="flex items-start justify-between gap-4">
+          <h2 class="font-mono text-3xl sm:text-4xl font-semibold text-bone break-words">${esc(c.name)}</h2>
+          <div class="pt-3">${copyBtn(c.id, "name", "Copiar")}</div>
+        </div>
+        <p class="font-serif text-2xl sm:text-[1.7rem] leading-snug text-bone-dim mt-4">${hl(c.description)}</p>
+
+        ${c.risk === "danger" ? `
+        <div class="mt-6 rounded-xl overflow-hidden border border-blood/50">
+          <div class="hazard h-2"></div>
+          <div class="bg-blood-soft px-4 py-3 flex gap-3">
+            <span class="font-mono text-blood text-lg leading-none mt-0.5">!</span>
+            <p class="text-sm text-bone"><strong class="text-blood font-semibold">Comando destructivo.</strong> Puede borrar datos o cortar el acceso de forma irreversible. Verifica el objetivo, ten copia de seguridad y prueba primero en un entorno de laboratorio.</p>
+          </div>
+        </div>` : c.risk === "caution" ? `
+        <p class="mt-6 text-sm text-bone-dim border-l-2 border-amber pl-3"><span class="text-amber font-medium">Precaución:</span> modifica configuración o estado del sistema. Revisa los parámetros antes de ejecutar.</p>` : ""}
+
+        <!-- 1. Sintaxis -->
+        <section class="mt-9">
+          ${sectionTitle("01", "Sintaxis", copyBtn(c.id, "syntax", "Copiar"))}
+          <pre class="overflow-x-auto thin-scroll font-mono text-[13px] leading-relaxed bg-paper rounded-lg border border-paper-line px-4 py-3"><code>${code(c.syntax, c.shell)}</code></pre>
+        </section>
+
+        <!-- 2. Parámetros -->
+        ${c.flags?.length ? `
+        <section class="mt-9">
+          ${sectionTitle("02", "Parámetros habituales")}
+          <dl class="divide-y divide-paper-line">
+            ${c.flags.map((f) => `<div class="grid sm:grid-cols-[minmax(0,15rem)_1fr] gap-x-6 gap-y-1 py-2.5">
+              <dt class="font-mono text-[13px] text-sky break-words">${esc(f.flag)}</dt>
+              <dd class="text-sm text-bone-dim">${hl(f.description)}</dd></div>`).join("")}
+          </dl>
+        </section>` : ""}
+
+        <!-- 3. Ejemplo -->
+        <section class="mt-9">
+          ${sectionTitle("03", "En el mundo real", copyBtn(c.id, "example", "Copiar ejemplo"))}
+          <div class="rounded-xl bg-[#0d0c0a] border ${c.risk === "danger" ? "border-blood/40" : "border-paper-line"} overflow-hidden">
+            <div class="px-4 py-2 border-b border-paper-line font-mono text-[11px] text-bone-mute">${prompt}</div>
+            <pre class="px-4 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words"><code>${code(c.example.command, c.shell)}</code></pre>
+          </div>
+          <p class="mt-4 font-serif text-xl italic leading-snug text-bone">“${hl(c.example.explanation)}”</p>
+        </section>
+
+        <!-- 4. Etiquetas -->
+        <section class="mt-9">
+          ${sectionTitle("04", "Palabras clave")}
+          <div class="flex flex-wrap gap-2">
+            ${(c.tags || []).map((t) => `<button data-tag="${esc(t)}" class="font-mono text-xs px-2.5 py-1 rounded-full border border-paper-line2 text-bone-dim hover:border-amber hover:text-amber transition">${hl(t)}</button>`).join("")}
+          </div>
+        </section>
+
+        ${related.length ? `
+        <section class="mt-9 pb-4">
+          ${sectionTitle("→", "Ver también")}
+          <div class="grid sm:grid-cols-2 gap-2">
+            ${related.map((x) => `<button data-id="${x.id}" class="text-left rounded-lg border border-paper-line hover:border-paper-line2 hover:bg-paper-3 px-3 py-2.5 transition">
+              <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full ${RISK[x.risk].dot}"></span><code class="font-mono text-sm text-bone">${esc(x.name)}</code>
+              <span class="ml-auto font-mono text-[10px] ${OS_STYLE[x.os].ring.split(" ")[1]}">${OS_STYLE[x.os].letter}</span></span>
+              <span class="block text-xs text-bone-mute mt-1 line-clamp-1">${esc(x.description)}</span></button>`).join("")}
+          </div>
+        </section>` : ""}
+      </div>
+    </article>`;
+    box.scrollTop = 0;
+  }
+
+  // ------------------------------------------------------------ Orquestación
+  function ensureSelection() {
+    if (!mqDesktop.matches) return;
+    if (!state.visible.some((c) => c.id === state.selected)) state.selected = state.visible[0]?.id || null;
   }
 
   function render() {
-    renderOsTabs();
-    renderSidebar();
-    renderMain(filter());
+    renderHeader();
+    renderList();
+    ensureSelection();
+    renderList(); // repinta la fila seleccionada
+    renderDetail();
   }
 
-  // ---------------------------------------------------------------- Portapapeles
-  async function copyText(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
+  const detailWrap = $("#detailWrap");
+  function openSheet() { if (!mqDesktop.matches) { detailWrap.classList.remove("translate-y-full"); document.body.classList.add("sheet-open"); } }
+  function closeSheet() { detailWrap.classList.add("translate-y-full"); document.body.classList.remove("sheet-open"); }
+
+  function select(id, { open = true, scroll = false } = {}) {
+    state.selected = id;
+    history.replaceState(null, "", id ? `#${id}` : location.pathname);
+    document.querySelectorAll("#list .row").forEach((el) => {
+      const on = el.dataset.id === id;
+      el.setAttribute("aria-current", on);
+      el.querySelector("code")?.classList.toggle("text-amber", on);
+      el.querySelector("code")?.classList.toggle("text-bone", !on);
+      if (on && scroll) el.scrollIntoView({ block: "nearest" });
+    });
+    renderDetail();
+    if (open) openSheet();
+  }
+
+  // ------------------------------------------------------------ Portapapeles
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
       const ta = Object.assign(document.createElement("textarea"), { value: text });
-      ta.style.cssText = "position:fixed;opacity:0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
+      ta.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
     }
   }
-
-  let toastTimer;
+  let toastT;
   function toast(msg) {
-    const t = $("#toast");
-    t.textContent = msg;
-    t.classList.remove("opacity-0", "translate-y-3");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.add("opacity-0", "translate-y-3"), 1600);
+    const t = $("#toast"); t.textContent = msg;
+    t.classList.remove("opacity-0", "translate-y-2");
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.add("opacity-0", "translate-y-2"), 1700);
   }
 
-  // ---------------------------------------------------------------- Sidebar móvil
-  const sidebar = $("#sidebar"), overlay = $("#overlay");
-  const openSidebar = () => { sidebar.classList.remove("-translate-x-full"); overlay.classList.remove("hidden"); };
-  const closeSidebar = () => { sidebar.classList.add("-translate-x-full"); overlay.classList.add("hidden"); };
-
-  // ---------------------------------------------------------------- Eventos
-  const setOs = (os) => { state.os = os; localStorage.setItem("cs.os", os); render(); };
+  // ------------------------------------------------------------ Eventos
+  const setOs = (os) => { state.os = os; localStorage.setItem("mc.os", os); render(); };
 
   document.addEventListener("click", async (e) => {
-    const el = e.target.closest("[data-os],[data-cat],[data-risk],[data-copy],[data-tag],[data-cat-jump]");
+    if (e.target.closest("#btnBack")) return closeSheet();
+    const el = e.target.closest("[data-os],[data-cat],[data-risk],[data-copy],[data-tag],[data-id]");
     if (!el) return;
+    const d = el.dataset;
 
-    if (el.dataset.os) return setOs(el.dataset.os);
-
-    if (el.dataset.cat) {
-      state.category = el.dataset.cat;
-      closeSidebar();
-      render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+    if (d.copy) {
+      const c = cmdById[d.copy];
+      await copy(d.field === "example" ? c.example.command : d.field === "syntax" ? c.syntax : c.name);
+      const span = el.querySelector("span"), prev = span.textContent;
+      span.textContent = "Copiado"; el.classList.add("!text-amber");
+      setTimeout(() => { span.textContent = prev; el.classList.remove("!text-amber"); }, 1200);
+      return toast(c.risk === "danger" ? "Copiado · comando PELIGROSO, revísalo antes de ejecutar" : "Copiado al portapapeles");
     }
-
-    if (el.dataset.catJump) { state.category = el.dataset.catJump; render(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
-
-    if (el.dataset.risk) {
-      const r = el.dataset.risk;
-      state.risks.has(r) ? state.risks.delete(r) : state.risks.add(r);
-      if (!state.risks.size) state.risks = new Set(Object.keys(RISK)); // nunca vacío
+    if (d.os) return setOs(d.os);
+    if (d.cat) { state.category = d.cat; closeSheet(); render(); return window.scrollTo({ top: 0, behavior: "smooth" }); }
+    if (d.risk) {
+      state.risks.has(d.risk) ? state.risks.delete(d.risk) : state.risks.add(d.risk);
+      if (!state.risks.size) state.risks = new Set(Object.keys(RISK));
       return render();
     }
-
-    if (el.dataset.tag) {
-      state.query = el.dataset.tag;
-      $("#search").value = state.query;
-      state.category = "all";
-      render();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    if (el.dataset.copy) {
-      const c = commands.find((x) => x.id === el.dataset.copy);
-      const field = el.dataset.field;
-      const text = field === "example" ? c.example.command : field === "syntax" ? c.syntax : c.name;
-      await copyText(text);
-      const label = el.querySelector("span");
-      const prev = label?.textContent;
-      el.classList.add("!text-neon-green", "!border-neon-green/60");
-      if (label && prev) label.textContent = "¡Copiado!";
-      setTimeout(() => { el.classList.remove("!text-neon-green", "!border-neon-green/60"); if (label && prev) label.textContent = prev; }, 1200);
-      toast(c.risk === "danger" ? "⚠ Copiado — comando PELIGROSO, revísalo antes de ejecutar" : "✓ Copiado al portapapeles");
-    }
+    if (d.tag) { state.query = d.tag; $("#search").value = d.tag; state.category = "all"; closeSheet(); render(); return window.scrollTo({ top: 0, behavior: "smooth" }); }
+    if (d.id) return select(d.id, { scroll: true });
   });
 
-  let debounce;
+  let deb;
   $("#search").addEventListener("input", (e) => {
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      state.query = e.target.value.trim();
-      if (state.query) state.category = "all";
-      render();
-    }, 60);
+    clearTimeout(deb);
+    deb = setTimeout(() => { state.query = e.target.value.trim(); if (state.query) state.category = "all"; render(); }, 60);
   });
 
   document.addEventListener("keydown", (e) => {
     const search = $("#search");
-    const typing = /INPUT|TEXTAREA/.test(document.activeElement?.tagName);
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); search.focus(); search.select(); return; }
-    if (e.key === "/" && !typing) { e.preventDefault(); search.focus(); return; }
+    const inInput = document.activeElement === search;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); closeSheet(); search.focus(); search.select(); return; }
+    if (e.key === "/" && !inInput) { e.preventDefault(); search.focus(); return; }
     if (e.key === "Escape") {
-      if (!sidebar.classList.contains("-translate-x-full") && window.innerWidth < 1024) return closeSidebar();
-      search.value = ""; state.query = ""; search.blur(); render(); return;
+      if (document.body.classList.contains("sheet-open")) return closeSheet();
+      if (search.value) { search.value = ""; state.query = ""; render(); }
+      search.blur(); return;
     }
-    if (e.altKey && ["1", "2", "3"].includes(e.key)) { e.preventDefault(); setOs(OS_TABS[+e.key - 1].id); }
+    if (e.altKey && ["1", "2", "3"].includes(e.key)) { e.preventDefault(); return setOs(OS[+e.key - 1].id); }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (!state.visible.length) return;
+      e.preventDefault();
+      const i = state.visible.findIndex((c) => c.id === state.selected);
+      const next = e.key === "ArrowDown" ? Math.min(i + 1, state.visible.length - 1) : Math.max(i - 1, 0);
+      select(state.visible[i === -1 ? 0 : next].id, { open: false, scroll: true });
+      return;
+    }
+    if (e.key === "Enter" && state.selected && !mqDesktop.matches) openSheet();
   });
 
-  $("#btnMenu").addEventListener("click", openSidebar);
-  $("#btnClose").addEventListener("click", closeSidebar);
-  overlay.addEventListener("click", closeSidebar);
-  $("#logo").addEventListener("click", (e) => { e.preventDefault(); state.category = "all"; state.query = ""; $("#search").value = ""; render(); });
   $("#btnReset").addEventListener("click", () => {
     state.category = "all"; state.query = ""; state.risks = new Set(Object.keys(RISK)); $("#search").value = ""; render();
   });
+  mqDesktop.addEventListener("change", () => { closeSheet(); render(); });
+  window.addEventListener("hashchange", () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!cmdById[id] || id === state.selected) return;
+    if (!state.visible.some((c) => c.id === id)) {
+      state.category = "all"; state.query = ""; $("#search").value = ""; state.risks = new Set(Object.keys(RISK));
+      if (state.os !== "all" && cmdById[id].os !== state.os) state.os = "all";
+      state.selected = id; render();
+    }
+    select(id, { scroll: true });
+  });
 
+  // Arranque: si llega un enlace con #comando, se abre su ficha.
   render();
+  if (state.selected && cmdById[state.selected] && location.hash) select(state.selected, { scroll: true });
 })();

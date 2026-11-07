@@ -1,0 +1,50 @@
+/* Manual de campo — estilos complementarios a Tailwind */
+:root { color-scheme: dark; }
+
+body {
+  /* Grano de papel sutil */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection { background: #ffb45455; color: #fff; }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.thin-scroll { scrollbar-width: thin; scrollbar-color: #3d3930 transparent; }
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: #3d3930; border-radius: 8px; }
+
+.key {
+  font-family: "IBM Plex Mono", monospace; font-size: 10px; line-height: 1;
+  padding: 4px 6px; border: 1px solid #3d3930; border-bottom-width: 2px; border-radius: 4px; color: #a39d90;
+}
+
+/* Filas de la lista */
+.row { position: relative; }
+.row[aria-current="true"] { background: #1b1a16; }
+.row[aria-current="true"]::before {
+  content: ""; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: #ffb454;
+}
+@media (max-width: 1023px) { .row[aria-current="true"]::before { left: -20px; } }
+
+/* Franja de advertencia para comandos destructivos */
+.hazard {
+  background-image: repeating-linear-gradient(-45deg, #ff6b5e 0 10px, #141310 10px 20px);
+}
+
+/* Resaltado de sintaxis */
+.tk-cmd  { color: #ffb454; font-weight: 600; }
+.tk-flag { color: #8cc4ff; }
+.tk-str  { color: #9fd8a6; }
+.tk-var  { color: #e7a6ff; }
+.tk-op   { color: #ff8a7a; }
+.tk-com  { color: #6f6a5f; font-style: italic; }
+
+mark { background: transparent; color: #ffb454; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+.fade-in { animation: fade .22s ease both; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+body.sheet-open { overflow: hidden; }
+@media (min-width: 1024px) { body.sheet-open { overflow: auto; } }
