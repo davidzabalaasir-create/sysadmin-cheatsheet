@@ -154,6 +154,9 @@
     };
     $("#catRail").innerHTML = tab("all", "§", "Todo", pool.length) +
       cats.map((c) => tab(c.id, catNum[c.id], c.label, counts[c.id] || 0, c.os.length === 1)).join("");
+    // Sin requestAnimationFrame: así funciona aunque la pestaña esté en segundo plano.
+    if (lastCenteredCat !== state.category) { centerActiveCat(lastCenteredCat !== null); lastCenteredCat = state.category; }
+    updateRailArrows();
 
     $("#riskToggles").innerHTML = Object.entries(RISK).map(([id, r]) => {
       const on = state.risks.has(id);
@@ -168,6 +171,60 @@
       <p class="font-serif text-5xl leading-none text-bone">${commands.length}</p>
       <p class="font-mono text-[10px] uppercase tracking-widest text-bone-mute mt-1">comandos · ${linux} linux / ${commands.length - linux} windows</p>`;
   }
+
+  // ------------------------------------------------------------ Barra de categorías desplazable
+  const rail = $("#catRail"), railPrev = $("#railPrev"), railNext = $("#railNext");
+  let lastCenteredCat = null;
+
+  function updateRailArrows() {
+    const max = rail.scrollWidth - rail.clientWidth;
+    railPrev.hidden = rail.scrollLeft <= 4;
+    railNext.hidden = max <= 4 || rail.scrollLeft >= max - 4;
+  }
+
+  /** Centra la pestaña activa sin mover la página en vertical. */
+  function centerActiveCat(smooth) {
+    const tab = rail.querySelector(`[data-cat="${state.category}"]`);
+    if (!tab) return;
+    const left = tab.offsetLeft - (rail.clientWidth - tab.offsetWidth) / 2;
+    rail.scrollTo({ left: Math.max(0, left), behavior: smooth ? "smooth" : "instant" });
+  }
+
+  railPrev.addEventListener("click", () => rail.scrollBy({ left: -rail.clientWidth * 0.7, behavior: "smooth" }));
+  railNext.addEventListener("click", () => rail.scrollBy({ left: rail.clientWidth * 0.7, behavior: "smooth" }));
+  rail.addEventListener("scroll", updateRailArrows, { passive: true });
+  window.addEventListener("resize", updateRailArrows);
+
+  // Rueda vertical del ratón → desplazamiento horizontal.
+  rail.addEventListener("wheel", (e) => {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || rail.scrollWidth <= rail.clientWidth) return;
+    e.preventDefault();
+    rail.scrollBy({ left: e.deltaY, behavior: "instant" });
+  }, { passive: false });
+
+  // Arrastrar con el ratón para desplazar (en táctil ya funciona el gesto nativo).
+  let drag = null, suppressClick = false;
+  rail.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    drag = { x: e.clientX, left: rail.scrollLeft, moved: false };
+  });
+  window.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) > 5) { drag.moved = true; rail.classList.add("dragging"); }
+    if (drag.moved) rail.scrollLeft = drag.left - dx;
+  });
+  window.addEventListener("pointerup", () => {
+    if (!drag) return;
+    suppressClick = drag.moved;
+    setTimeout(() => { suppressClick = false; }, 0); // por si se soltó fuera y no llega el click
+    rail.classList.remove("dragging");
+    drag = null;
+  });
+  // Tras arrastrar no se debe seleccionar la categoría sobre la que se soltó.
+  rail.addEventListener("click", (e) => {
+    if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; }
+  }, true);
 
   // ------------------------------------------------------------ Render: lista
   function row(c) {

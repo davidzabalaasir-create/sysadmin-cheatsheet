@@ -68,8 +68,18 @@
     </div>
 
     <!-- Índice de categorías -->
-    <nav class="border-t border-paper-line">
-      <div id="catRail" class="max-w-[1500px] mx-auto px-5 lg:px-10 flex gap-1 overflow-x-auto no-scrollbar" aria-label="Categorías"></div>
+    <nav class="border-t border-paper-line" aria-label="Categorías">
+      <div class="relative max-w-[1500px] mx-auto">
+        <button id="railPrev" type="button" aria-label="Ver categorías anteriores" tabindex="-1"
+          class="rail-arrow left-0 pl-2 lg:pl-5 pr-8 bg-gradient-to-r from-paper via-paper/95 to-transparent">
+          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg></span>
+        </button>
+        <div id="catRail" class="relative px-5 lg:px-10 flex gap-1 overflow-x-auto no-scrollbar scroll-smooth cursor-grab select-none"></div>
+        <button id="railNext" type="button" aria-label="Ver más categorías" tabindex="-1"
+          class="rail-arrow right-0 pr-2 lg:pr-5 pl-8 bg-gradient-to-l from-paper via-paper/95 to-transparent">
+          <span class="rail-btn"><svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+      </div>
     </nav>
   </header>
 

@@ -20,6 +20,20 @@ body {
   padding: 4px 6px; border: 1px solid #3d3930; border-bottom-width: 2px; border-radius: 4px; color: #a39d90;
 }
 
+/* Barra de categorías desplazable */
+.rail-arrow {
+  position: absolute; top: 0; bottom: 0; z-index: 10;
+  display: flex; align-items: center; transition: opacity .2s;
+}
+.rail-arrow[hidden] { display: flex; opacity: 0; pointer-events: none; }
+.rail-btn {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px;
+  border: 1px solid #3d3930; background: #1b1a16; color: #ece6d9; transition: border-color .15s, color .15s;
+}
+.rail-arrow:hover .rail-btn { border-color: #ffb454; color: #ffb454; }
+#catRail.dragging { cursor: grabbing; scroll-behavior: auto; }
+#catRail.dragging button { pointer-events: none; }
+
 /* Filas de la lista */
 .row { position: relative; }
 .row[aria-current="true"] { background: #1b1a16; }
