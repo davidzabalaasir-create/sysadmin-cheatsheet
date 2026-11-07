@@ -26,7 +26,7 @@ python -m http.server 5500
 
 ```
 index.html                  UI (Tailwind CDN)
-assets/data.js              Dataset de comandos (153)
+assets/data.js              Dataset de comandos (184)
 assets/app.js               Lógica: filtros, búsqueda, ficha, copiar
 assets/styles.css           Estilos complementarios
 data/commands.example.json  Ejemplo del modelo de datos JSON
@@ -46,3 +46,7 @@ Añade un objeto a `commands` en `assets/data.js`:
   tags: ["…"]
 }
 ```
+
+## Auditoría
+
+[Ubuntu + Apache + MariaDB](docs/auditoria-ubuntu-apache-mariadb.md): análisis, revisión de comandos existentes y 31 comandos nuevos.

@@ -2059,6 +2059,440 @@ window.CHEATSHEET = {
       ],
       example: { command: "Get-ADDomainController -Filter * | Select-Object Name, Site, IPv4Address, OperatingSystem, IsGlobalCatalog; netdom query fsmo", explanation: "Mapa rápido de los DC por sede y de los roles FSMO antes de retirar un controlador antiguo." },
       tags: ["dc", "fsmo", "controladores", "sitios", "catalogo global"]
+    },
+
+    /* ========== STACK WEB · UBUNTU + APACHE + MARIADB ========== */
+    /* Formato de log asumido: "combined" de Apache en Ubuntu
+       ($1 IP · $4 fecha · $6 "MÉTODO · $7 ruta · $9 código · $10 bytes). */
+
+    // ---- Monitoreo de red e interconexión
+    {
+      id: "web-apachetop", name: "apachetop", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "«top» para Apache: muestra en tiempo real las URLs, IPs y códigos HTTP más solicitados leyendo el access.log.",
+      syntax: "apachetop [-f access.log] [-T segundos] [-H hits]",
+      requires: "sudo apt install apachetop",
+      flags: [
+        { flag: "-f archivo", description: "Log a vigilar (se puede repetir para varios vhosts)." },
+        { flag: "-T 60", description: "Ventana de tiempo para las estadísticas." },
+        { flag: "d / n (teclas)", description: "Alterna entre URLs, referers e IPs / ordena." }
+      ],
+      example: { command: "sudo apachetop -f /var/log/apache2/access.log -f /var/log/apache2/other_vhosts_access.log -T 60", explanation: "Durante un pico de tráfico, ves al instante qué URL o qué IP está generando la carga en el último minuto." },
+      tags: ["apache", "http", "tiempo real", "trafico", "urls"]
+    },
+    {
+      id: "web-server-status", name: "mod_status (server-status)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Marcador interno de Apache: workers ocupados/libres, peticiones por segundo y qué está atendiendo cada proceso en este momento.",
+      syntax: "curl -s 'http://localhost/server-status?auto'  |  apache2ctl fullstatus",
+      requires: "mod_status (activo por defecto en Ubuntu, limitado a localhost). Para fullstatus: sudo apt install lynx",
+      flags: [
+        { flag: "?auto", description: "Salida en texto plano para scripts." },
+        { flag: "BusyWorkers / IdleWorkers", description: "Si Idle llega a 0, Apache está saturado." },
+        { flag: "ExtendedStatus On", description: "Incluye URL y cliente de cada worker." },
+        { flag: "Scoreboard", description: "_ libre · W enviando · K keep-alive · R leyendo." }
+      ],
+      example: { command: "watch -n 2 \"curl -s 'http://localhost/server-status?auto' | grep -E 'BusyWorkers|IdleWorkers|ReqPerSec|Scoreboard'\"", explanation: "Monitoriza en directo la ocupación de Apache: si los workers libres caen a cero, las peticiones empiezan a hacer cola." },
+      tags: ["apache", "workers", "estado", "saturacion", "scoreboard"]
+    },
+    {
+      id: "web-ss-per-ip", name: "ss (conexiones HTTP por IP)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Cuenta las conexiones establecidas a los puertos 80/443 agrupadas por IP remota: detecta flood o clientes abusivos.",
+      syntax: "ss -Htn state established '( sport = :80 or sport = :443 )'",
+      requires: "Nativo (iproute2).",
+      flags: [
+        { flag: "-H", description: "Sin cabecera (más fácil de procesar)." },
+        { flag: "state established", description: "Solo conexiones activas." },
+        { flag: "'( sport = :443 )'", description: "Filtro nativo de ss, más rápido que grep." },
+        { flag: "state syn-recv", description: "Conexiones a medio abrir (posible SYN flood)." }
+      ],
+      example: { command: "ss -Htn state established '( sport = :80 or sport = :443 )' | awk '{print $4}' | sed -E 's/:[0-9]+$//' | sort | uniq -c | sort -nr | head -n 15", explanation: "Las 15 IPs con más conexiones abiertas contra Apache. Una sola IP con cientos de conexiones suele ser un bot o un ataque." },
+      tags: ["conexiones", "apache", "flood", "ddos", "ip"]
+    },
+    {
+      id: "web-ngrep", name: "ngrep (HTTP en vivo)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Captura y muestra las peticiones HTTP en claro que llegan al servidor, como un grep sobre el tráfico de red.",
+      syntax: "ngrep -q -W byline -d any 'patrón' 'filtro BPF'",
+      requires: "sudo apt install ngrep · Solo ve HTTP sin cifrar (puerto 80 o tráfico interno entre proxy y Apache).",
+      flags: [
+        { flag: "-q", description: "Modo silencioso (solo coincidencias)." },
+        { flag: "-W byline", description: "Respeta los saltos de línea de las cabeceras." },
+        { flag: "-d any", description: "Todas las interfaces." },
+        { flag: "'^(GET|POST)'", description: "Solo líneas de petición." }
+      ],
+      example: { command: "sudo ngrep -q -W byline -d any '^(GET|POST) ' 'tcp dst port 80'", explanation: "Ver en directo qué peticiones llegan por HTTP (por ejemplo, para confirmar si un bot sigue entrando por el puerto 80 o por qué no redirige a HTTPS)." },
+      tags: ["http", "captura", "peticiones", "sniffer", "debug"]
+    },
+    {
+      id: "web-curl-timing", name: "curl -w (desglose de latencia)", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Desglosa el tiempo de una petición en DNS, TCP, TLS, primer byte (TTFB) y total para saber dónde se pierde el tiempo.",
+      syntax: "curl -o /dev/null -s -w 'formato' URL",
+      requires: "Nativo (curl).",
+      flags: [
+        { flag: "%{time_namelookup}", description: "Resolución DNS." },
+        { flag: "%{time_connect}", description: "Conexión TCP establecida." },
+        { flag: "%{time_appconnect}", description: "Negociación TLS terminada." },
+        { flag: "%{time_starttransfer}", description: "TTFB: el servidor empieza a responder (PHP + MariaDB)." }
+      ],
+      example: { command: "curl -o /dev/null -s -w 'dns:%{time_namelookup}s tcp:%{time_connect}s tls:%{time_appconnect}s ttfb:%{time_starttransfer}s total:%{time_total}s http:%{http_code}\\n' https://tu-dominio.com/", explanation: "Si el TTFB es alto pero DNS/TCP/TLS son rápidos, el cuello de botella está en la aplicación o en la base de datos, no en la red." },
+      tags: ["latencia", "ttfb", "rendimiento", "tls", "dns"]
+    },
+    {
+      id: "web-logtop", name: "logtop", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Ranking en tiempo real de cualquier campo de un log (IP, URL, user-agent) con frecuencia por segundo.",
+      syntax: "tail -F access.log | awk '{print $campo}' | logtop",
+      requires: "sudo apt install logtop",
+      flags: [
+        { flag: "$1 / $7", description: "IP de origen / URL solicitada." },
+        { flag: "-s N", description: "Tamaño del historial." },
+        { flag: "--line-buffered", description: "Evita retrasos en la tubería." }
+      ],
+      example: { command: "tail -F /var/log/apache2/access.log | awk '{print $1, $7; fflush()}' | logtop", explanation: "Ve en directo qué combinación IP + URL martillea el servidor: típico de un bot atacando wp-login.php o un buscador." },
+      tags: ["tiempo real", "ranking", "ip", "url", "logs"]
+    },
+    {
+      id: "web-goaccess", name: "goaccess", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Analizador de logs web: visitantes, URLs, códigos de error, bots, ancho de banda… en terminal o como informe HTML.",
+      syntax: "goaccess access.log --log-format=COMBINED [-o informe.html] [--real-time-html]",
+      requires: "sudo apt install goaccess",
+      flags: [
+        { flag: "--log-format=COMBINED", description: "Formato por defecto de Apache en Ubuntu." },
+        { flag: "-o informe.html", description: "Genera informe HTML." },
+        { flag: "--ignore-crawlers", description: "Excluye bots conocidos." },
+        { flag: "zcat -f", description: "Incluye logs rotados comprimidos." }
+      ],
+      example: { command: "zcat -f /var/log/apache2/access.log* | goaccess - --log-format=COMBINED -o /root/informe-web-$(date +%F).html", explanation: "Informe de las últimas semanas (logs rotados incluidos). Se guarda fuera de /var/www para no exponerlo públicamente." },
+      tags: ["estadisticas", "informe", "visitas", "logs", "apache"]
+    },
+
+    // ---- Rendimiento y diagnóstico de procesos
+    {
+      id: "web-apache2ctl", name: "apache2ctl -V / -M / -S", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Radiografía de Apache: MPM en uso (prefork/event), módulos cargados y virtual hosts con el archivo que los define.",
+      syntax: "apache2ctl -V | -M | -S | configtest",
+      requires: "Nativo (apache2).",
+      flags: [
+        { flag: "-V", description: "Versión, MPM y rutas de compilación." },
+        { flag: "-M", description: "Módulos cargados." },
+        { flag: "-S", description: "VirtualHosts, puertos y archivo de cada uno." },
+        { flag: "configtest", description: "Valida la sintaxis sin reiniciar." }
+      ],
+      example: { command: "apache2ctl -V | grep -i mpm && apache2ctl -M 2>/dev/null | grep -E 'mpm|php|proxy_fcgi|http2|ssl' && apache2ctl -S", explanation: "Si ves mpm_prefork + php_module, Apache usa mod_php: migrar a mpm_event + PHP-FPM reduce mucho el consumo de RAM." },
+      tags: ["apache", "mpm", "modulos", "vhosts", "configuracion"]
+    },
+    {
+      id: "web-apache-rss", name: "ps (RAM por proceso de Apache)", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Calcula cuánta memoria usa de media cada proceso de Apache para dimensionar MaxRequestWorkers sin agotar la RAM.",
+      syntax: "ps -C apache2 -o rss= | awk '...'",
+      requires: "Nativo.",
+      flags: [
+        { flag: "-C apache2", description: "Solo procesos de Apache." },
+        { flag: "-o rss=", description: "Memoria residente en KB, sin cabecera." },
+        { flag: "MaxRequestWorkers", description: "≈ (RAM para Apache) / (media por proceso)." }
+      ],
+      example: { command: "ps -C apache2 -o rss= | awk '{s+=$1; n++} END {printf \"procesos=%d  media=%.1f MB  total=%.1f MB\\n\", n, s/n/1024, s/1024}'", explanation: "Con 4 GB libres para Apache y 60 MB de media por proceso, MaxRequestWorkers no debería pasar de ~65. Si se sobredimensiona, el servidor acaba usando swap." },
+      tags: ["apache", "memoria", "ram", "maxrequestworkers", "tuning"]
+    },
+    {
+      id: "web-apache-errors", name: "grep (saturación en error.log)", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Busca en el error.log los avisos de Apache que indican saturación, timeouts o caídas de PHP-FPM.",
+      syntax: "grep -E 'AH00161|AH00484|AH01071|AH01067' /var/log/apache2/error.log",
+      requires: "Nativo.",
+      flags: [
+        { flag: "AH00161 / AH00484", description: "Se alcanzó MaxRequestWorkers (peticiones en cola)." },
+        { flag: "AH01071", description: "Error devuelto por PHP-FPM." },
+        { flag: "AH01067 / timeout", description: "El backend no respondió a tiempo." },
+        { flag: "zgrep", description: "Busca también en logs rotados .gz." }
+      ],
+      example: { command: "zgrep -hE 'AH00161|AH00484|MaxRequestWorkers|AH01071|timed out' /var/log/apache2/error.log* | awk '{print substr($5,1,4), $2, $3}' | sort | uniq -c | tail -n 20", explanation: "Cuenta por día los avisos de saturación: si coinciden con las quejas de lentitud, hay que ajustar workers o PHP-FPM." },
+      tags: ["apache", "errores", "saturacion", "php-fpm", "timeout"]
+    },
+    {
+      id: "web-mariadb-status", name: "mariadb-admin extended-status", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Muestra cada N segundos la variación de los contadores clave de MariaDB: conexiones, consultas por segundo y consultas lentas.",
+      syntax: "mariadb-admin [-u root -p] extended-status -r -i segundos",
+      requires: "Nativo (mariadb-client). En Ubuntu, root entra por socket con sudo sin contraseña.",
+      flags: [
+        { flag: "-r -i 5", description: "Diferencia respecto a la muestra anterior, cada 5 s." },
+        { flag: "Threads_running", description: "Consultas ejecutándose a la vez (alto = contención)." },
+        { flag: "Slow_queries", description: "Nuevas consultas lentas en el intervalo." },
+        { flag: "Questions", description: "Consultas por intervalo." }
+      ],
+      example: { command: "sudo mariadb-admin extended-status -r -i 5 | grep -E 'Threads_(connected|running)|Questions |Slow_queries|Aborted_connects'", explanation: "Durante un pico, ves si MariaDB es el cuello de botella: Threads_running disparado o Slow_queries creciendo." },
+      tags: ["mariadb", "mysql", "rendimiento", "conexiones", "consultas"]
+    },
+    {
+      id: "web-mariadb-processlist", name: "SHOW PROCESSLIST (consultas activas)", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Lista las consultas en ejecución con su duración para localizar la que bloquea la base de datos. KILL la cancela.",
+      syntax: "mariadb -e \"SELECT ... FROM information_schema.processlist ...\"  |  KILL QUERY id",
+      requires: "Nativo (mariadb-client).",
+      flags: [
+        { flag: "command <> 'Sleep'", description: "Oculta conexiones inactivas." },
+        { flag: "time > 5", description: "Solo consultas de más de 5 s." },
+        { flag: "KILL QUERY id", description: "Cancela la consulta, mantiene la conexión." },
+        { flag: "KILL id", description: "Cierra la conexión entera." }
+      ],
+      example: { command: "sudo mariadb -e \"SELECT id, user, db, time, state, LEFT(info,120) AS consulta FROM information_schema.processlist WHERE command <> 'Sleep' AND time > 5 ORDER BY time DESC;\"", explanation: "La web va lenta: encuentra la consulta que lleva más tiempo ejecutándose y bloqueando tablas. Cancélala con KILL QUERY solo si sabes qué es." },
+      tags: ["mariadb", "consultas", "bloqueo", "lento", "processlist"]
+    },
+    {
+      id: "web-mariadb-slowlog", name: "slow query log + mariadb-dumpslow", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Activa en caliente el registro de consultas lentas y resume las que más tiempo consumen en total.",
+      syntax: "SET GLOBAL slow_query_log=1; SET GLOBAL long_query_time=N;  |  mariadb-dumpslow -s t -t 10 log",
+      requires: "Nativo (mariadb-server; mariadb-dumpslow equivale a mysqldumpslow). Para que sobreviva al reinicio, añádelo en /etc/mysql/mariadb.conf.d/50-server.cnf.",
+      flags: [
+        { flag: "long_query_time=1", description: "Registra consultas de más de 1 s." },
+        { flag: "log_queries_not_using_indexes", description: "Registra también las que no usan índices." },
+        { flag: "-s t -t 10", description: "Top 10 por tiempo total." },
+        { flag: "-s c", description: "Ordena por número de ejecuciones." }
+      ],
+      example: { command: "sudo mariadb -e \"SET GLOBAL slow_query_log=1; SET GLOBAL long_query_time=1;\" && sleep 3600 && sudo mariadb-dumpslow -s t -t 10 /var/lib/mysql/$(hostname)-slow.log", explanation: "Recoge una hora de tráfico real y muestra las 10 consultas que más tiempo de base de datos consumen: candidatas a índice o caché." },
+      tags: ["mariadb", "consultas lentas", "slow log", "indices", "optimizacion"]
+    },
+    {
+      id: "web-mysqltuner", name: "mysqltuner", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Analiza la configuración y estadísticas de MariaDB y recomienda ajustes (buffer pool, conexiones, caché de tablas…).",
+      syntax: "mysqltuner [--user root] [--forcemem MB]",
+      requires: "sudo apt install mysqltuner · Ejecutar con al menos 24 h de actividad para que las recomendaciones sean fiables.",
+      flags: [
+        { flag: "--forcemem 4096", description: "RAM a considerar si la BD comparte servidor." },
+        { flag: "--nocolor", description: "Salida limpia para guardar." },
+        { flag: "--verbose", description: "Más detalle." }
+      ],
+      example: { command: "sudo mysqltuner --nocolor | tee /root/mysqltuner-$(date +%F).txt | grep -A40 'Recommendations'", explanation: "Revisión mensual de MariaDB: guarda el informe y muestra las recomendaciones (normalmente innodb_buffer_pool_size)." },
+      tags: ["mariadb", "tuning", "configuracion", "optimizacion", "rendimiento"]
+    },
+    {
+      id: "web-pidstat", name: "pidstat (Apache + MariaDB)", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Mide por intervalos el uso de CPU, RAM y disco de los procesos del servidor web y de la base de datos.",
+      syntax: "pidstat [-u] [-r] [-d] -C 'patrón' intervalo [veces]",
+      requires: "sudo apt install sysstat",
+      flags: [
+        { flag: "-u / -r / -d", description: "CPU / memoria / E/S de disco." },
+        { flag: "-C 'apache2|mariadbd'", description: "Filtra por nombre de proceso." },
+        { flag: "-l", description: "Muestra la línea de comando completa." }
+      ],
+      example: { command: "pidstat -u -r -d -C 'apache2|mariadbd|php-fpm' 5 12", explanation: "Un minuto de muestreo bajo carga: identifica si quien consume CPU o disco es Apache, PHP-FPM o MariaDB." },
+      tags: ["cpu", "memoria", "disco", "procesos", "sysstat"]
+    },
+    {
+      id: "web-iostat", name: "iostat -xz", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Latencia y saturación de cada disco. Clave para saber si MariaDB va lenta por el almacenamiento.",
+      syntax: "iostat -xz [-m] intervalo [veces]",
+      requires: "sudo apt install sysstat",
+      flags: [
+        { flag: "-x", description: "Estadísticas extendidas." },
+        { flag: "-z", description: "Oculta dispositivos sin actividad." },
+        { flag: "r_await / w_await", description: "Latencia media en ms (más de 10–20 ms en SSD es mala)." },
+        { flag: "%util", description: "Cerca del 100 % = disco saturado." }
+      ],
+      example: { command: "iostat -xzm 5 6", explanation: "Si w_await y %util se disparan cuando la web va lenta, el problema es el disco (escrituras de MariaDB o logs), no la CPU." },
+      tags: ["disco", "latencia", "io", "rendimiento", "mariadb"]
+    },
+    {
+      id: "web-ab", name: "ab (prueba de carga)", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "ApacheBench: lanza N peticiones con C usuarios simultáneos y mide peticiones por segundo y tiempos de respuesta.",
+      syntax: "ab -n peticiones -c concurrencia [-k] URL",
+      requires: "Paquete apache2-utils (se instala con apache2). Úsalo solo contra tus propios servidores y fuera de horas punta.",
+      flags: [
+        { flag: "-n 1000", description: "Peticiones totales." },
+        { flag: "-c 50", description: "Peticiones simultáneas." },
+        { flag: "-k", description: "Usa keep-alive." },
+        { flag: "Requests per second", description: "Métrica principal del resultado." }
+      ],
+      example: { command: "ab -n 2000 -c 50 -k https://staging.tu-dominio.com/ | grep -E 'Requests per second|Time per request|Failed requests|50%|95%|99%'", explanation: "Compara el rendimiento antes y después de un cambio (OPcache, MPM event, caché) con la misma prueba." },
+      tags: ["carga", "benchmark", "stress", "rendimiento", "apache"]
+    },
+
+    // ---- Seguridad y análisis de logs
+    {
+      id: "web-log-404", name: "awk (IPs con más errores 404)", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Lista las IPs que más errores 404 generan: casi siempre escáneres buscando archivos vulnerables.",
+      syntax: "awk '$9 == 404 {print $1}' access.log | sort | uniq -c | sort -nr",
+      requires: "Nativo. Log en formato combined.",
+      flags: [
+        { flag: "$9 == 404", description: "Columna del código HTTP." },
+        { flag: "$9 ~ /^5/", description: "Errores de servidor (5xx)." },
+        { flag: "zcat -f access.log*", description: "Incluye logs rotados." }
+      ],
+      example: { command: "zcat -f /var/log/apache2/access.log* | awk '$9 == 404 {print $1}' | sort | uniq -c | sort -nr | awk '$1 > 100' | head -n 20", explanation: "IPs con más de 100 errores 404: candidatas a bloqueo en el firewall o en Fail2ban." },
+      tags: ["404", "escaneo", "ip", "logs", "apache"]
+    },
+    {
+      id: "web-log-scans", name: "grep (escaneos de vulnerabilidades)", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Detecta en el access.log intentos típicos de explotación: .env, .git, phpMyAdmin, path traversal, inyección SQL o XSS.",
+      syntax: "grep -Ei 'patrones' access.log | awk '{print $1}' | sort | uniq -c",
+      requires: "Nativo.",
+      flags: [
+        { flag: "\\.env|/\\.git", description: "Búsqueda de credenciales expuestas." },
+        { flag: "\\.\\./|etc/passwd", description: "Path traversal." },
+        { flag: "union.*select|sleep\\(", description: "Inyección SQL." },
+        { flag: "<script|%3Cscript", description: "XSS." }
+      ],
+      example: { command: "grep -Ei '\\.env|/\\.git/|phpmyadmin|wp-config|\\.\\./|etc/passwd|union.+select|sleep\\(|<script|%3Cscript|base64_decode' /var/log/apache2/access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head -n 20", explanation: "Ranking de IPs que han lanzado sondas de ataque. Comprueba también con awk '$9==200' si alguna de esas peticiones tuvo éxito." },
+      tags: ["ataques", "inyeccion", "sqli", "xss", "escaneo", "seguridad"]
+    },
+    {
+      id: "web-log-bruteforce", name: "awk (fuerza bruta en logins web)", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Cuenta los POST contra formularios de login (wp-login.php, xmlrpc.php, /admin) por IP para detectar fuerza bruta.",
+      syntax: "awk '$6 ~ /POST/ && $7 ~ /login/ {print $1}' access.log | sort | uniq -c | sort -nr",
+      requires: "Nativo.",
+      flags: [
+        { flag: "$6 ~ /POST/", description: "Método de la petición." },
+        { flag: "$7 ~ /wp-login|xmlrpc/", description: "Rutas de login a vigilar (adáptalas a tu aplicación)." },
+        { flag: "awk '$1 > 20'", description: "Umbral de intentos." }
+      ],
+      example: { command: "awk '$6 ~ /POST/ && $7 ~ /wp-login\\.php|xmlrpc\\.php|\\/admin|\\/login/ {print $1}' /var/log/apache2/access.log | sort | uniq -c | sort -nr | awk '$1 > 20' | head", explanation: "IPs con más de 20 intentos de login hoy. Si es WordPress, xmlrpc.php permite cientos de intentos por petición: desactívalo si no lo usas." },
+      tags: ["fuerza bruta", "login", "wordpress", "xmlrpc", "ataques"]
+    },
+    {
+      id: "web-log-useragents", name: "awk (user-agents sospechosos)", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Agrupa los user-agents y destaca herramientas de ataque conocidas (sqlmap, nikto, nmap, masscan…).",
+      syntax: "awk -F'\"' '{print $6}' access.log | sort | uniq -c | sort -nr",
+      requires: "Nativo.",
+      flags: [
+        { flag: "-F'\"'", description: "Separa por comillas: $6 es el user-agent en formato combined." },
+        { flag: "grep -Ei 'sqlmap|nikto'", description: "Herramientas de pentesting." },
+        { flag: "'^-$'", description: "Peticiones sin user-agent (casi siempre scripts)." }
+      ],
+      example: { command: "awk -F'\"' '{print $6}' /var/log/apache2/access.log | grep -Ei 'sqlmap|nikto|nmap|masscan|zgrab|nuclei|wpscan|dirbuster|gobuster|python-requests|curl|^-$' | sort | uniq -c | sort -nr", explanation: "Detecta escáneres automáticos que se identifican en el user-agent; combinado con su IP, puedes bloquearlos con Fail2ban." },
+      tags: ["user-agent", "bots", "escaneres", "sqlmap", "seguridad"]
+    },
+    {
+      id: "web-log-rpm", name: "awk (peticiones por minuto)", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Agrupa las peticiones por minuto para localizar picos de tráfico anómalos (DDoS, scraping) y cuándo empezaron.",
+      syntax: "awk '{print substr($4, 2, 17)}' access.log | sort | uniq -c",
+      requires: "Nativo.",
+      flags: [
+        { flag: "substr($4,2,17)", description: "dd/Mmm/aaaa:HH:MM, fecha hasta el minuto." },
+        { flag: "substr($4,2,14)", description: "Agrupa por hora." },
+        { flag: "sort -nr | head", description: "Los minutos de más tráfico." }
+      ],
+      example: { command: "awk '{print substr($4, 2, 17)}' /var/log/apache2/access.log | sort | uniq -c | sort -nr | head -n 10", explanation: "Muestra los 10 minutos con más peticiones; después filtra ese minuto con grep para ver qué IPs lo causaron." },
+      tags: ["picos", "ddos", "trafico", "minuto", "analisis"]
+    },
+    {
+      id: "web-fail2ban-apache", name: "fail2ban (jails para Apache)", os: "linux", shell: "bash", category: "security", risk: "caution",
+      description: "Activa las protecciones de Fail2ban para Apache: autenticación fallida, bots maliciosos, escaneo de scripts y desbordamientos.",
+      syntax: "/etc/fail2ban/jail.d/apache.local  →  [apache-auth] enabled = true ...",
+      requires: "sudo apt install fail2ban · Incluye ya los filtros apache-*; solo hay que activarlos.",
+      flags: [
+        { flag: "apache-auth", description: "Fallos de autenticación HTTP Basic/Digest." },
+        { flag: "apache-badbots", description: "User-agents de spambots conocidos." },
+        { flag: "apache-noscript", description: "Búsqueda de scripts inexistentes (.php, .asp…)." },
+        { flag: "apache-overflows", description: "Peticiones anormalmente largas." }
+      ],
+      example: { command: "sudo tee /etc/fail2ban/jail.d/apache.local >/dev/null <<'EOF'\n[apache-auth]\nenabled = true\n[apache-badbots]\nenabled = true\n[apache-noscript]\nenabled = true\n[apache-overflows]\nenabled = true\nEOF\nsudo fail2ban-client reload && sudo fail2ban-client status", explanation: "Protege Apache con los filtros que ya trae Fail2ban. Añade tu IP de administración a ignoreip en jail.local para no bloquearte." },
+      tags: ["fail2ban", "apache", "bloqueo", "bots", "proteccion"]
+    },
+    {
+      id: "web-mariadb-security", name: "Auditoría de seguridad de MariaDB", os: "linux", shell: "bash", category: "security", risk: "safe",
+      description: "Comprueba que MariaDB no está expuesta a Internet y que no hay usuarios accesibles desde cualquier host o sin contraseña.",
+      syntax: "ss -tlnp 'sport = :3306' && mariadb -e \"SELECT user, host, plugin FROM mysql.user;\"",
+      requires: "Nativo. Si aparece 0.0.0.0:3306, revisa bind-address en /etc/mysql/mariadb.conf.d/50-server.cnf.",
+      flags: [
+        { flag: "127.0.0.1:3306", description: "Correcto: solo escucha en local." },
+        { flag: "host = '%'", description: "Usuario accesible desde cualquier IP." },
+        { flag: "mariadb-secure-installation", description: "Quita usuarios anónimos y la base de datos de pruebas." }
+      ],
+      example: { command: "sudo ss -tlnp 'sport = :3306' && sudo mariadb -e \"SELECT user, host, plugin FROM mysql.user WHERE host NOT IN ('localhost','127.0.0.1','::1') OR user = '';\"", explanation: "Si 3306 escucha en todas las interfaces o hay usuarios con host '%', la base de datos está expuesta a ataques de fuerza bruta." },
+      tags: ["mariadb", "seguridad", "usuarios", "puerto", "exposicion"]
+    },
+
+    // ---- Mantenimiento y automatización
+    {
+      id: "web-mariadb-backup", name: "mariadb-dump (backup con rotación)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Copia de seguridad consistente de todas las bases de datos sin bloquear InnoDB, comprimida y con borrado de copias antiguas.",
+      syntax: "mariadb-dump --single-transaction --routines --triggers --events --all-databases | gzip > archivo.sql.gz",
+      requires: "Nativo (mariadb-client). Guarda una copia fuera del servidor (rsync/rclone).",
+      flags: [
+        { flag: "--single-transaction", description: "Copia consistente de InnoDB sin bloquear tablas." },
+        { flag: "--routines --triggers --events", description: "Incluye procedimientos, triggers y eventos." },
+        { flag: "--all-databases / nombre_bd", description: "Todas o una concreta." },
+        { flag: "find -mtime +7 -delete", description: "Retención de 7 días." }
+      ],
+      example: { command: "sudo mariadb-dump --single-transaction --routines --triggers --events --all-databases | gzip > /backups/mariadb-$(date +%F_%H%M).sql.gz && find /backups -name 'mariadb-*.sql.gz' -mtime +7 -delete", explanation: "Backup nocturno listo para cron. Restaurar: gunzip < archivo.sql.gz | sudo mariadb. Prueba la restauración de vez en cuando." },
+      tags: ["backup", "mariadb", "mysqldump", "copia", "rotacion"]
+    },
+    {
+      id: "web-cron-flock", name: "cron + flock (tareas sin solapamiento)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Evita que una tarea programada se ejecute dos veces a la vez si la anterior aún no terminó, y registra su salida.",
+      syntax: "m h * * * flock -n /run/lock/tarea.lock comando >> log 2>&1",
+      requires: "Nativo (util-linux).",
+      flags: [
+        { flag: "-n", description: "Si ya está en ejecución, sale sin esperar." },
+        { flag: "-w 300", description: "Espera hasta 300 s a que se libere." },
+        { flag: ">> log 2>&1", description: "Guarda salida y errores." },
+        { flag: "MAILTO=", description: "Variable de crontab para recibir avisos por correo." }
+      ],
+      example: { command: "30 2 * * * flock -n /run/lock/backup-db.lock /usr/local/bin/backup-db.sh >> /var/log/backup-db.log 2>&1", explanation: "Si un backup tarda más de lo normal, el siguiente no se lanza encima saturando disco y MariaDB." },
+      tags: ["cron", "flock", "bloqueo", "solapamiento", "tareas"]
+    },
+    {
+      id: "web-apache-reload", name: "configtest + reload (cambios sin corte)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Activa módulos o sitios y aplica la configuración de Apache sin cortar las conexiones activas, solo si la sintaxis es válida.",
+      syntax: "a2enmod|a2dismod|a2ensite|a2dissite nombre && apache2ctl configtest && systemctl reload apache2",
+      requires: "Nativo (apache2).",
+      flags: [
+        { flag: "a2enmod / a2dismod", description: "Activa / desactiva módulos." },
+        { flag: "a2ensite / a2dissite", description: "Activa / desactiva virtual hosts." },
+        { flag: "a2enconf", description: "Activa fragmentos de conf-available." },
+        { flag: "reload vs restart", description: "reload termina las peticiones en curso; restart las corta." }
+      ],
+      example: { command: "sudo a2enmod headers expires http2 && sudo apache2ctl configtest && sudo systemctl reload apache2", explanation: "Activa cabeceras de seguridad, caché de estáticos y HTTP/2. Si configtest falla, no se recarga nada y la web sigue funcionando." },
+      tags: ["apache", "recargar", "modulos", "vhost", "sin corte"]
+    },
+    {
+      id: "web-logrotate", name: "logrotate -d / -f", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Prueba y fuerza la rotación de logs de Apache para evitar que llenen el disco.",
+      syntax: "logrotate -d /etc/logrotate.d/apache2 | logrotate -f /etc/logrotate.d/apache2",
+      requires: "Nativo.",
+      flags: [
+        { flag: "-d", description: "Simulación: muestra qué haría sin hacerlo." },
+        { flag: "-f", description: "Fuerza la rotación ahora." },
+        { flag: "rotate 14 / daily", description: "Directivas de retención en el archivo." },
+        { flag: "compress", description: "Comprime los logs rotados." }
+      ],
+      example: { command: "sudo logrotate -d /etc/logrotate.d/apache2 2>&1 | tail -n 20 && sudo logrotate -f /etc/logrotate.d/apache2", explanation: "El access.log ocupa varios GB: verifica la configuración en modo simulación y rota inmediatamente." },
+      tags: ["logs", "rotar", "espacio", "apache", "mantenimiento"]
+    },
+    {
+      id: "web-certbot", name: "certbot renew --dry-run", os: "linux", shell: "bash", category: "automation", risk: "safe",
+      description: "Comprueba que la renovación automática de los certificados Let's Encrypt funcionará antes de que caduquen.",
+      syntax: "certbot certificates | certbot renew --dry-run",
+      requires: "sudo apt install certbot python3-certbot-apache (o snap install --classic certbot).",
+      flags: [
+        { flag: "certificates", description: "Certificados y fecha de caducidad." },
+        { flag: "renew --dry-run", description: "Simula la renovación contra el entorno de pruebas." },
+        { flag: "--apache", description: "Configura el vhost HTTPS automáticamente." }
+      ],
+      example: { command: "sudo certbot certificates && sudo certbot renew --dry-run && systemctl list-timers | grep -i certbot", explanation: "Confirma caducidades, que la renovación funciona y que el temporizador automático está programado." },
+      tags: ["certificado", "letsencrypt", "https", "ssl", "renovacion"]
+    },
+    {
+      id: "web-cleanup", name: "Limpieza de espacio (apt, journal, logs)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Libera espacio de forma segura: caché de paquetes, kernels antiguos, journal de systemd y logs rotados viejos.",
+      syntax: "apt clean && apt autoremove --purge && journalctl --vacuum-time=14d",
+      requires: "Nativo.",
+      flags: [
+        { flag: "apt clean", description: "Vacía la caché de paquetes descargados." },
+        { flag: "autoremove --purge", description: "Quita dependencias y kernels antiguos." },
+        { flag: "--vacuum-time=14d / --vacuum-size=500M", description: "Recorta el journal por antigüedad / tamaño." },
+        { flag: "find ... -mtime +30 -delete", description: "Borra logs rotados de más de 30 días." }
+      ],
+      example: { command: "df -h / && sudo apt clean && sudo apt autoremove --purge -y && sudo journalctl --vacuum-time=14d && sudo find /var/log/apache2 -name '*.gz' -mtime +30 -delete && df -h /", explanation: "Mantenimiento mensual del disco con medición antes y después. Revisa la política de retención de logs antes de borrar." },
+      tags: ["limpieza", "espacio", "cache", "journal", "mantenimiento"]
+    },
+    {
+      id: "web-needrestart", name: "needrestart", os: "linux", shell: "bash", category: "packages", risk: "safe",
+      description: "Tras actualizar paquetes, indica qué servicios (Apache, MariaDB, PHP-FPM…) siguen usando librerías antiguas y si hace falta reiniciar el kernel.",
+      syntax: "needrestart [-r l|a] [-k] [-b]",
+      requires: "Viene instalado en Ubuntu Server 22.04+; si no: sudo apt install needrestart",
+      flags: [
+        { flag: "-r l", description: "Solo lista, no reinicia nada." },
+        { flag: "-k / -l", description: "Solo kernel / solo librerías (sin ellas revisa ambos)." },
+        { flag: "-b", description: "Salida para scripts/monitorización." }
+      ],
+      example: { command: "sudo apt update && sudo apt upgrade -y && sudo needrestart -r l", explanation: "Después de parchear OpenSSL o glibc, Apache y MariaDB siguen con la versión vulnerable en memoria hasta reiniciarlos: needrestart te dice cuáles." },
+      tags: ["actualizaciones", "reinicio", "servicios", "kernel", "parches"]
     }
   ]
 };

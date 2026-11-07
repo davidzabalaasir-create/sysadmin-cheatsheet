@@ -101,7 +101,7 @@
     hay: norm([
       c.name, c.description, c.syntax, SHELL[c.shell], c.os, catById[c.category].label, catById[c.category].labelEn,
       (c.tags || []).join(" "), (c.flags || []).map((f) => `${f.flag} ${f.description}`).join(" "),
-      c.example.command, c.example.explanation, RISK[c.risk].label
+      c.example.command, c.example.explanation, RISK[c.risk].label, c.requires || ""
     ].join(" "))
   }));
 
@@ -277,6 +277,12 @@
           </div>
         </div>` : c.risk === "caution" ? `
         <p class="mt-6 text-sm text-bone-dim border-l-2 border-amber pl-3"><span class="text-amber font-medium">Precaución:</span> modifica configuración o estado del sistema. Revisa los parámetros antes de ejecutar.</p>` : ""}
+
+        ${c.requires ? `
+        <div class="mt-6 flex gap-3 rounded-lg border border-sky/30 bg-sky-soft px-4 py-3">
+          <span class="font-mono text-[10px] uppercase tracking-widest text-sky pt-0.5 shrink-0">Requisitos</span>
+          <p class="text-sm text-bone">${hl(c.requires)}</p>
+        </div>` : ""}
 
         <!-- 1. Sintaxis -->
         <section class="mt-9">
