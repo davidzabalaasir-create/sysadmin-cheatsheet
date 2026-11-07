@@ -4,7 +4,7 @@
  * la app funcione abriendo index.html directamente, sin servidor).
  * ========================================================================= */
 window.CHEATSHEET = {
-  version: "1.2.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
+  version: "1.3.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
   categories: [
     { id: "users",      label: "Usuarios y Permisos",      labelEn: "User & Privilege Management", icon: "users",   os: ["linux", "windows"] },
     { id: "filesystem", label: "Archivos y Directorios",   labelEn: "File System",                 icon: "folder",  os: ["linux", "windows"] },
@@ -3094,6 +3094,413 @@ window.CHEATSHEET = {
       ],
       example: { command: "/tool torch interface=ether1 src-address=0.0.0.0/0 port=any", explanation: "«Internet va lento en la oficina»: descubre en directo qué equipo está saturando la conexión." },
       tags: ["mikrotik", "torch", "ancho de banda", "ping", "diagnostico"]
+    },
+
+    /* ===================== AMPLIACIÓN · WINDOWS (v1.3) ===================== */
+
+    // ---- Usuarios y permisos
+    {
+      id: "win-get-acl", name: "Get-Acl / Set-Acl", os: "windows", shell: "powershell", category: "users", risk: "caution",
+      description: "Lee y modifica permisos NTFS (y de claves del Registro) como objetos de PowerShell: ideal para auditar o copiar permisos entre carpetas.",
+      syntax: "Get-Acl -Path <ruta> | Format-List | Set-Acl -Path <destino> -AclObject <acl>",
+      flags: [
+        { flag: "(Get-Acl ruta).Access", description: "Lista de entradas: identidad, derechos y herencia." },
+        { flag: "Get-Acl origen | Set-Acl destino", description: "Copia los permisos de una carpeta a otra." },
+        { flag: "AddAccessRule()", description: "Añade una regla nueva al objeto ACL." },
+        { flag: "SetAccessRuleProtection($true,$true)", description: "Corta la herencia conservando los permisos actuales." }
+      ],
+      example: { command: "Get-ChildItem D:\\Shares -Directory | ForEach-Object { (Get-Acl $_.FullName).Access | Where-Object IdentityReference -like '*Everyone*' | Select-Object @{n='Carpeta';e={$_.FullName}}, IdentityReference, FileSystemRights }", explanation: "Auditoría rápida: carpetas compartidas donde «Everyone» tiene algún permiso." },
+      tags: ["permisos", "ntfs", "acl", "auditoria", "copiar permisos"]
+    },
+    {
+      id: "win-cmdkey", name: "cmdkey", os: "windows", shell: "cmd", category: "users", risk: "caution",
+      description: "Gestiona las credenciales guardadas en el Administrador de credenciales de Windows (RDP, recursos compartidos, servidores).",
+      syntax: "cmdkey /list | /add:destino /user:usuario /pass | /generic:destino | /delete:destino",
+      flags: [
+        { flag: "/list", description: "Muestra las credenciales guardadas." },
+        { flag: "/add:servidor /user:u /pass", description: "Guarda una credencial de dominio (pide la contraseña)." },
+        { flag: "/generic:TERMSRV/host", description: "Credencial para Escritorio remoto." },
+        { flag: "/delete:destino", description: "Elimina una credencial (p. ej. tras cambiar la contraseña)." }
+      ],
+      example: { command: "cmdkey /list | findstr /i \"Target\" && cmdkey /delete:srv01", explanation: "Tras cambiar tu contraseña de dominio, borra la credencial antigua guardada para srv01, que provocaba bloqueos de cuenta." },
+      tags: ["credenciales", "contraseñas", "rdp", "bloqueo", "credential manager"]
+    },
+    {
+      id: "win-quser", name: "quser / logoff", os: "windows", shell: "cmd", category: "users", risk: "caution",
+      description: "Lista las sesiones de usuario (locales o de Escritorio remoto) de un servidor y cierra las que se hayan quedado colgadas.",
+      syntax: "quser [/server:host] | logoff <IdSesión> [/server:host]",
+      flags: [
+        { flag: "/server:host", description: "Consulta un servidor remoto." },
+        { flag: "ESTADO Disc", description: "Sesión desconectada que sigue consumiendo recursos." },
+        { flag: "logoff ID", description: "Cierra la sesión (se pierde el trabajo no guardado)." },
+        { flag: "query session", description: "Alternativa con más detalle." }
+      ],
+      example: { command: "quser /server:srv01 && logoff 3 /server:srv01", explanation: "«No puedo entrar por RDP, hay demasiados usuarios»: ve quién tiene sesión en srv01 y cierra la desconectada que ocupa la licencia." },
+      tags: ["sesiones", "rdp", "escritorio remoto", "usuarios conectados", "cerrar sesion"]
+    },
+
+    // ---- Archivos
+    {
+      id: "win-select-string", name: "Select-String", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "El «grep» de PowerShell: busca texto o expresiones regulares en archivos o en la salida de otros comandos.",
+      syntax: "Select-String -Path <archivos> -Pattern <regex> [-Context n] [-SimpleMatch] [-CaseSensitive]",
+      flags: [
+        { flag: "-Pattern", description: "Expresión regular a buscar." },
+        { flag: "-SimpleMatch", description: "Texto literal (sin regex)." },
+        { flag: "-Context 2,2", description: "Líneas antes y después de cada coincidencia." },
+        { flag: "-Recurse (con Get-ChildItem)", description: "Busca en subcarpetas." }
+      ],
+      example: { command: "Get-ChildItem C:\\inetpub\\wwwroot -Recurse -Include *.config | Select-String -Pattern 'password\\s*=' | Select-Object Path, LineNumber, Line", explanation: "Busca contraseñas en texto plano en los web.config de IIS antes de una auditoría." },
+      tags: ["buscar", "grep", "texto", "regex", "findstr"]
+    },
+    {
+      id: "win-forfiles", name: "forfiles", os: "windows", shell: "cmd", category: "filesystem", risk: "danger",
+      description: "Ejecuta un comando sobre los archivos que cumplen un criterio de fecha: el clásico para borrar logs o copias antiguas desde CMD.",
+      syntax: "forfiles /P ruta /S /M patrón /D -días /C \"cmd /c comando @path\"",
+      flags: [
+        { flag: "/P ruta /S", description: "Carpeta inicial y subcarpetas." },
+        { flag: "/M *.log", description: "Patrón de archivos." },
+        { flag: "/D -30", description: "Modificados hace más de 30 días." },
+        { flag: "/C \"cmd /c echo @path\"", description: "Comando a ejecutar; prueba primero con echo." }
+      ],
+      example: { command: "forfiles /P \"D:\\Backups\\SQL\" /S /M *.bak /D -14 /C \"cmd /c del /q @path\"", explanation: "Borra copias de SQL Server de más de 14 días. Cambia «del /q» por «echo» para revisar antes qué se borraría." },
+      tags: ["borrar", "antiguos", "limpieza", "logs", "retencion"]
+    },
+    {
+      id: "win-fsutil", name: "fsutil", os: "windows", shell: "cmd", category: "storage", risk: "caution",
+      description: "Utilidad avanzada del sistema de archivos: espacio libre real, bit de «volumen sucio», archivos de prueba y comportamiento NTFS.",
+      syntax: "fsutil volume diskfree C: | fsutil dirty query C: | fsutil file createnew archivo tamaño",
+      flags: [
+        { flag: "volume diskfree C:", description: "Bytes totales y libres del volumen." },
+        { flag: "dirty query C:", description: "Indica si Windows ejecutará chkdsk al arrancar." },
+        { flag: "file createnew f 1073741824", description: "Crea un archivo de 1 GB (pruebas de cuota o copia)." },
+        { flag: "behavior query disablelastaccess", description: "Si NTFS actualiza la fecha de último acceso." }
+      ],
+      example: { command: "fsutil dirty query D: && fsutil volume diskfree D:", explanation: "Tras un apagado brusco, comprueba si el volumen de datos quedó marcado como dañado y cuánto espacio libre tiene." },
+      tags: ["ntfs", "espacio", "dirty", "chkdsk", "archivo de prueba"]
+    },
+    {
+      id: "win-net-use", name: "net use / New-SmbMapping", os: "windows", shell: "cmd", category: "network", risk: "caution",
+      description: "Conecta, lista y desconecta unidades de red y recursos compartidos SMB.",
+      syntax: "net use [X:] \\\\servidor\\recurso [/user:dominio\\u] [/persistent:yes] | net use X: /delete",
+      flags: [
+        { flag: "net use", description: "Lista las conexiones actuales y su estado." },
+        { flag: "/persistent:yes", description: "Reconecta la unidad al iniciar sesión." },
+        { flag: "/delete", description: "Desconecta (usa * para todas)." },
+        { flag: "New-SmbMapping -LocalPath X: -RemotePath", description: "Equivalente en PowerShell." }
+      ],
+      example: { command: "net use * /delete /y && net use Z: \\\\srv01\\Departamentos /persistent:yes", explanation: "Una unidad de red sale como «No disponible» tras un cambio de servidor: limpia todas las conexiones y vuelve a mapearla." },
+      tags: ["unidad de red", "mapear", "smb", "recurso compartido", "carpeta compartida"]
+    },
+
+    // ---- Redes
+    {
+      id: "win-netstat", name: "netstat -ano / -b", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Clásico de CMD: conexiones y puertos en escucha con el PID (o el ejecutable) que los usa.",
+      syntax: "netstat -ano [-p tcp] | netstat -b | netstat -s",
+      flags: [
+        { flag: "-a -n -o", description: "Todas las conexiones, numéricas, con PID." },
+        { flag: "-b", description: "Nombre del ejecutable (requiere admin)." },
+        { flag: "-s", description: "Estadísticas por protocolo (errores, retransmisiones)." },
+        { flag: "| findstr :443", description: "Filtra por puerto." }
+      ],
+      example: { command: "netstat -ano | findstr \":80 \" | findstr LISTENING && tasklist /FI \"PID eq 4\"", explanation: "IIS no arranca porque el puerto 80 está ocupado: localiza el PID que lo tiene (el 4 es el propio sistema, típico de http.sys o WebDAV)." },
+      tags: ["puertos", "conexiones", "pid", "listen", "ocupado"]
+    },
+    {
+      id: "win-test-connection", name: "Test-Connection", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Ping de PowerShell que devuelve objetos: ideal para comprobar muchos equipos a la vez o usarlo en scripts.",
+      syntax: "Test-Connection -TargetName <host[]> [-Count n] [-Quiet] [-Repeat] [-TcpPort p]",
+      flags: [
+        { flag: "-Quiet", description: "Solo True/False." },
+        { flag: "-Count 2", description: "Número de pings." },
+        { flag: "-Repeat", description: "Ping continuo (como ping -t), PowerShell 7." },
+        { flag: "-TcpPort 3389", description: "Prueba un puerto TCP en vez de ICMP (PowerShell 7)." }
+      ],
+      example: { command: "'srv01','srv02','dc01','web01' | ForEach-Object { [pscustomobject]@{ Equipo = $_; Responde = Test-Connection $_ -Count 1 -Quiet } }", explanation: "Tras un corte eléctrico, tabla rápida de qué servidores han vuelto a responder." },
+      tags: ["ping", "conectividad", "icmp", "equipos", "disponibilidad"]
+    },
+    {
+      id: "win-dnsclientcache", name: "Get-DnsClientCache / Clear-DnsClientCache", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Muestra y vacía la caché DNS del cliente desde PowerShell, también en equipos remotos.",
+      syntax: "Get-DnsClientCache [-Entry nombre] | Clear-DnsClientCache [-CimSession equipo]",
+      flags: [
+        { flag: "-Entry", description: "Filtra por nombre." },
+        { flag: "Data / TimeToLive", description: "IP resuelta y segundos que le quedan en caché." },
+        { flag: "-CimSession", description: "Actúa sobre otro equipo." },
+        { flag: "ipconfig /flushdns", description: "Equivalente clásico." }
+      ],
+      example: { command: "Get-DnsClientCache -Entry intranet.corp.local | Select-Object Entry, Data, TimeToLive; Clear-DnsClientCache -CimSession pc-contab-03", explanation: "Tras cambiar la IP de la intranet, comprueba qué IP tiene cacheada un puesto y vacía su caché en remoto." },
+      tags: ["dns", "cache", "flushdns", "resolucion", "remoto"]
+    },
+    {
+      id: "win-invoke-webrequest", name: "Invoke-WebRequest / Invoke-RestMethod", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Cliente HTTP de PowerShell: comprueba webs y APIs, descarga archivos y convierte respuestas JSON en objetos.",
+      syntax: "Invoke-WebRequest -Uri <url> [-UseBasicParsing] [-OutFile f] | Invoke-RestMethod -Uri <url> [-Method] [-Body] [-Headers]",
+      flags: [
+        { flag: "StatusCode / Headers", description: "Código HTTP y cabeceras de la respuesta." },
+        { flag: "-OutFile", description: "Descarga a un archivo." },
+        { flag: "Invoke-RestMethod", description: "Devuelve el JSON ya convertido en objetos." },
+        { flag: "-SkipCertificateCheck", description: "Ignora errores de certificado (solo pruebas, PS 7)." }
+      ],
+      example: { command: "$r = Invoke-WebRequest -Uri https://app.empresa.com/health -UseBasicParsing -TimeoutSec 10; \"$($r.StatusCode) $($r.Headers['Server'])\"", explanation: "Comprueba desde un servidor Windows interno que la aplicación responde y qué servidor web la sirve." },
+      tags: ["http", "api", "rest", "descargar", "curl"]
+    },
+    {
+      id: "win-netsh-portproxy", name: "netsh interface portproxy", os: "windows", shell: "cmd", category: "network", risk: "caution",
+      description: "Redirige un puerto local a otra IP y puerto (reenvío TCP), sin instalar nada. Útil para migraciones o para exponer un servicio de WSL.",
+      syntax: "netsh interface portproxy add v4tov4 listenport=P listenaddress=IP connectport=P connectaddress=IP",
+      flags: [
+        { flag: "add v4tov4", description: "Crea una redirección IPv4 → IPv4." },
+        { flag: "show all", description: "Lista las redirecciones activas." },
+        { flag: "delete v4tov4 listenport=…", description: "Elimina una redirección." },
+        { flag: "Servicio iphlpsvc", description: "Debe estar en marcha para que funcione." }
+      ],
+      example: { command: "netsh interface portproxy add v4tov4 listenport=1433 listenaddress=0.0.0.0 connectport=1433 connectaddress=10.0.0.60 && netsh interface portproxy show all", explanation: "Durante la migración de SQL Server, el servidor antiguo reenvía las conexiones al nuevo mientras se actualizan las cadenas de conexión. Abre el puerto en el firewall." },
+      tags: ["redireccion", "port forwarding", "migracion", "wsl", "tcp"]
+    },
+    {
+      id: "win-netsh-wlan", name: "netsh wlan show profiles", os: "windows", shell: "cmd", category: "network", risk: "caution",
+      description: "Lista las redes Wi-Fi guardadas, muestra su configuración (incluida la clave) y genera un informe de diagnóstico inalámbrico.",
+      syntax: "netsh wlan show profiles | show profile name=\"red\" key=clear | show wlanreport",
+      flags: [
+        { flag: "show profiles", description: "Redes Wi-Fi guardadas en el equipo." },
+        { flag: "key=clear", description: "Muestra la contraseña en claro (requiere admin)." },
+        { flag: "show wlanreport", description: "Informe HTML de conexiones y desconexiones de los últimos días." },
+        { flag: "delete profile name=", description: "Olvida una red guardada." }
+      ],
+      example: { command: "netsh wlan show wlanreport && start %ProgramData%\\Microsoft\\Windows\\WlanReport\\wlan-report-latest.html", explanation: "Un portátil pierde la Wi-Fi a menudo: genera el informe de los últimos 3 días con cada desconexión y su motivo." },
+      tags: ["wifi", "inalambrico", "clave", "desconexiones", "informe"]
+    },
+
+    // ---- Procesos y sistema
+    {
+      id: "win-cim-hardware", name: "Get-CimInstance (inventario de hardware)", os: "windows", shell: "powershell", category: "processes", risk: "safe",
+      description: "Consulta WMI/CIM para inventariar hardware: número de serie, modelo, BIOS, CPU, RAM y discos, también en remoto.",
+      syntax: "Get-CimInstance -ClassName Win32_<Clase> [-ComputerName equipo] [-Filter …]",
+      flags: [
+        { flag: "Win32_BIOS", description: "Número de serie y versión de BIOS." },
+        { flag: "Win32_ComputerSystem", description: "Fabricante, modelo y RAM total." },
+        { flag: "Win32_Processor / Win32_DiskDrive", description: "CPU y discos físicos." },
+        { flag: "-ComputerName", description: "Equipos remotos (WinRM)." }
+      ],
+      example: { command: "Get-CimInstance Win32_BIOS -ComputerName pc-contab-03 | Select-Object PSComputerName, Manufacturer, SerialNumber; Get-CimInstance Win32_ComputerSystem -ComputerName pc-contab-03 | Select-Object Model, @{n='RAM GB';e={[math]::Round($_.TotalPhysicalMemory/1GB)}}", explanation: "Número de serie y modelo de un portátil para abrir una garantía sin desplazarte hasta el usuario." },
+      tags: ["inventario", "hardware", "numero de serie", "wmi", "bios"]
+    },
+    {
+      id: "win-reg", name: "reg query / reg add", os: "windows", shell: "cmd", category: "processes", risk: "caution",
+      description: "Consulta, crea, exporta y elimina claves y valores del Registro de Windows desde la línea de comandos.",
+      syntax: "reg query clave [/v valor] [/s] | reg add clave /v valor /t tipo /d datos [/f] | reg export clave archivo.reg",
+      flags: [
+        { flag: "/v nombre", description: "Valor concreto." },
+        { flag: "/t REG_DWORD /d 1", description: "Tipo y datos del valor." },
+        { flag: "/f", description: "Sin pedir confirmación." },
+        { flag: "reg export … .reg", description: "Copia de seguridad antes de cambiar nada." }
+      ],
+      example: { command: "reg export \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\" C:\\Temp\\rdp-backup.reg && reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\" /v fDenyTSConnections /t REG_DWORD /d 0 /f", explanation: "Habilita Escritorio remoto en un servidor, guardando antes una copia de la clave. Abre también el puerto 3389 en el firewall." },
+      tags: ["registro", "regedit", "clave", "configuracion", "rdp"]
+    },
+    {
+      id: "win-sc", name: "sc.exe", os: "windows", shell: "cmd", category: "processes", risk: "caution",
+      description: "Configuración avanzada de servicios: tipo de inicio, cuenta, acciones ante fallos, dependencias y borrado de servicios huérfanos.",
+      syntax: "sc.exe [\\\\equipo] query|qc|config|failure|delete servicio [opciones]",
+      flags: [
+        { flag: "qc servicio", description: "Configuración: ejecutable, inicio, cuenta, dependencias." },
+        { flag: "config servicio start= delayed-auto", description: "Inicio automático retrasado (ojo al espacio tras «=»)." },
+        { flag: "failure … actions= restart/60000", description: "Reinicia el servicio si se cae." },
+        { flag: "delete servicio", description: "Elimina el servicio (restos de software desinstalado)." }
+      ],
+      example: { command: "sc.exe failure Spooler reset= 86400 actions= restart/60000/restart/60000/\"\"/0 && sc.exe qfailure Spooler", explanation: "Hace que la cola de impresión se reinicie sola dos veces si se cae, en lugar de esperar a que alguien llame." },
+      tags: ["servicios", "reinicio automatico", "fallos", "inicio retrasado", "eliminar servicio"]
+    },
+    {
+      id: "win-powercfg", name: "powercfg", os: "windows", shell: "cmd", category: "processes", risk: "safe",
+      description: "Energía: informe de batería y de consumo, qué impide la suspensión y qué despertó al equipo.",
+      syntax: "powercfg /batteryreport | /energy | /requests | /lastwake | /setactive esquema",
+      flags: [
+        { flag: "/batteryreport", description: "Informe HTML con capacidad de diseño frente a capacidad actual." },
+        { flag: "/requests", description: "Procesos o drivers que impiden suspender o apagar la pantalla." },
+        { flag: "/lastwake", description: "Qué despertó al equipo la última vez." },
+        { flag: "/energy", description: "Diagnóstico de eficiencia energética de 60 s." }
+      ],
+      example: { command: "powercfg /batteryreport /output C:\\Temp\\bateria.html && start C:\\Temp\\bateria.html", explanation: "Un usuario dice que la batería dura poco: compara la capacidad de diseño con la actual para justificar el cambio." },
+      tags: ["bateria", "energia", "suspension", "portatil", "informe"]
+    },
+    {
+      id: "win-wevtutil", name: "wevtutil", os: "windows", shell: "cmd", category: "security", risk: "caution",
+      description: "Gestiona registros de eventos desde CMD: consulta, exporta para análisis forense, cambia el tamaño máximo o vacía un registro.",
+      syntax: "wevtutil el | qe registro [/q:consulta] [/c:n] [/f:text] | epl registro archivo.evtx | sl registro /ms:bytes | cl registro",
+      flags: [
+        { flag: "qe Security /c:5 /rd:true /f:text", description: "Últimos 5 eventos en texto." },
+        { flag: "epl registro archivo.evtx", description: "Exporta el registro (evidencia, análisis offline)." },
+        { flag: "sl Security /ms:1073741824", description: "Amplía el tamaño máximo a 1 GB." },
+        { flag: "cl registro", description: "Vacía el registro (genera evento 1102 en Security)." }
+      ],
+      example: { command: "wevtutil epl Security C:\\Evidencias\\%COMPUTERNAME%-Security.evtx && wevtutil sl Security /ms:1073741824", explanation: "Ante un incidente, conserva el registro de seguridad completo y amplía su tamaño para no perder eventos nuevos." },
+      tags: ["eventos", "logs", "exportar", "forense", "tamaño registro"]
+    },
+
+    // ---- Seguridad
+    {
+      id: "win-authenticode", name: "Get-AuthenticodeSignature", os: "windows", shell: "powershell", category: "security", risk: "safe",
+      description: "Comprueba la firma digital de ejecutables, scripts y drivers: si está firmado, por quién y si la firma es válida.",
+      syntax: "Get-AuthenticodeSignature -FilePath <archivo>",
+      flags: [
+        { flag: "Status", description: "Valid, NotSigned, HashMismatch…" },
+        { flag: "SignerCertificate.Subject", description: "Quién firmó el archivo." },
+        { flag: "Set-AuthenticodeSignature", description: "Firma tus propios scripts con un certificado de firma de código." }
+      ],
+      example: { command: "Get-ChildItem C:\\Users\\*\\AppData\\Roaming -Recurse -Include *.exe -ErrorAction SilentlyContinue | Get-AuthenticodeSignature | Where-Object Status -ne 'Valid' | Select-Object Path, Status", explanation: "Caza de amenazas: ejecutables sin firma válida en AppData, una ubicación típica de malware." },
+      tags: ["firma", "authenticode", "malware", "ejecutables", "integridad"]
+    },
+    {
+      id: "win-klist", name: "klist", os: "windows", shell: "cmd", category: "security", risk: "caution",
+      description: "Muestra y purga los tickets Kerberos de la sesión: útil cuando un cambio de grupo no se aplica o falla la autenticación.",
+      syntax: "klist [tickets | tgt | purge] [-lh 0 -li 0x3e7]",
+      flags: [
+        { flag: "klist", description: "Tickets de servicio de la sesión actual." },
+        { flag: "klist tgt", description: "Ticket principal (TGT) y su caducidad." },
+        { flag: "klist purge", description: "Borra los tickets: se piden de nuevo con los grupos actuales." },
+        { flag: "-li 0x3e7 purge", description: "Purga los tickets de la cuenta de equipo (SYSTEM)." }
+      ],
+      example: { command: "klist purge && gpupdate /force && whoami /groups | findstr /i \"GG_Finanzas\"", explanation: "Acabas de añadir a un usuario a un grupo: purga sus tickets para que el nuevo permiso funcione sin cerrar sesión." },
+      tags: ["kerberos", "tickets", "grupos", "autenticacion", "purge"]
+    },
+    {
+      id: "win-cert-expiring", name: "Get-ChildItem Cert:\\ (certificados)", os: "windows", shell: "powershell", category: "security", risk: "safe",
+      description: "Recorre el almacén de certificados de Windows como si fuera una unidad: localiza certificados caducados o a punto de caducar.",
+      syntax: "Get-ChildItem Cert:\\LocalMachine\\My [-ExpiringInDays n] | certutil -store My",
+      flags: [
+        { flag: "Cert:\\LocalMachine\\My", description: "Certificados personales del equipo (IIS, RDP…)." },
+        { flag: "-ExpiringInDays 30", description: "Solo los que caducan en 30 días." },
+        { flag: "Thumbprint", description: "Huella para enlazarlos en IIS o scripts." },
+        { flag: "certutil -store My", description: "Alternativa en CMD." }
+      ],
+      example: { command: "Invoke-Command -ComputerName srv01, srv02 -ScriptBlock { Get-ChildItem Cert:\\LocalMachine\\My -ExpiringInDays 45 } | Select-Object PSComputerName, Subject, NotAfter, Thumbprint", explanation: "Revisión mensual: certificados de servidores que caducan en los próximos 45 días, antes de que dejen de funcionar HTTPS o RDP." },
+      tags: ["certificados", "caducidad", "ssl", "iis", "almacen"]
+    },
+
+    // ---- Automatización
+    {
+      id: "win-export-clixml", name: "Get-Credential / Export-Clixml", os: "windows", shell: "powershell", category: "automation", risk: "caution",
+      description: "Guarda credenciales cifradas para usarlas en scripts programados sin escribir contraseñas en texto plano.",
+      syntax: "Get-Credential | Export-Clixml -Path archivo.xml | $c = Import-Clixml -Path archivo.xml",
+      flags: [
+        { flag: "Get-Credential", description: "Pide usuario y contraseña de forma segura." },
+        { flag: "Export-Clixml", description: "Cifra con DPAPI: solo descifrable por el mismo usuario en el mismo equipo." },
+        { flag: "Import-Clixml", description: "Recupera el objeto de credencial." },
+        { flag: "-Credential $c", description: "Úsalo en Invoke-Command, New-PSDrive, etc." }
+      ],
+      example: { command: "Get-Credential CORP\\svc_backup | Export-Clixml C:\\Scripts\\svc_backup.xml; $c = Import-Clixml C:\\Scripts\\svc_backup.xml; New-PSDrive -Name B -PSProvider FileSystem -Root \\\\srv01\\Backups -Credential $c", explanation: "Ejecuta Export-Clixml con la misma cuenta que lanzará la tarea programada: el XML solo funcionará para esa cuenta y en ese equipo." },
+      tags: ["credenciales", "contraseñas", "scripts", "dpapi", "seguridad"]
+    },
+    {
+      id: "win-enable-psremoting", name: "Enable-PSRemoting / Enter-PSSession", os: "windows", shell: "powershell", category: "automation", risk: "caution",
+      description: "Habilita la administración remota por WinRM y abre sesiones interactivas en otros equipos, como un SSH de Windows.",
+      syntax: "Enable-PSRemoting -Force | Enter-PSSession -ComputerName equipo [-Credential] | Exit-PSSession",
+      flags: [
+        { flag: "Enable-PSRemoting -Force", description: "Configura WinRM, el listener y la regla de firewall." },
+        { flag: "Enter-PSSession", description: "Sesión interactiva remota." },
+        { flag: "Test-WSMan equipo", description: "Comprueba si WinRM responde." },
+        { flag: "TrustedHosts", description: "Necesario para equipos fuera del dominio (con precaución)." }
+      ],
+      example: { command: "Test-WSMan srv01; Enter-PSSession -ComputerName srv01 -Credential CORP\\adm.jlopez", explanation: "Administra un servidor Core sin escritorio: comprueba que WinRM responde y abre una consola remota en él." },
+      tags: ["winrm", "remoto", "pssession", "administracion remota", "core"]
+    },
+    {
+      id: "win-start-process", name: "Start-Process", os: "windows", shell: "powershell", category: "automation", risk: "caution",
+      description: "Lanza programas con opciones: como administrador, con otras credenciales, esperando a que terminen o capturando su código de salida.",
+      syntax: "Start-Process -FilePath prog [-ArgumentList …] [-Verb RunAs] [-Wait] [-PassThru] [-WindowStyle Hidden]",
+      flags: [
+        { flag: "-Verb RunAs", description: "Ejecuta elevado (aviso UAC)." },
+        { flag: "-Wait -PassThru", description: "Espera y devuelve el proceso (ExitCode)." },
+        { flag: "-ArgumentList", description: "Argumentos del programa." },
+        { flag: "-WindowStyle Hidden", description: "Sin ventana visible." }
+      ],
+      example: { command: "$p = Start-Process msiexec.exe -ArgumentList '/i C:\\Instaladores\\agente.msi /qn /norestart /l*v C:\\Temp\\agente.log' -Wait -PassThru; \"Código de salida: $($p.ExitCode)\"", explanation: "Instala un agente en silencio desde un script y comprueba el resultado (0 = correcto, 3010 = requiere reinicio)." },
+      tags: ["ejecutar", "elevar", "runas", "esperar", "codigo de salida"]
+    },
+
+    // ---- Paquetes
+    {
+      id: "win-msiexec", name: "msiexec", os: "windows", shell: "cmd", category: "packages", risk: "caution",
+      description: "Instala, repara y desinstala paquetes MSI de forma desatendida y con registro detallado.",
+      syntax: "msiexec /i paquete.msi /qn [/norestart] [/l*v log] | msiexec /x {CódigoProducto} /qn",
+      flags: [
+        { flag: "/i | /x", description: "Instalar | desinstalar." },
+        { flag: "/qn", description: "Totalmente silencioso." },
+        { flag: "/l*v archivo.log", description: "Log detallado (clave para diagnosticar fallos)." },
+        { flag: "/fa", description: "Repara reinstalando todos los archivos." }
+      ],
+      example: { command: "msiexec /i \"\\\\srv01\\Software\\7z2408-x64.msi\" /qn /norestart /l*v C:\\Temp\\7zip-install.log", explanation: "Despliegue silencioso desde un recurso compartido; si falla, busca «value 3» en el log para ver el error real." },
+      tags: ["instalar", "desinstalar", "msi", "silencioso", "despliegue"]
+    },
+    {
+      id: "win-installed-software", name: "Inventario de software instalado", os: "windows", shell: "powershell", category: "packages", risk: "safe",
+      description: "Lista el software instalado leyendo las claves de desinstalación del Registro (rápido y sin los efectos secundarios de Win32_Product).",
+      syntax: "Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\WOW6432Node\\…\\Uninstall\\*",
+      flags: [
+        { flag: "Uninstall\\*", description: "Programas de 64 bits." },
+        { flag: "WOW6432Node\\…\\Uninstall\\*", description: "Programas de 32 bits." },
+        { flag: "UninstallString", description: "Comando para desinstalarlo." },
+        { flag: "Evita Win32_Product", description: "Es lento y puede reparar paquetes MSI al consultarlo." }
+      ],
+      example: { command: "Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*, HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Where-Object DisplayName | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Sort-Object DisplayName | Export-Csv C:\\Temp\\software.csv -NoTypeInformation -Delimiter ';' -Encoding UTF8", explanation: "Inventario de software de un equipo en CSV para auditar licencias o localizar versiones vulnerables." },
+      tags: ["inventario", "software", "programas instalados", "licencias", "auditoria"]
+    },
+    {
+      id: "win-appxpackage", name: "Get-AppxPackage / Remove-AppxPackage", os: "windows", shell: "powershell", category: "packages", risk: "caution",
+      description: "Gestiona las aplicaciones de la Microsoft Store (UWP/MSIX): listar, reinstalar las que fallan o quitar las preinstaladas innecesarias.",
+      syntax: "Get-AppxPackage [-AllUsers] [*nombre*] | Remove-AppxPackage | Get-AppxProvisionedPackage -Online",
+      flags: [
+        { flag: "-AllUsers", description: "Paquetes de todos los usuarios (requiere admin)." },
+        { flag: "Remove-AppxPackage", description: "Desinstala para el usuario." },
+        { flag: "Remove-AppxProvisionedPackage -Online", description: "Evita que se instale en usuarios nuevos." },
+        { flag: "Add-AppxPackage -Register …AppxManifest.xml", description: "Reinstala una app dañada." }
+      ],
+      example: { command: "Get-AppxPackage -AllUsers *Xbox* | Remove-AppxPackage -AllUsers; Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like '*Xbox*' | Remove-AppxProvisionedPackage -Online", explanation: "Limpia las aplicaciones de Xbox de los equipos de oficina, también para los usuarios que se creen después." },
+      tags: ["store", "apps", "bloatware", "uwp", "desinstalar"]
+    },
+
+    // ---- Active Directory
+    {
+      id: "win-ad-passwordpolicy", name: "Get-ADDefaultDomainPasswordPolicy", os: "windows", shell: "powershell", category: "ad", risk: "safe",
+      description: "Muestra la directiva de contraseñas y bloqueo del dominio y las directivas granulares (FGPP) que se aplican a un usuario.",
+      syntax: "Get-ADDefaultDomainPasswordPolicy | Get-ADFineGrainedPasswordPolicy -Filter * | Get-ADUserResultantPasswordPolicy usuario",
+      flags: [
+        { flag: "MinPasswordLength / MaxPasswordAge", description: "Longitud mínima y caducidad." },
+        { flag: "LockoutThreshold / LockoutDuration", description: "Intentos antes del bloqueo y su duración." },
+        { flag: "Get-ADFineGrainedPasswordPolicy", description: "Directivas granulares (p. ej. para administradores)." },
+        { flag: "Get-ADUserResultantPasswordPolicy", description: "Qué directiva granular afecta a un usuario." }
+      ],
+      example: { command: "Get-ADDefaultDomainPasswordPolicy | Select-Object MinPasswordLength, MaxPasswordAge, LockoutThreshold, LockoutDuration; Get-ADUserResultantPasswordPolicy jlopez", explanation: "Respuesta para auditoría: política de contraseñas y bloqueo vigente y si un usuario tiene una política granular distinta." },
+      tags: ["contraseñas", "directiva", "bloqueo", "fgpp", "auditoria"]
+    },
+    {
+      id: "win-new-adou", name: "New-ADOrganizationalUnit / Get-ADOrganizationalUnit", os: "windows", shell: "powershell", category: "ad", risk: "caution",
+      description: "Crea y consulta unidades organizativas (OU) protegidas contra borrado accidental.",
+      syntax: "New-ADOrganizationalUnit -Name n -Path DN [-ProtectedFromAccidentalDeletion $true] | Get-ADOrganizationalUnit -Filter *",
+      flags: [
+        { flag: "-Path", description: "OU o dominio padre (DN)." },
+        { flag: "-ProtectedFromAccidentalDeletion", description: "Impide borrarla sin quitar antes la protección." },
+        { flag: "Get-ADOrganizationalUnit -Filter * | Select DistinguishedName", description: "Árbol de OUs." },
+        { flag: "Set-ADOrganizationalUnit -ProtectedFromAccidentalDeletion $false", description: "Quita la protección para poder borrarla." }
+      ],
+      example: { command: "'Usuarios','Equipos','Grupos' | ForEach-Object { New-ADOrganizationalUnit -Name $_ -Path 'OU=Valencia,DC=corp,DC=local' -ProtectedFromAccidentalDeletion $true }", explanation: "Crea la estructura estándar de OUs para una sede nueva, protegida contra borrados por error." },
+      tags: ["ou", "unidad organizativa", "estructura", "dominio", "proteccion"]
+    },
+    {
+      id: "win-set-aduser-bulk", name: "Set-ADUser (cambios masivos)", os: "windows", shell: "powershell", category: "ad", risk: "caution",
+      description: "Modifica atributos de usuarios de AD en bloque: departamento, cargo, teléfono, responsable, oficina…",
+      syntax: "Get-ADUser -Filter … | Set-ADUser -Department d -Title t -Office o -Manager m [-WhatIf]",
+      flags: [
+        { flag: "-Department / -Title / -Office", description: "Atributos más comunes." },
+        { flag: "-Manager", description: "Responsable (para organigramas y flujos)." },
+        { flag: "-Replace @{atributo='valor'}", description: "Cualquier atributo LDAP." },
+        { flag: "-WhatIf", description: "Simula los cambios antes de aplicarlos." }
+      ],
+      example: { command: "Import-Csv cambios.csv | ForEach-Object { Set-ADUser -Identity $_.Usuario -Department $_.Departamento -Title $_.Cargo -Office $_.Oficina -WhatIf }", explanation: "Reorganización: actualiza departamento, cargo y oficina de muchos usuarios desde un CSV de RR. HH. (quita -WhatIf tras revisar)." },
+      tags: ["usuarios", "masivo", "atributos", "csv", "departamento"]
     }
   ]
 };

@@ -2,7 +2,7 @@
 
 🌐 **Web:** https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/ · [![CI](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml/badge.svg)](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml)
 
-Biblioteca y cheat sheet de **226 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** y **equipos de red** (Cisco IOS, MikroTik RouterOS). En español e inglés.
+Biblioteca y cheat sheet de **256 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** y **equipos de red** (Cisco IOS, MikroTik RouterOS). En español e inglés.
 
 ## Características
 
