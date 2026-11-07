@@ -7,10 +7,10 @@ Cheat sheet web de comandos para administradores de sistemas y redes: **Linux (B
 ## Características
 
 - Diseño **maestro-detalle** estilo manual impreso: índice de comandos a la izquierda y ficha completa a la derecha (en móvil, hoja a pantalla completa).
-- Selector **Todo / Linux / Windows** e índice de 8 categorías numeradas con contadores.
+- Selector **Todo / Linux / Windows** e índice de 9 categorías numeradas (incluye Paquetes y Actualizaciones) con contadores.
 - Navegación con teclado (↑ ↓) y enlaces directos a cada comando (`#linux-find`).
 - **Búsqueda en tiempo real** (`Ctrl+K` o `/`) por comando, descripción, flags o etiqueta, sin importar los acentos.
-- Fichas con sintaxis resaltada, parámetros habituales, ejemplo real, comandos relacionados y botón de **copiar al portapapeles**.
+- Fichas con sintaxis resaltada, parámetros habituales, ejemplo real, comandos relacionados y botón de **copiar al portapapeles**, también en cada fila de la lista para copiar el ejemplo sin abrir la ficha.
 - Niveles de riesgo: **Seguro**, **Precaución** y **Peligroso** (los destructivos van resaltados en rojo).
 - Tema oscuro cálido con acento ámbar y tipografía editorial (Instrument Serif + IBM Plex), 100 % responsivo.
 
@@ -26,7 +26,7 @@ python -m http.server 5500
 
 ```
 index.html                  UI (Tailwind CDN)
-assets/data.js              Dataset de comandos (97)
+assets/data.js              Dataset de comandos (153)
 assets/app.js               Lógica: filtros, búsqueda, ficha, copiar
 assets/styles.css           Estilos complementarios
 data/commands.example.json  Ejemplo del modelo de datos JSON

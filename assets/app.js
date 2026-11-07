@@ -173,7 +173,7 @@
   function row(c) {
     const r = RISK[c.risk], o = OS_STYLE[c.os];
     const sel = c.id === state.selected;
-    return `<button data-id="${c.id}" class="row w-full text-left grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-3 py-3 rounded-lg hover:bg-paper-2 transition" aria-current="${sel}">
+    return `<div data-id="${c.id}" role="button" tabindex="0" class="row group cursor-pointer w-full text-left grid grid-cols-[28px_minmax(0,1fr)_auto] items-start gap-3 px-3 py-3 rounded-lg hover:bg-paper-2 transition" aria-current="${sel}">
       <span class="mt-0.5 grid place-items-center w-7 h-7 rounded-full border font-mono text-[11px] ${o.ring}" title="${o.name}">${o.letter}</span>
       <span class="min-w-0">
         <span class="flex items-baseline gap-2 flex-wrap">
@@ -182,10 +182,17 @@
         </span>
         <span class="block text-[13px] text-bone-dim leading-snug mt-0.5 line-clamp-2">${hl(c.description)}</span>
       </span>
-      <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider ${r.text}" title="${r.label}">
-        ${c.risk === "safe" ? "" : `<span class="hidden sm:inline">${r.label}</span>`}<span class="w-2 h-2 rounded-full ${r.dot}"></span>
+      <span class="flex flex-col items-end gap-2">
+        <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider ${r.text}" title="${r.label}">
+          ${c.risk === "safe" ? "" : `<span class="hidden sm:inline">${r.label}</span>`}<span class="w-2 h-2 rounded-full ${r.dot}"></span>
+        </span>
+        <button data-copy="${c.id}" data-field="example" title="Copiar ejemplo: ${esc(c.example.command.split("\n")[0].slice(0, 80))}" aria-label="Copiar ejemplo de ${esc(c.name)}"
+          class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[10px] uppercase tracking-wider
+                 hover:text-amber hover:border-amber/60 transition lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100 group-aria-[current=true]:opacity-100">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copiar</span>
+        </button>
       </span>
-    </button>`;
+    </div>`;
   }
 
   function renderList() {
@@ -422,6 +429,8 @@
       select(state.visible[i === -1 ? 0 : next].id, { open: false, scroll: true });
       return;
     }
+    const focusedRow = document.activeElement?.closest?.(".row");
+    if ((e.key === "Enter" || e.key === " ") && focusedRow && document.activeElement === focusedRow) { e.preventDefault(); return select(focusedRow.dataset.id); }
     if (e.key === "Enter" && state.selected && !mqDesktop.matches) openSheet();
   });
 
