@@ -13,7 +13,8 @@ Biblioteca y cheat sheet de **307 comandos** para administradores de sistemas y 
 - Niveles de riesgo **Seguro**, **Precaución** y **Peligroso**, con aviso al copiar comandos destructivos.
 - **Favoritos** ☆ y **Recientes** (los últimos 20 copiados), con pestañas propias.
 - **Variables editables** `{x}`: tu usuario, dominio de AD, dominio web, servidores y red de administración se aplican a los ejemplos al verlos, copiarlos e imprimirlos.
-- **Terminal simulada**: prueba comandos en una consola dentro del navegador (salidas realistas, historial, Tab, `help`), sin ejecutar nada. Botón «Terminal» y «▶ Probar» en las fichas con simulación.
+- **Terminal simulada**: prueba comandos en una consola dentro del navegador (salidas realistas, historial, Tab, `help`), sin ejecutar nada. Dos sistemas: **Linux** (bash) y **Windows** (PowerShell y cmd, sin distinguir mayúsculas). Botón «Terminal» y «▶ Probar» en las fichas con simulación.
+- **Segura**: CSP estricta, sin dependencias en tiempo de ejecución ni recursos de terceros; informe en `docs/seguridad/AUDITORIA.md`. Dependabot propone las actualizaciones de npm y de las Actions.
 - **Modo práctica**: adivina el comando a partir de su descripción, con puntuación y racha; respeta los filtros para practicar un tema (útil para CCNA, LPIC, RHCSA, AZ-800…).
 - **Exportar a PDF / imprimir** la lista actual (categoría, favoritos o búsqueda) en un formato limpio para papel.
 - **Español / English** con un clic: interfaz y contenido traducidos.
@@ -59,7 +60,7 @@ assets/fonts/ · assets/icons/   Fuentes locales e iconos · assets/og-image.png
 sw.js · manifest.webmanifest    Modo sin conexión e instalación (PWA)
 tests/                          Pruebas de interfaz (Playwright)
 scripts/                        Validador, servidor local, fuentes, iconos
-docs/                           Auditoría Ubuntu + Apache + MariaDB · especificación de la terminal
+docs/                           Auditoría Ubuntu + Apache + MariaDB · especificación de la terminal · auditoría de seguridad
 AGENTS.md                       Guía para agentes de código (Codex, Claude Code)
 ```
 

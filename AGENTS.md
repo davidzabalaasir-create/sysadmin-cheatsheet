@@ -23,6 +23,7 @@ assets/terminal.js                 Terminal simulada: motor (sin dependencias); 
 assets/terminal-data.js            Datos de la terminal: window.SYS_TERMINAL_DATA = { env, fs, commands }
 assets/terminal.css                Estilos de la terminal (web y docs/terminal/prototype)
 docs/terminal/HANDOFF.md           Especificación de la terminal (arquitectura, datos, seguridad, a11y)
+docs/seguridad/AUDITORIA.md        Auditoría de seguridad de la web (CSP, XSS, CI, dependencias)
 tests/app.spec.js                  Pruebas de interfaz (Playwright) · playwright.config.js
 .github/workflows/ci.yml           CI: validación, CSS al día y pruebas en cada push/PR
 .github/dependabot.yml             PR semanales de actualización (npm y Actions); revísalos y fusiónalos si la CI pasa
