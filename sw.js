@@ -5,7 +5,7 @@
  * Las peticiones a la red usan cache: "no-cache" para revalidar con el servidor (ETag) y no
  * mezclar archivos de dos publicaciones por la caché HTTP de GitHub Pages (max-age=600). */
 const fresh = (request) => fetch(request, { cache: "no-cache" });
-const VERSION = "1.5.0";
+const VERSION = "1.5.1";
 const CACHE = `sysadmin-${VERSION}`;
 
 const ASSETS = [
@@ -18,6 +18,7 @@ const ASSETS = [
   "./assets/data-en.js",
   "./assets/i18n.js",
   "./assets/app.js",
+  "./assets/version-guard.js",
   "./assets/terminal.css",
   "./assets/terminal.js",
   "./assets/terminal-data.js",

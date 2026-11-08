@@ -293,3 +293,28 @@ test("la terminal habla el idioma de la página", async ({ page }) => {
   await expect(termText(page)).toContainText("nope: command not found");
   await expect(page.locator("#termTitle")).toHaveText("Simulated terminal");
 });
+
+// ---------------------------------------------------------------- Seguridad
+test("la política de seguridad (CSP) está activa y no bloquea nada legítimo", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__csp = [];
+    document.addEventListener("securitypolicyviolation", (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
+  await page.goto("/?csp=1#linux-ss"); // carga nueva del documento para que se instale el vigilante
+  await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute("content", /script-src 'self'/);
+  // Recorre las funciones principales
+  await page.locator("#btnVars").click();
+  await page.locator('[data-var="usuario"]').fill("dzabala");
+  await page.locator("#varsDialog button[value=close]").last().click();
+  await page.locator("#btnQuiz").click();
+  await page.locator("#quizDialog [data-answer]").first().click();
+  await page.locator("#quizDialog button[value=close]").first().click();
+  await page.locator("#btnTerm").click();
+  await page.locator("#term-in").fill("help ss");
+  await page.locator("#term-in").press("Enter");
+  await page.locator("#term-in").press("Escape");
+  await page.locator("#btnPrint").click();
+  await page.locator("#btnLang").click();
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.__csp)).toEqual([]);
+});

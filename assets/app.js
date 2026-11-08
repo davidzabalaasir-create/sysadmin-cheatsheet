@@ -195,7 +195,10 @@
   function applyVars(text, mark = false) {
     let s = text;
     const wrap = (v) => (mark && !/[\s"']/.test(v) ? `\u0001${v}\u0002` : v);
-    const get = (k) => (userVars[k] || "").trim();
+    // Se eliminan los caracteres que el resaltado usa como marcas internas (U+0001 y U+0002),
+    // para que una variable no pueda descuadrar el marcado.
+    const MARKS = new RegExp("[" + String.fromCharCode(1) + String.fromCharCode(2) + "]", "g");
+    const get = (k) => String(userVars[k] || "").replace(MARKS, "").trim();
     const dom = get("dominio");
     if (dom) {
       const dn = dom.split(".").filter(Boolean).map((p) => `DC=${p}`).join(",");

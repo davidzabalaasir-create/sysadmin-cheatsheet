@@ -97,10 +97,10 @@ else {
 }
 
 // ---- Versión: data.js e index.html deben coincidir (evita mezclar versiones con cachés antiguas)
-const html = require("fs").readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const html = require("fs").readFileSync(path.join(__dirname, "..", "assets", "version-guard.js"), "utf8");
 const appVersion = (html.match(/APP_VERSION = "([^"]+)"/) || [])[1];
 if (!window.CHEATSHEET.version) errors.push("data.js: falta 'version' en window.CHEATSHEET");
-else if (appVersion !== window.CHEATSHEET.version) errors.push(`versión: data.js tiene ${window.CHEATSHEET.version} e index.html (APP_VERSION) tiene ${appVersion}`);
+else if (appVersion !== window.CHEATSHEET.version) errors.push(`versión: data.js tiene ${window.CHEATSHEET.version} y assets/version-guard.js (APP_VERSION) tiene ${appVersion}`);
 
 const count = (f) => commands.filter(f).length;
 console.log(`Comandos: ${commands.length} (linux ${count((c) => c.os === "linux")}, windows ${count((c) => c.os === "windows")}, red ${count((c) => c.os === "network")})`);

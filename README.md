@@ -42,7 +42,7 @@ node scripts/make-icons.js   # regenera iconos e imagen para compartir
 - El CSS de Tailwind, las fuentes, los iconos y la imagen para compartir se publican ya generados (GitHub Pages no compila).
 - En local, las pruebas usan el Edge o Chrome que tengas instalado; en GitHub se descarga Chromium.
 - **GitHub Actions** (`.github/workflows/ci.yml`) valida los datos, comprueba que el CSS está al día y ejecuta las pruebas en cada push y pull request.
-- Al publicar una versión nueva, sube `VERSION` en `sw.js` y la versión en `assets/data.js` e `index.html` (`APP_VERSION`), que deben coincidir.
+- Al publicar una versión nueva, sube `VERSION` en `sw.js` y la versión en `assets/data.js` y `assets/version-guard.js` (`APP_VERSION`), que deben coincidir.
 
 ## Estructura
 

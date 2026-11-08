@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Política de seguridad de contenido: solo recursos del propio sitio, sin scripts ni estilos en línea.
+       (GitHub Pages no permite cabeceras; frame-ancestors no funciona en <meta>.) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <title>Sysadmin · Comandos para administradores de sistemas (Linux & Windows)</title>
   <meta name="description" content="Sysadmin: biblioteca de comandos para administradores de sistemas y redes: Linux (Bash), Windows (CMD/PowerShell/Active Directory), contenedores, Microsoft 365 y equipos de red." />
   <link rel="canonical" href="https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/" />
@@ -111,8 +115,8 @@
 
     <section class="min-w-0 px-5 lg:px-0 py-6" data-i18n-attr="aria-label:list.label" aria-label="Lista de comandos">
       <div class="flex items-center justify-between gap-3 mb-4">
-        <p id="listMeta" class="font-mono text-xs text-bone-mute" aria-live="polite"></p>
-        <div class="flex items-center gap-1.5">
+        <p id="listMeta" class="min-w-0 flex-1 break-words font-mono text-xs text-bone-mute" aria-live="polite"></p>
+        <div class="flex shrink-0 items-center gap-1.5">
           <div id="riskToggles" class="flex gap-1.5"></div>
           <button id="btnPrint" type="button" data-i18n-attr="title:print.title;aria-label:print.title"
             class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-paper-line2 font-mono text-[10px] uppercase tracking-wider text-bone-dim hover:text-amber hover:border-amber/60 transition">
@@ -227,19 +231,6 @@
   <script src="assets/terminal-data.js"></script>
   <script src="assets/terminal.js"></script>
   <script src="assets/app.js"></script>
-  <script>
-    /* Si un service worker antiguo sirvió datos de otra versión (HTML nuevo con JS/datos viejos),
-       se limpia la caché y se recarga una sola vez. Solo con conexión, para no romper el modo sin conexión. */
-    (function () {
-      var APP_VERSION = "1.5.0";
-      if ((window.CHEATSHEET || {}).version === APP_VERSION || !navigator.onLine || sessionStorage.getItem("sw-refresh")) return;
-      sessionStorage.setItem("sw-refresh", "1");
-      var regs = "serviceWorker" in navigator ? navigator.serviceWorker.getRegistrations() : Promise.resolve([]);
-      regs.then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
-        .then(function () { return window.caches ? caches.keys() : []; })
-        .then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })
-        .then(function () { location.reload(); });
-    })();
-  </script>
+  <script src="assets/version-guard.js"></script>
 </body>
 </html>
