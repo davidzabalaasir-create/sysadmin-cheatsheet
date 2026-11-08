@@ -81,6 +81,7 @@
     server:    '<rect x="3" y="3.5" width="18" height="7" rx="1.5"/><rect x="3" y="13.5" width="18" height="7" rx="1.5"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/>',
     cloud:     '<path d="M7 18.5a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.5 1.6A3.8 3.8 0 0 1 17.5 18.5z"/>',
     router:    '<rect x="2.5" y="13" width="19" height="7" rx="1.5"/><path d="M6.5 16.5h.01M10 16.5h.01M15 13V9M8.5 8.5a6.5 6.5 0 0 1 13 0M11.5 10.5a3.5 3.5 0 0 1 7 0"/>',
+    switch:    '<rect x="2.5" y="7" width="19" height="10" rx="1.5"/><path d="M6 11h1.5M9.5 11H11M13 11h1.5M16.5 11H18M6 14h12"/><path d="M8 7V4.5M16 7V4.5"/>',
     tree:      '<rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/>'
   };
   const catIcon = (name, cls = "w-4 h-4") =>

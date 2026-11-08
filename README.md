@@ -2,18 +2,18 @@
 
 🌐 **Web:** https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/ · [![CI](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml/badge.svg)](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml)
 
-Biblioteca y cheat sheet de **256 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** y **equipos de red** (Cisco IOS, MikroTik RouterOS). En español e inglés.
+Biblioteca y cheat sheet de **307 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** **equipos de red** (Cisco IOS, MikroTik RouterOS) y **Cisco IOS para Packet Tracer** (51 comandos del temario CCNA: VLAN, trunks, STP, EtherChannel, OSPF, EIGRP, DHCP, NAT, ACL, HSRP, IPv6…). En español e inglés.
 
 ## Características
 
 - Diseño **maestro-detalle** estilo manual impreso: índice a la izquierda y ficha completa a la derecha (en móvil, hoja a pantalla completa).
-- Selector **Todo / Linux / Windows** e índice de **14 categorías** desplazable (flechas, rueda, arrastre).
+- Selector **Todo / Linux / Windows** e índice de **15 categorías** desplazable (flechas, rueda, arrastre).
 - **Búsqueda en tiempo real** (`Ctrl+K` o `/`) por comando, descripción, parámetros o etiqueta, sin importar los acentos, en los dos idiomas.
 - Fichas con sintaxis resaltada, parámetros habituales, **ejemplo real**, requisitos, comandos relacionados y botones de **copiar**; también en cada fila de la lista.
 - Niveles de riesgo **Seguro**, **Precaución** y **Peligroso**, con aviso al copiar comandos destructivos.
 - **Favoritos** ☆ y **Recientes** (los últimos 20 copiados), con pestañas propias.
 - **Variables editables** `{x}`: tu usuario, dominio de AD, dominio web, servidores y red de administración se aplican a los ejemplos al verlos, copiarlos e imprimirlos.
-- **Modo práctica**: adivina el comando a partir de su descripción, con puntuación y racha; respeta los filtros para practicar un tema (útil para LPIC, RHCSA, AZ-800…).
+- **Modo práctica**: adivina el comando a partir de su descripción, con puntuación y racha; respeta los filtros para practicar un tema (útil para CCNA, LPIC, RHCSA, AZ-800…).
 - **Exportar a PDF / imprimir** la lista actual (categoría, favoritos o búsqueda) en un formato limpio para papel.
 - **Español / English** con un clic: interfaz y contenido traducidos.
 - **Funciona sin conexión** e instalable como app (PWA). Sin dependencias externas en tiempo de ejecución.

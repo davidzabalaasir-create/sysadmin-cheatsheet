@@ -53,12 +53,12 @@ Abrir `index.html` con doble clic también funciona.
 
 ```js
 {
-  id: "linux-ejemplo",        // único; prefijos: linux-, win-, web- (stack Ubuntu+Apache+MariaDB), net- (equipos de red)
+  id: "linux-ejemplo",        // único; prefijos: linux-, win-, web- (stack Ubuntu+Apache+MariaDB), net- (equipos de red), pt- (Cisco IOS · Packet Tracer)
   name: "comando",            // un paréntesis final aclaratorio está permitido: "nc (transferir archivos)"
   os: "linux" | "windows" | "network",
   shell: "bash" | "powershell" | "cmd" | "ios" | "routeros",   // Linux → bash; network → ios/routeros
   category: "users" | "filesystem" | "network" | "processes" | "security" | "automation" | "storage" |
-            "packages" | "containers" | "git" | "virtualization" | "m365" | "netdevices" | "ad",
+            "packages" | "containers" | "git" | "virtualization" | "m365" | "netdevices" | "packettracer" | "ad",
   risk: "safe" | "caution" | "danger",
   description: "Qué hace, en una o dos frases.",
   syntax: "comando [opciones] argumentos",
@@ -80,6 +80,7 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
   - `caution`: cambia configuración o estado.
   - `danger`: puede destruir datos o cortar el acceso (rm -rf, format, diskpart clean, fsck, reinicios…).
 - Si la herramienta no viene instalada por defecto, rellena `requires`.
+- Ejemplos de Cisco IOS / Packet Tracer: topología R1/R2 y SW1/SW2, VLAN 10 Ventas, 20 Contabilidad, 99 Gestión (192.168.99.0/24); bloques de configuración completos con `configure terminal` … `end`.
 - Los logs de Apache se asumen en formato **combined** de Ubuntu (`$1` IP, `$4` fecha, `$6` método, `$7` ruta, `$9` código HTTP).
 - En cadenas JS escapa bien: `\\` para la barra invertida de Windows y `\\n` cuando el comando necesite un `\n` literal. Para un ejemplo de varias líneas usa `\n` real.
 - Comprueba la sintaxis de los ejemplos bash, por ejemplo con `bash -n`.

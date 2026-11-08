@@ -1,6 +1,6 @@
 {
   "$schema": "https://example.local/sysadmin-cheatsheet.schema.json",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "categories": [
     {
       "id": "users",
@@ -124,6 +124,15 @@
       "label": "Equipos de red",
       "labelEn": "Network Devices (Cisco / MikroTik)",
       "icon": "router",
+      "os": [
+        "network"
+      ]
+    },
+    {
+      "id": "packettracer",
+      "label": "Cisco IOS · Packet Tracer",
+      "labelEn": "Cisco IOS · Packet Tracer (CCNA)",
+      "icon": "switch",
       "os": [
         "network"
       ]

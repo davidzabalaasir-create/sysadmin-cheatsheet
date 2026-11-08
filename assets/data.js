@@ -4,7 +4,7 @@
  * la app funcione abriendo index.html directamente, sin servidor).
  * ========================================================================= */
 window.CHEATSHEET = {
-  version: "1.3.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
+  version: "1.4.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
   categories: [
     { id: "users",      label: "Usuarios y Permisos",      labelEn: "User & Privilege Management", icon: "users",   os: ["linux", "windows"] },
     { id: "filesystem", label: "Archivos y Directorios",   labelEn: "File System",                 icon: "folder",  os: ["linux", "windows"] },
@@ -19,6 +19,7 @@ window.CHEATSHEET = {
     { id: "virtualization", label: "Virtualización",             labelEn: "Virtualization",                   icon: "server",    os: ["linux", "windows"] },
     { id: "m365",           label: "Exchange y Microsoft 365",   labelEn: "Exchange & Microsoft 365",         icon: "cloud",     os: ["windows"] },
     { id: "netdevices",     label: "Equipos de red",             labelEn: "Network Devices (Cisco / MikroTik)", icon: "router",  os: ["network"] },
+    { id: "packettracer",   label: "Cisco IOS · Packet Tracer",  labelEn: "Cisco IOS · Packet Tracer (CCNA)",  icon: "switch",    os: ["network"] },
     { id: "ad",       label: "Active Directory / LDAP",  labelEn: "Active Directory / LDAP",     icon: "tree",    os: ["windows"] }
   ],
 
@@ -3501,6 +3502,725 @@ window.CHEATSHEET = {
       ],
       example: { command: "Import-Csv cambios.csv | ForEach-Object { Set-ADUser -Identity $_.Usuario -Department $_.Departamento -Title $_.Cargo -Office $_.Oficina -WhatIf }", explanation: "Reorganización: actualiza departamento, cargo y oficina de muchos usuarios desde un CSV de RR. HH. (quita -WhatIf tras revisar)." },
       tags: ["usuarios", "masivo", "atributos", "csv", "departamento"]
+    },
+
+    /* ============ CISCO IOS · PACKET TRACER (temario CCNA) ============
+       Comandos de IOS admitidos por Cisco Packet Tracer 8.x. Topología de los ejemplos:
+       R1/R2 routers, SW1/SW2 switches, VLAN 10 Ventas, 20 Contabilidad, 99 Gestión. */
+
+    // ---- Configuración básica y acceso
+    {
+      id: "pt-modes", name: "enable / configure terminal / end", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Modos de IOS: usuario (>), privilegiado (#), configuración global (config)# y submodos. Con «do» se ejecutan comandos show sin salir del modo de configuración.",
+      syntax: "enable → configure terminal → interface … → exit | end | do show …",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "enable", description: "Pasa al modo privilegiado (#)." },
+        { flag: "configure terminal (conf t)", description: "Entra en configuración global." },
+        { flag: "exit / end (Ctrl+Z)", description: "Sube un nivel / vuelve directamente al modo privilegiado." },
+        { flag: "do show …", description: "Ejecuta un show desde cualquier modo de configuración." }
+      ],
+      example: { command: "enable\nconfigure terminal\ninterface GigabitEthernet0/0\ndo show ip interface brief\nend", explanation: "Recorrido típico de una práctica: entrar a configurar una interfaz y comprobar el estado sin salir del modo de configuración." },
+      tags: ["modos", "enable", "conf t", "ios", "ccna"]
+    },
+    {
+      id: "pt-basic-config", name: "hostname / banner motd / no ip domain-lookup", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Configuración inicial de cualquier router o switch: nombre, aviso legal y evitar que un comando mal escrito se interprete como un nombre DNS.",
+      syntax: "hostname NOMBRE | banner motd # texto # | no ip domain-lookup",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS (configuración global).",
+      flags: [
+        { flag: "hostname R1", description: "Nombre del equipo (cambia el prompt)." },
+        { flag: "banner motd # … #", description: "Mensaje que se muestra al conectar; # es el delimitador." },
+        { flag: "no ip domain-lookup", description: "Evita la espera al teclear mal un comando." },
+        { flag: "line console 0 → logging synchronous", description: "Los mensajes de log no cortan lo que escribes." }
+      ],
+      example: { command: "configure terminal\nhostname R1\nno ip domain-lookup\nbanner motd # Acceso solo para personal autorizado #\nline console 0\n logging synchronous\n exec-timeout 10 0\nend", explanation: "Lo primero en cualquier práctica de Packet Tracer o en un equipo nuevo: nombre, aviso legal y consola cómoda de usar." },
+      tags: ["hostname", "banner", "configuracion inicial", "domain-lookup", "consola"]
+    },
+    {
+      id: "pt-passwords", name: "enable secret / line console / service password-encryption", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Protege el acceso al equipo: contraseña del modo privilegiado, de la consola y de las líneas VTY, y cifrado de las contraseñas en la configuración.",
+      syntax: "enable secret clave | line console 0 → password clave → login | service password-encryption",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS (configuración global).",
+      flags: [
+        { flag: "enable secret", description: "Contraseña del modo privilegiado con hash (no uses enable password)." },
+        { flag: "line console 0 / line vty 0 15", description: "Consola física / accesos remotos (Telnet/SSH)." },
+        { flag: "login", description: "Exige la contraseña de la línea." },
+        { flag: "service password-encryption", description: "Oculta las contraseñas en texto plano del running-config." }
+      ],
+      example: { command: "configure terminal\nenable secret Cl4ss!Priv\nline console 0\n password C0ns0la!\n login\nline vty 0 15\n password Vty!2026\n login\nexit\nservice password-encryption", explanation: "Asegura el acceso básico de un switch del laboratorio. En producción usa SSH con usuarios locales (siguiente comando)." },
+      tags: ["contraseñas", "enable secret", "consola", "vty", "seguridad"]
+    },
+    {
+      id: "pt-ssh", name: "SSH (crypto key generate rsa / transport input ssh)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Habilita la administración remota segura por SSH v2 con usuarios locales y desactiva Telnet.",
+      syntax: "ip domain-name dominio → crypto key generate rsa → username u privilege 15 secret clave → line vty 0 15 → transport input ssh → login local",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS; hostname y nombre de dominio configurados.",
+      flags: [
+        { flag: "crypto key generate rsa (1024+)", description: "Genera las claves; SSH v2 necesita al menos 768 bits (usa 2048)." },
+        { flag: "ip ssh version 2", description: "Solo la versión segura del protocolo." },
+        { flag: "login local", description: "Autentica con los usuarios locales." },
+        { flag: "transport input ssh", description: "Bloquea Telnet en las líneas VTY." }
+      ],
+      example: { command: "configure terminal\nip domain-name corp.local\ncrypto key generate rsa general-keys modulus 2048\nip ssh version 2\nusername admin privilege 15 secret Adm!n2026\nline vty 0 15\n login local\n transport input ssh\nend\nshow ip ssh", explanation: "Configuración de SSH que se pide en casi todas las prácticas del CCNA. Pruébalo desde un PC de Packet Tracer con «ssh -l admin 192.168.99.2»." },
+      tags: ["ssh", "acceso remoto", "telnet", "usuarios", "seguridad"]
+    },
+    {
+      id: "pt-erase-reload", name: "erase startup-config / reload", os: "network", shell: "ios", category: "packettracer", risk: "danger",
+      description: "Borra la configuración guardada y reinicia el equipo para dejarlo de fábrica. En un switch hay que borrar también vlan.dat.",
+      syntax: "erase startup-config | delete flash:vlan.dat | reload",
+      requires: "Modo privilegiado (enable).",
+      flags: [
+        { flag: "erase startup-config (write erase)", description: "Borra la configuración de arranque." },
+        { flag: "delete flash:vlan.dat", description: "Borra la base de datos de VLAN del switch." },
+        { flag: "reload", description: "Reinicia; responde «no» a guardar los cambios." },
+        { flag: "copy running-config tftp:", description: "Haz copia antes si quieres conservarla." }
+      ],
+      example: { command: "erase startup-config\ndelete flash:vlan.dat\nreload", explanation: "Deja un switch de laboratorio como nuevo antes de empezar otra práctica. Irreversible: guarda antes lo que necesites." },
+      tags: ["borrar", "fabrica", "reset", "reload", "vlan.dat"]
+    },
+    {
+      id: "pt-ntp-logging", name: "ntp server / logging host / clock", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Sincroniza la hora con un servidor NTP y envía los logs a un servidor syslog, con marca de tiempo para poder correlacionar eventos.",
+      syntax: "ntp server IP | logging host IP | service timestamps log datetime msec | show clock | show ntp status",
+      requires: "Cisco Packet Tracer 8.x (servidor con los servicios NTP y Syslog activados) o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "ntp server", description: "Servidor de hora." },
+        { flag: "logging host / logging trap", description: "Servidor syslog / nivel mínimo a enviar." },
+        { flag: "service timestamps log datetime msec", description: "Fecha y hora en cada mensaje." },
+        { flag: "show ntp associations", description: "Estado de la sincronización." }
+      ],
+      example: { command: "configure terminal\nntp server 192.168.99.10\nservice timestamps log datetime msec\nlogging host 192.168.99.10\nlogging trap informational\nend\nshow ntp status", explanation: "Todos los equipos de la práctica envían sus logs al servidor de gestión con la hora sincronizada." },
+      tags: ["ntp", "hora", "syslog", "logs", "timestamps"]
+    },
+
+    // ---- Interfaces
+    {
+      id: "pt-interface-ip", name: "interface / ip address / no shutdown", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Configura la IP de una interfaz de router y la activa (en los routers las interfaces vienen apagadas).",
+      syntax: "interface Gi0/0 → description texto → ip address IP MÁSCARA → no shutdown",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "interface GigabitEthernet0/0", description: "Selecciona la interfaz (abreviable a g0/0)." },
+        { flag: "ip address IP MÁSCARA", description: "Dirección y máscara en formato decimal." },
+        { flag: "no shutdown", description: "Activa la interfaz." },
+        { flag: "clock rate 64000", description: "Solo en el extremo DCE de un enlace serie." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet0/0\n description LAN Ventas\n ip address 192.168.10.1 255.255.255.0\n no shutdown\ninterface Serial0/0/0\n description Enlace a R2\n ip address 10.0.0.1 255.255.255.252\n clock rate 64000\n no shutdown\nend", explanation: "Configura la LAN y el enlace serie hacia R2. El «clock rate» solo va en el lado DCE (el del icono del reloj en Packet Tracer)." },
+      tags: ["interfaz", "ip", "no shutdown", "serial", "direccionamiento"]
+    },
+    {
+      id: "pt-interface-range", name: "interface range / shutdown", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Aplica la misma configuración a varios puertos a la vez; buena práctica: apagar los puertos que no se usan y llevarlos a una VLAN sin uso.",
+      syntax: "interface range Fa0/1 - 24 | interface range Fa0/1 - 5 , Gi0/1",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "interface range Fa0/10 - 24", description: "Rango de puertos (espacios alrededor del guion)." },
+        { flag: ", Gi0/2", description: "Combina rangos y puertos sueltos." },
+        { flag: "shutdown", description: "Apaga los puertos." },
+        { flag: "switchport access vlan 999", description: "VLAN «aparcamiento» sin uso." }
+      ],
+      example: { command: "configure terminal\nvlan 999\n name SIN_USO\ninterface range FastEthernet0/10 - 24\n switchport mode access\n switchport access vlan 999\n shutdown\nend", explanation: "Endurece un switch: los puertos libres quedan apagados y en una VLAN sin acceso a nada." },
+      tags: ["rango", "puertos", "shutdown", "seguridad", "switch"]
+    },
+    {
+      id: "pt-speed-duplex", name: "speed / duplex / show interfaces status", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Fija velocidad y dúplex de un puerto cuando la autonegociación falla o hay que igualar ambos extremos.",
+      syntax: "interface Fa0/1 → speed 10|100|1000|auto → duplex half|full|auto",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "speed 100", description: "Velocidad fija." },
+        { flag: "duplex full", description: "Dúplex fijo; debe coincidir en los dos extremos." },
+        { flag: "show interfaces status", description: "Velocidad y dúplex negociados de cada puerto." },
+        { flag: "Errores late collision / CRC", description: "Síntoma típico de un dúplex desigual." }
+      ],
+      example: { command: "configure terminal\ninterface FastEthernet0/24\n speed 100\n duplex full\nend\nshow interfaces FastEthernet0/24 | include duplex|collision", explanation: "Corrige un enlace lento por desajuste de dúplex y comprueba que desaparecen las colisiones tardías." },
+      tags: ["velocidad", "duplex", "autonegociacion", "colisiones", "puerto"]
+    },
+    {
+      id: "pt-loopback", name: "interface loopback", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Crea una interfaz virtual que siempre está activa: ideal como router-id de OSPF, para gestión o para simular redes en una práctica.",
+      syntax: "interface loopback N → ip address IP 255.255.255.255",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "interface loopback 0", description: "Crea la loopback 0." },
+        { flag: "/32 (255.255.255.255)", description: "Máscara habitual para una loopback." },
+        { flag: "Siempre up", description: "No depende de ningún cable." }
+      ],
+      example: { command: "configure terminal\ninterface loopback 0\n ip address 1.1.1.1 255.255.255.255\nend\nshow ip interface brief | include Loopback", explanation: "Da a R1 una dirección estable que OSPF usará como router-id y que sirve para probar el routing con ping." },
+      tags: ["loopback", "router-id", "virtual", "gestion", "ospf"]
+    },
+
+    // ---- VLAN y switching
+    {
+      id: "pt-vlan", name: "vlan / name / show vlan brief", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Crea VLAN con nombre en un switch y comprueba qué puertos pertenecen a cada una.",
+      syntax: "vlan N → name NOMBRE | show vlan brief | no vlan N",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "vlan 10", description: "Crea la VLAN (o entra a editarla)." },
+        { flag: "name VENTAS", description: "Nombre descriptivo." },
+        { flag: "show vlan brief", description: "VLAN y puertos de acceso asignados (los trunks no salen)." },
+        { flag: "no vlan 10", description: "Borra la VLAN: sus puertos quedan inactivos." }
+      ],
+      example: { command: "configure terminal\nvlan 10\n name VENTAS\nvlan 20\n name CONTABILIDAD\nvlan 99\n name GESTION\nend\nshow vlan brief", explanation: "Crea las VLAN de la práctica. Después asigna los puertos con «switchport access vlan» (categoría Equipos de red)." },
+      tags: ["vlan", "crear", "nombre", "switch", "segmentacion"]
+    },
+    {
+      id: "pt-trunk", name: "switchport mode trunk / show interfaces trunk", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Configura un enlace troncal 802.1Q entre switches (o hacia un router) que transporta varias VLAN, con VLAN nativa y lista de VLAN permitidas.",
+      syntax: "interface Gi0/1 → switchport mode trunk → switchport trunk native vlan N → switchport trunk allowed vlan lista",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "switchport mode trunk", description: "Fuerza el modo troncal." },
+        { flag: "switchport trunk native vlan 99", description: "VLAN sin etiquetar (igual en ambos extremos)." },
+        { flag: "switchport trunk allowed vlan 10,20,99", description: "Solo esas VLAN cruzan el trunk." },
+        { flag: "switchport nonegotiate", description: "Desactiva DTP (buena práctica de seguridad)." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet0/1\n switchport mode trunk\n switchport trunk native vlan 99\n switchport trunk allowed vlan 10,20,99\n switchport nonegotiate\nend\nshow interfaces trunk", explanation: "Enlace troncal SW1–SW2. Si la VLAN nativa no coincide en los dos lados, CDP avisa de «native VLAN mismatch»." },
+      tags: ["trunk", "troncal", "802.1q", "vlan nativa", "dtp"]
+    },
+    {
+      id: "pt-voice-vlan", name: "switchport voice vlan", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Puerto de acceso con VLAN de datos para el PC y VLAN de voz para el teléfono IP conectado en cascada.",
+      syntax: "interface Fa0/N → switchport mode access → switchport access vlan D → switchport voice vlan V → mls qos trust cos",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "switchport voice vlan 150", description: "VLAN para el tráfico del teléfono." },
+        { flag: "mls qos trust cos", description: "Confía en el marcado de prioridad del teléfono." },
+        { flag: "show interfaces Fa0/5 switchport", description: "Comprueba VLAN de acceso y de voz." }
+      ],
+      example: { command: "configure terminal\nvlan 150\n name VOZ\ninterface FastEthernet0/5\n switchport mode access\n switchport access vlan 10\n switchport voice vlan 150\n mls qos trust cos\nend", explanation: "Puesto de trabajo con teléfono IP: el PC va a la VLAN 10 y el teléfono a la VLAN de voz 150." },
+      tags: ["voz", "telefono ip", "voip", "vlan", "qos"]
+    },
+    {
+      id: "pt-vtp", name: "vtp mode / vtp domain / show vtp status", os: "network", shell: "ios", category: "packettracer", risk: "danger",
+      description: "VTP propaga las VLAN entre switches. Un switch con un número de revisión mayor puede sobrescribir (y borrar) las VLAN de toda la red.",
+      syntax: "vtp mode server|client|transparent | vtp domain NOMBRE | vtp password clave | show vtp status",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "vtp mode transparent", description: "No aprende ni anuncia VLAN (la opción más segura)." },
+        { flag: "vtp domain", description: "Dominio VTP compartido." },
+        { flag: "vtp password", description: "Evita que un switch ajeno se una al dominio." },
+        { flag: "Configuration Revision", description: "Pon a 0 un switch nuevo antes de conectarlo (cambia el dominio)." }
+      ],
+      example: { command: "configure terminal\nvtp domain CORP\nvtp password Vtp!2026\nvtp mode client\nend\nshow vtp status", explanation: "Une un switch de acceso al dominio VTP como cliente. Antes de conectar un switch usado, comprueba que su revisión es 0." },
+      tags: ["vtp", "vlan", "propagacion", "dominio", "revision"]
+    },
+    {
+      id: "pt-stp", name: "spanning-tree mode / vlan priority / show spanning-tree", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Configura Spanning Tree para evitar bucles: modo Rapid PVST+, elección del root bridge por VLAN y diagnóstico de puertos bloqueados.",
+      syntax: "spanning-tree mode rapid-pvst | spanning-tree vlan N root primary|priority P | show spanning-tree [vlan N]",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "spanning-tree mode rapid-pvst", description: "RSTP por VLAN: convergencia en segundos." },
+        { flag: "vlan 10 root primary", description: "Hace de este switch el root bridge de la VLAN." },
+        { flag: "vlan 10 priority 4096", description: "Prioridad manual (múltiplos de 4096)." },
+        { flag: "show spanning-tree summary", description: "Modo y estado de cada VLAN." }
+      ],
+      example: { command: "configure terminal\nspanning-tree mode rapid-pvst\nspanning-tree vlan 10,20 root primary\nspanning-tree vlan 99 root secondary\nend\nshow spanning-tree vlan 10", explanation: "El switch de distribución será el root de las VLAN de usuarios: el tráfico sigue el camino previsto y no uno elegido al azar." },
+      tags: ["stp", "spanning tree", "rstp", "root bridge", "bucles"]
+    },
+    {
+      id: "pt-portfast", name: "spanning-tree portfast / bpduguard", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Puertos de equipos finales: PortFast los activa al instante y BPDU Guard los apaga si alguien conecta un switch, evitando bucles.",
+      syntax: "interface Fa0/N → spanning-tree portfast → spanning-tree bpduguard enable | spanning-tree portfast default",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "spanning-tree portfast", description: "Pasa a forwarding sin esperar (solo puertos de acceso)." },
+        { flag: "spanning-tree bpduguard enable", description: "Pone el puerto en err-disabled si recibe BPDU." },
+        { flag: "spanning-tree portfast default", description: "PortFast en todos los puertos de acceso." },
+        { flag: "spanning-tree portfast bpduguard default", description: "BPDU Guard global." }
+      ],
+      example: { command: "configure terminal\ninterface range FastEthernet0/1 - 9\n spanning-tree portfast\n spanning-tree bpduguard enable\nend", explanation: "Los PC arrancan con red al momento y un switch doméstico conectado por un usuario no puede crear un bucle." },
+      tags: ["portfast", "bpdu guard", "stp", "seguridad", "acceso"]
+    },
+    {
+      id: "pt-etherchannel", name: "channel-group / show etherchannel summary", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Agrupa varios enlaces físicos en uno lógico (EtherChannel) con LACP o PAgP: más ancho de banda y redundancia sin bloqueos de STP.",
+      syntax: "interface range Gi0/1 - 2 → channel-group N mode active|passive|desirable|auto|on → interface port-channel N",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "mode active / passive", description: "LACP (estándar)." },
+        { flag: "mode desirable / auto", description: "PAgP (propietario de Cisco)." },
+        { flag: "interface port-channel 1", description: "Se configura la interfaz lógica (trunk, VLAN…)." },
+        { flag: "show etherchannel summary", description: "Flags SU / P = correcto; «s» o «I» = problema." }
+      ],
+      example: { command: "configure terminal\ninterface range GigabitEthernet0/1 - 2\n channel-group 1 mode active\ninterface port-channel 1\n switchport mode trunk\n switchport trunk allowed vlan 10,20,99\nend\nshow etherchannel summary", explanation: "Une los dos enlaces entre SW1 y SW2 con LACP. Los puertos miembros deben tener la misma velocidad, dúplex y configuración." },
+      tags: ["etherchannel", "lacp", "pagp", "port-channel", "agregacion"]
+    },
+    {
+      id: "pt-port-security", name: "switchport port-security", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Limita qué y cuántas direcciones MAC pueden usar un puerto de acceso y qué pasa si se conecta un equipo no autorizado.",
+      syntax: "switchport port-security → maximum N → mac-address sticky → violation shutdown|restrict|protect",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS; el puerto debe estar en modo access.",
+      flags: [
+        { flag: "switchport port-security maximum 2", description: "Máximo de MAC permitidas." },
+        { flag: "mac-address sticky", description: "Aprende las MAC y las guarda en la configuración." },
+        { flag: "violation shutdown / restrict / protect", description: "Apagar puerto / descartar y registrar / solo descartar." },
+        { flag: "show port-security interface Fa0/1", description: "Estado, MAC aprendidas y violaciones." }
+      ],
+      example: { command: "configure terminal\ninterface FastEthernet0/1\n switchport mode access\n switchport port-security\n switchport port-security maximum 2\n switchport port-security mac-address sticky\n switchport port-security violation restrict\nend\nshow port-security interface FastEthernet0/1", explanation: "Solo el PC y el teléfono del puesto pueden usar la boca; un portátil ajeno se descarta y queda registrado." },
+      tags: ["port security", "mac", "sticky", "violacion", "seguridad"]
+    },
+    {
+      id: "pt-errdisable", name: "show interfaces status err-disabled / errdisable recovery", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Localiza puertos apagados por seguridad (port-security, BPDU Guard…) y los recupera manualmente o de forma automática.",
+      syntax: "show interfaces status err-disabled | interface Fa0/N → shutdown → no shutdown | errdisable recovery cause …",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "show interfaces status err-disabled", description: "Puertos en err-disabled y el motivo." },
+        { flag: "shutdown + no shutdown", description: "Recuperación manual tras corregir la causa." },
+        { flag: "errdisable recovery cause psecure-violation", description: "Recuperación automática por causa." },
+        { flag: "errdisable recovery interval 300", description: "Segundos de espera antes de reactivar." }
+      ],
+      example: { command: "show interfaces status err-disabled\nconfigure terminal\ninterface FastEthernet0/1\n shutdown\n no shutdown\nend", explanation: "Un usuario se queda sin red tras conectar un switch: localiza el puerto apagado por BPDU Guard y reactívalo una vez retirado el equipo." },
+      tags: ["err-disabled", "puerto apagado", "recuperar", "bpdu guard", "port security"]
+    },
+    {
+      id: "pt-svi-mgmt", name: "interface vlan / ip default-gateway", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Da una IP de gestión a un switch de capa 2 mediante una SVI y su puerta de enlace, para administrarlo por SSH.",
+      syntax: "interface vlan 99 → ip address IP MÁSCARA → no shutdown | ip default-gateway IP",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "interface vlan 99", description: "Interfaz virtual de la VLAN de gestión." },
+        { flag: "no shutdown", description: "La SVI solo sube si la VLAN existe y tiene algún puerto activo." },
+        { flag: "ip default-gateway", description: "Router para administrar el switch desde otras redes." }
+      ],
+      example: { command: "configure terminal\ninterface vlan 99\n ip address 192.168.99.2 255.255.255.0\n no shutdown\nexit\nip default-gateway 192.168.99.1\nend", explanation: "El switch SW1 queda accesible en 192.168.99.2 desde cualquier red, a través del router de la VLAN de gestión." },
+      tags: ["svi", "gestion", "default-gateway", "vlan 99", "ip switch"]
+    },
+    {
+      id: "pt-dhcp-snooping", name: "ip dhcp snooping", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Bloquea servidores DHCP no autorizados: solo los puertos marcados como de confianza pueden enviar ofertas DHCP.",
+      syntax: "ip dhcp snooping → ip dhcp snooping vlan N → interface X → ip dhcp snooping trust | show ip dhcp snooping",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS.",
+      flags: [
+        { flag: "ip dhcp snooping vlan 10,20", description: "VLAN protegidas." },
+        { flag: "ip dhcp snooping trust", description: "Puerto hacia el servidor DHCP o el trunk de subida." },
+        { flag: "ip dhcp snooping limit rate 10", description: "Limita peticiones por segundo (contra agotamiento)." },
+        { flag: "show ip dhcp snooping binding", description: "Tabla IP–MAC–puerto aprendida." }
+      ],
+      example: { command: "configure terminal\nip dhcp snooping\nip dhcp snooping vlan 10,20\nno ip dhcp snooping information option\ninterface GigabitEthernet0/1\n ip dhcp snooping trust\ninterface range FastEthernet0/1 - 24\n ip dhcp snooping limit rate 10\nend", explanation: "Un router doméstico conectado por error ya no puede repartir IPs a los usuarios de las VLAN 10 y 20." },
+      tags: ["dhcp snooping", "seguridad", "rogue dhcp", "trust", "capa 2"]
+    },
+    {
+      id: "pt-arp-inspection", name: "ip arp inspection", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Dynamic ARP Inspection: descarta respuestas ARP falsas (ARP spoofing) comparándolas con la tabla de DHCP snooping.",
+      syntax: "ip arp inspection vlan N | interface X → ip arp inspection trust | show ip arp inspection",
+      requires: "Cisco Packet Tracer 8.x o un switch con Cisco IOS; DHCP snooping activado.",
+      flags: [
+        { flag: "ip arp inspection vlan 10,20", description: "Activa DAI en esas VLAN." },
+        { flag: "ip arp inspection trust", description: "Puertos de confianza (trunks, routers)." },
+        { flag: "ip arp inspection validate src-mac dst-mac ip", description: "Comprobaciones adicionales." }
+      ],
+      example: { command: "configure terminal\nip arp inspection vlan 10,20\ninterface GigabitEthernet0/1\n ip arp inspection trust\nend\nshow ip arp inspection vlan 10", explanation: "Impide ataques de intermediario por ARP spoofing en las VLAN de usuarios." },
+      tags: ["dai", "arp spoofing", "seguridad", "capa 2", "mitm"]
+    },
+
+    // ---- Routing
+    {
+      id: "pt-roas", name: "router-on-a-stick (encapsulation dot1Q)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Enrutamiento entre VLAN con un solo enlace troncal hacia el router, usando una subinterfaz por VLAN.",
+      syntax: "interface Gi0/0.N → encapsulation dot1Q N [native] → ip address IP MÁSCARA",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS; el puerto del switch hacia el router en modo trunk.",
+      flags: [
+        { flag: "interface g0/0.10", description: "Subinterfaz (el número suele coincidir con la VLAN)." },
+        { flag: "encapsulation dot1Q 10", description: "Etiqueta 802.1Q de la VLAN." },
+        { flag: "encapsulation dot1Q 99 native", description: "VLAN nativa sin etiquetar." },
+        { flag: "no shutdown en la física", description: "La interfaz física debe estar activa." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet0/0\n no shutdown\ninterface GigabitEthernet0/0.10\n encapsulation dot1Q 10\n ip address 192.168.10.1 255.255.255.0\ninterface GigabitEthernet0/0.20\n encapsulation dot1Q 20\n ip address 192.168.20.1 255.255.255.0\ninterface GigabitEthernet0/0.99\n encapsulation dot1Q 99 native\n ip address 192.168.99.1 255.255.255.0\nend", explanation: "Clásico del CCNA: R1 enruta entre Ventas, Contabilidad y Gestión con un único cable hacia SW1." },
+      tags: ["inter-vlan", "router on a stick", "subinterfaz", "dot1q", "enrutamiento"]
+    },
+    {
+      id: "pt-l3-switch", name: "ip routing / no switchport (switch de capa 3)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Enrutamiento entre VLAN en un switch multicapa (3560/3650) con SVI, y puertos enrutados hacia el router.",
+      syntax: "ip routing | interface vlan N → ip address … | interface Gi0/1 → no switchport → ip address …",
+      requires: "Cisco Packet Tracer 8.x con un switch multicapa (3560-24PS o 3650) o un switch L3 con Cisco IOS.",
+      flags: [
+        { flag: "ip routing", description: "Activa el enrutamiento en el switch." },
+        { flag: "interface vlan 10", description: "SVI que actúa como puerta de enlace de la VLAN." },
+        { flag: "no switchport", description: "Convierte un puerto en enrutado (como el de un router)." }
+      ],
+      example: { command: "configure terminal\nip routing\ninterface vlan 10\n ip address 192.168.10.1 255.255.255.0\ninterface vlan 20\n ip address 192.168.20.1 255.255.255.0\ninterface GigabitEthernet0/1\n no switchport\n ip address 10.0.0.2 255.255.255.252\nexit\nip route 0.0.0.0 0.0.0.0 10.0.0.1\nend", explanation: "El switch de distribución enruta entre VLAN a velocidad de cable y envía el resto del tráfico a R1." },
+      tags: ["capa 3", "multicapa", "svi", "ip routing", "inter-vlan"]
+    },
+    {
+      id: "pt-static-route", name: "ip route (rutas estáticas y por defecto)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Rutas estáticas, ruta por defecto y ruta flotante de respaldo con mayor distancia administrativa.",
+      syntax: "ip route RED MÁSCARA siguiente-salto|interfaz [distancia]",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ip route 0.0.0.0 0.0.0.0 …", description: "Ruta por defecto (salida a Internet)." },
+        { flag: "… 10.0.0.2", description: "Siguiente salto (IP del router vecino)." },
+        { flag: "… Serial0/0/0", description: "Interfaz de salida (enlaces punto a punto)." },
+        { flag: "… 200", description: "Distancia administrativa: ruta flotante de respaldo." }
+      ],
+      example: { command: "configure terminal\nip route 192.168.30.0 255.255.255.0 10.0.0.2\nip route 0.0.0.0 0.0.0.0 203.0.113.1\nip route 0.0.0.0 0.0.0.0 10.0.0.6 200\nend\nshow ip route static", explanation: "Ruta a la LAN de R2, salida a Internet por el ISP principal y una ruta por defecto de respaldo que solo se usa si cae la principal." },
+      tags: ["ruta estatica", "ruta por defecto", "flotante", "routing", "siguiente salto"]
+    },
+    {
+      id: "pt-show-ip-route", name: "show ip route / show ip protocols", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Tabla de enrutamiento con el origen de cada ruta (C, L, S, O, D, R…) y los protocolos de enrutamiento activos.",
+      syntax: "show ip route [static|ospf|eigrp|connected|IP] | show ip protocols",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "C / L / S", description: "Conectada / local / estática." },
+        { flag: "O / D / R", description: "OSPF / EIGRP / RIP." },
+        { flag: "[110/2]", description: "[distancia administrativa / métrica]." },
+        { flag: "show ip route 192.168.30.5", description: "Qué ruta usaría para un destino concreto." }
+      ],
+      example: { command: "show ip route\nshow ip route 192.168.30.5\nshow ip protocols", explanation: "Diagnóstico básico de cualquier práctica: ¿conoce el router la red destino, por qué protocolo y por qué vecino?" },
+      tags: ["tabla de rutas", "routing", "diagnostico", "show ip route", "protocolos"]
+    },
+    {
+      id: "pt-ospf", name: "router ospf / network area", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "OSPFv2 de área única: anuncia las redes, fija el router-id y evita enviar hellos hacia las LAN de usuarios.",
+      syntax: "router ospf ID → router-id X.X.X.X → network RED WILDCARD area A → passive-interface IF",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "router-id 1.1.1.1", description: "Identificador fijo del router." },
+        { flag: "network 192.168.10.0 0.0.0.255 area 0", description: "Red con máscara wildcard y área." },
+        { flag: "passive-interface g0/0", description: "Anuncia la red pero no envía hellos por esa interfaz." },
+        { flag: "ip ospf 1 area 0 (en la interfaz)", description: "Alternativa: activar OSPF por interfaz." }
+      ],
+      example: { command: "configure terminal\nrouter ospf 1\n router-id 1.1.1.1\n network 192.168.10.0 0.0.0.255 area 0\n network 10.0.0.0 0.0.0.3 area 0\n passive-interface GigabitEthernet0/0\nend", explanation: "R1 forma adyacencia con R2 por el enlace 10.0.0.0/30 y anuncia su LAN sin enviar paquetes OSPF a los PC." },
+      tags: ["ospf", "routing dinamico", "area 0", "router-id", "wildcard"]
+    },
+    {
+      id: "pt-ospf-show", name: "show ip ospf neighbor / interface brief", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Diagnóstico de OSPF: vecinos y su estado, interfaces participantes, costes y DR/BDR.",
+      syntax: "show ip ospf neighbor | show ip ospf interface [brief] | show ip ospf database | show ip route ospf",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "FULL", description: "Adyacencia completa (correcto)." },
+        { flag: "2WAY / INIT / EXSTART", description: "Problemas: DROTHERs, hellos, MTU o temporizadores distintos." },
+        { flag: "show ip ospf interface brief", description: "Área, coste y estado (DR, BDR, P2P) por interfaz." },
+        { flag: "show ip ospf database", description: "LSDB: LSA conocidos." }
+      ],
+      example: { command: "show ip ospf neighbor\nshow ip ospf interface brief\nshow ip route ospf", explanation: "Si no aparece el vecino, revisa área, máscara y temporizadores hello/dead en ambos extremos." },
+      tags: ["ospf", "vecinos", "adyacencia", "diagnostico", "dr bdr"]
+    },
+    {
+      id: "pt-ospf-tuning", name: "ip ospf cost / priority / default-information originate", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Ajustes de OSPF: coste de interfaz, prioridad para elegir DR, ancho de banda de referencia y propagación de la ruta por defecto.",
+      syntax: "ip ospf cost N | ip ospf priority N | auto-cost reference-bandwidth M | default-information originate",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ip ospf cost 10", description: "Coste manual (menor = preferido)." },
+        { flag: "ip ospf priority 0", description: "Este router nunca será DR/BDR." },
+        { flag: "auto-cost reference-bandwidth 10000", description: "Diferencia enlaces de 1 y 10 Gbps (igual en todos)." },
+        { flag: "default-information originate", description: "Anuncia la ruta por defecto al resto." }
+      ],
+      example: { command: "configure terminal\nrouter ospf 1\n auto-cost reference-bandwidth 10000\n default-information originate\ninterface GigabitEthernet0/1\n ip ospf priority 255\nend", explanation: "R1, el router frontera con Internet, reparte la ruta por defecto por OSPF y se asegura de ser el DR del segmento." },
+      tags: ["ospf", "coste", "dr", "ruta por defecto", "ajustes"]
+    },
+    {
+      id: "pt-eigrp", name: "router eigrp / show ip eigrp neighbors", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "EIGRP (protocolo de Cisco): anuncia redes con wildcard, desactiva la sumarización automática y comprueba vecinos.",
+      syntax: "router eigrp AS → network RED WILDCARD → no auto-summary | show ip eigrp neighbors | show ip eigrp topology",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "router eigrp 100", description: "Número de sistema autónomo (igual en todos los vecinos)." },
+        { flag: "no auto-summary", description: "Evita resumir a la clase (problema con redes discontinuas)." },
+        { flag: "passive-interface", description: "No forma vecinos en esa interfaz." },
+        { flag: "show ip eigrp topology", description: "Sucesores y sucesores factibles." }
+      ],
+      example: { command: "configure terminal\nrouter eigrp 100\n network 192.168.10.0 0.0.0.255\n network 10.0.0.0 0.0.0.3\n no auto-summary\n passive-interface GigabitEthernet0/0\nend\nshow ip eigrp neighbors", explanation: "Alternativa a OSPF en la práctica de enrutamiento dinámico entre R1 y R2." },
+      tags: ["eigrp", "routing dinamico", "sistema autonomo", "vecinos", "cisco"]
+    },
+    {
+      id: "pt-rip", name: "router rip / version 2", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "RIPv2: protocolo de vector distancia sencillo para prácticas pequeñas (máximo 15 saltos).",
+      syntax: "router rip → version 2 → network RED-CON-CLASE → no auto-summary",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "version 2", description: "Admite VLSM y envía por multicast." },
+        { flag: "network 192.168.10.0", description: "Red con clase (sin máscara)." },
+        { flag: "no auto-summary", description: "Necesario con subredes discontinuas." },
+        { flag: "debug ip rip", description: "Ver las actualizaciones que se envían y reciben." }
+      ],
+      example: { command: "configure terminal\nrouter rip\n version 2\n network 192.168.10.0\n network 10.0.0.0\n no auto-summary\n passive-interface GigabitEthernet0/0\nend\nshow ip route rip", explanation: "Enrutamiento dinámico mínimo entre dos o tres routers de una práctica de introducción." },
+      tags: ["rip", "ripv2", "vector distancia", "routing dinamico", "saltos"]
+    },
+    {
+      id: "pt-bgp", name: "router bgp / neighbor remote-as", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "eBGP básico con un proveedor: vecino en otro sistema autónomo y anuncio de la red pública propia.",
+      syntax: "router bgp AS → neighbor IP remote-as AS-VECINO → network RED mask MÁSCARA | show ip bgp summary",
+      requires: "Cisco Packet Tracer 8.x (soporte BGP básico) o un router con Cisco IOS.",
+      flags: [
+        { flag: "router bgp 65001", description: "AS propio." },
+        { flag: "neighbor … remote-as 65000", description: "Vecino eBGP (AS distinto)." },
+        { flag: "network … mask …", description: "Anuncia una red que exista en la tabla de rutas." },
+        { flag: "show ip bgp summary", description: "Estado de los vecinos (un número = prefijos recibidos)." }
+      ],
+      example: { command: "configure terminal\nrouter bgp 65001\n neighbor 203.0.113.1 remote-as 65000\n network 198.51.100.0 mask 255.255.255.0\nend\nshow ip bgp summary", explanation: "Práctica de conexión a un ISP: R1 anuncia la red pública de la empresa al proveedor por eBGP." },
+      tags: ["bgp", "ebgp", "isp", "sistema autonomo", "internet"]
+    },
+
+    // ---- Servicios IP
+    {
+      id: "pt-dhcp-server", name: "ip dhcp pool / excluded-address", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Convierte el router en servidor DHCP de una VLAN: rango, puerta de enlace, DNS y direcciones reservadas.",
+      syntax: "ip dhcp excluded-address INICIO FIN → ip dhcp pool NOMBRE → network RED MÁSCARA → default-router IP → dns-server IP",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ip dhcp excluded-address", description: "IPs que no se reparten (routers, servidores, impresoras)." },
+        { flag: "network", description: "Subred del pool." },
+        { flag: "default-router / dns-server", description: "Puerta de enlace y DNS que reciben los clientes." },
+        { flag: "show ip dhcp binding", description: "Concesiones entregadas (IP–MAC)." }
+      ],
+      example: { command: "configure terminal\nip dhcp excluded-address 192.168.10.1 192.168.10.20\nip dhcp pool VENTAS\n network 192.168.10.0 255.255.255.0\n default-router 192.168.10.1\n dns-server 8.8.8.8\n domain-name corp.local\nend\nshow ip dhcp binding", explanation: "Los PC de Ventas obtienen IP automáticamente; las 20 primeras quedan reservadas para equipos con IP fija. En el PC: Desktop → IP Configuration → DHCP." },
+      tags: ["dhcp", "pool", "servidor dhcp", "excluded-address", "ip automatica"]
+    },
+    {
+      id: "pt-dhcp-relay", name: "ip helper-address", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Reenvía las peticiones DHCP de una VLAN a un servidor DHCP situado en otra red (agente de retransmisión).",
+      syntax: "interface Gi0/0.N → ip helper-address IP-SERVIDOR-DHCP",
+      requires: "Cisco Packet Tracer 8.x o un router/switch L3 con Cisco IOS.",
+      flags: [
+        { flag: "ip helper-address", description: "En la interfaz o SVI que hace de puerta de enlace de los clientes." },
+        { flag: "Pool en el servidor", description: "El servidor necesita un ámbito para cada subred." },
+        { flag: "show ip interface | include Helper", description: "Comprueba el helper configurado." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet0/0.20\n ip helper-address 192.168.99.10\nend", explanation: "Los PC de Contabilidad (VLAN 20) reciben IP del servidor DHCP central de la red de gestión." },
+      tags: ["dhcp relay", "helper-address", "retransmision", "servidor central", "dhcp"]
+    },
+    {
+      id: "pt-nat-static", name: "ip nat inside source static", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "NAT estático: publica un servidor interno en Internet asignándole una IP pública fija.",
+      syntax: "ip nat inside source static IP-PRIVADA IP-PÚBLICA | interface X → ip nat inside | ip nat outside",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ip nat inside", description: "Interfaz hacia la red interna." },
+        { flag: "ip nat outside", description: "Interfaz hacia Internet." },
+        { flag: "static … tcp 192.168.10.50 80 203.0.113.10 80", description: "Variante por puerto (port forwarding)." }
+      ],
+      example: { command: "configure terminal\nip nat inside source static 192.168.10.50 203.0.113.10\ninterface GigabitEthernet0/0\n ip nat inside\ninterface GigabitEthernet0/1\n ip nat outside\nend", explanation: "El servidor web interno 192.168.10.50 es accesible desde Internet en 203.0.113.10." },
+      tags: ["nat", "nat estatico", "servidor", "ip publica", "port forwarding"]
+    },
+    {
+      id: "pt-pat", name: "ip nat inside source list … overload (PAT)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "PAT (NAT con sobrecarga): toda la red interna sale a Internet compartiendo la IP pública del router.",
+      syntax: "access-list N permit RED WILDCARD → ip nat inside source list N interface IF overload",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "access-list 1 permit …", description: "Qué direcciones internas se traducen." },
+        { flag: "interface Gi0/1 overload", description: "Usa la IP de la interfaz exterior con puertos distintos." },
+        { flag: "ip nat pool … / list … pool …", description: "Alternativa con un rango de IPs públicas." }
+      ],
+      example: { command: "configure terminal\naccess-list 1 permit 192.168.10.0 0.0.0.255\naccess-list 1 permit 192.168.20.0 0.0.0.255\nip nat inside source list 1 interface GigabitEthernet0/1 overload\ninterface GigabitEthernet0/0\n ip nat inside\ninterface GigabitEthernet0/1\n ip nat outside\nend", explanation: "Ventas y Contabilidad navegan por Internet con la única IP pública del router frontera." },
+      tags: ["pat", "nat overload", "internet", "nat", "ip publica"]
+    },
+    {
+      id: "pt-nat-show", name: "show ip nat translations / statistics", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Comprueba que NAT funciona: traducciones activas, aciertos y fallos, e interfaces inside/outside.",
+      syntax: "show ip nat translations | show ip nat statistics | clear ip nat translation *",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "Inside local / global", description: "IP privada / IP pública que la representa." },
+        { flag: "show ip nat statistics", description: "Hits, misses e interfaces configuradas." },
+        { flag: "clear ip nat translation *", description: "Borra las traducciones dinámicas (corta conexiones)." }
+      ],
+      example: { command: "show ip nat translations\nshow ip nat statistics", explanation: "Si no hay traducciones, revisa la ACL de NAT y que las interfaces inside y outside no estén invertidas." },
+      tags: ["nat", "traducciones", "diagnostico", "pat", "estadisticas"]
+    },
+    {
+      id: "pt-acl-standard", name: "access-list (ACL estándar)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "ACL estándar numerada (1–99): filtra solo por IP de origen. Se aplica lo más cerca posible del destino.",
+      syntax: "access-list N permit|deny ORIGEN WILDCARD | interface X → ip access-group N in|out",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "access-list 10 deny host 192.168.20.5", description: "Un único equipo (host = 0.0.0.0)." },
+        { flag: "permit any", description: "Imprescindible al final: hay un deny any implícito." },
+        { flag: "ip access-group 10 out", description: "Aplica la ACL a la interfaz en un sentido." },
+        { flag: "remark texto", description: "Comentario dentro de la ACL." }
+      ],
+      example: { command: "configure terminal\naccess-list 10 remark Contabilidad no accede a la red de servidores\naccess-list 10 deny 192.168.20.0 0.0.0.255\naccess-list 10 permit any\ninterface GigabitEthernet0/2\n ip access-group 10 out\nend", explanation: "La red de Contabilidad no puede llegar a la LAN de servidores; el resto del tráfico sigue permitido." },
+      tags: ["acl", "estandar", "filtrado", "access-list", "seguridad"]
+    },
+    {
+      id: "pt-acl-extended", name: "ip access-list extended", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "ACL extendida con nombre: filtra por origen, destino, protocolo y puerto. Se aplica cerca del origen.",
+      syntax: "ip access-list extended NOMBRE → permit|deny PROTO ORIGEN WC DESTINO WC [eq PUERTO] → interface X → ip access-group NOMBRE in",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "permit tcp … host 192.168.99.10 eq 443", description: "Protocolo, destino y puerto." },
+        { flag: "eq 80 / range 20 21", description: "Puerto concreto o rango." },
+        { flag: "permit icmp any any echo-reply", description: "Permite respuestas de ping." },
+        { flag: "Número de secuencia (10, 20…)", description: "Permite insertar o borrar líneas concretas." }
+      ],
+      example: { command: "configure terminal\nip access-list extended VENTAS-IN\n permit tcp 192.168.10.0 0.0.0.255 host 192.168.99.10 eq 443\n permit udp 192.168.10.0 0.0.0.255 any eq 53\n deny ip 192.168.10.0 0.0.0.255 192.168.99.0 0.0.0.255\n permit ip any any\ninterface GigabitEthernet0/0.10\n ip access-group VENTAS-IN in\nend", explanation: "Ventas solo puede usar el servidor de gestión por HTTPS, resuelve DNS y navega con normalidad." },
+      tags: ["acl", "extendida", "puertos", "filtrado", "firewall"]
+    },
+    {
+      id: "pt-acl-vty", name: "access-class (restringir acceso SSH)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Limita desde qué redes se puede administrar el equipo por SSH/Telnet aplicando una ACL a las líneas VTY.",
+      syntax: "access-list N permit RED WILDCARD → line vty 0 15 → access-class N in",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS. Prueba desde una sesión de consola para no bloquearte.",
+      flags: [
+        { flag: "access-class 5 in", description: "Se aplica a las líneas, no a una interfaz." },
+        { flag: "show line vty 0 15", description: "Comprueba la ACL aplicada." },
+        { flag: "show access-lists 5", description: "Ver coincidencias (intentos permitidos/denegados)." }
+      ],
+      example: { command: "configure terminal\naccess-list 5 permit 192.168.99.0 0.0.0.255\nline vty 0 15\n access-class 5 in\nend", explanation: "Solo los equipos de la VLAN de gestión pueden abrir SSH contra el router." },
+      tags: ["acl", "vty", "ssh", "gestion", "access-class"]
+    },
+    {
+      id: "pt-show-acl", name: "show access-lists / show ip interface", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Muestra las ACL con sus contadores de coincidencias y en qué interfaz y sentido está aplicada cada una.",
+      syntax: "show access-lists [N|NOMBRE] | show ip interface IF | include access list",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "(N match(es))", description: "Paquetes que han coincidido con cada línea." },
+        { flag: "show ip interface g0/0", description: "ACL de entrada y salida de la interfaz." },
+        { flag: "clear access-list counters", description: "Pone los contadores a cero para probar." }
+      ],
+      example: { command: "clear access-list counters\nshow access-lists VENTAS-IN\nshow ip interface GigabitEthernet0/0.10 | include access list", explanation: "Pon a cero los contadores, repite la prueba desde el PC y comprueba qué línea de la ACL está bloqueando el tráfico." },
+      tags: ["acl", "contadores", "diagnostico", "access-group", "show"]
+    },
+    {
+      id: "pt-hsrp", name: "standby (HSRP)", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Puerta de enlace redundante: dos routers comparten una IP virtual; si cae el activo, el otro toma el relevo.",
+      syntax: "interface X → standby N ip IP-VIRTUAL → standby N priority P → standby N preempt | show standby brief",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "standby 1 ip 192.168.10.254", description: "IP virtual que usarán los PC como puerta de enlace." },
+        { flag: "standby 1 priority 110", description: "Mayor prioridad = router activo." },
+        { flag: "standby 1 preempt", description: "Recupera el papel de activo al volver." },
+        { flag: "show standby brief", description: "Estado Active/Standby de cada grupo." }
+      ],
+      example: { command: "configure terminal\ninterface GigabitEthernet0/0\n ip address 192.168.10.2 255.255.255.0\n standby 1 ip 192.168.10.254\n standby 1 priority 110\n standby 1 preempt\nend\nshow standby brief", explanation: "R1 es el router activo de la VLAN 10; R2 se configura igual con prioridad 100 y toma el relevo si R1 cae." },
+      tags: ["hsrp", "redundancia", "fhrp", "puerta de enlace", "alta disponibilidad"]
+    },
+    {
+      id: "pt-snmp", name: "snmp-server community", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Habilita SNMP para que una herramienta de monitorización consulte el equipo, limitado por ACL.",
+      syntax: "snmp-server community NOMBRE ro|rw [ACL] | snmp-server location | snmp-server contact",
+      requires: "Cisco Packet Tracer 8.x (MIB Browser en un PC) o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "community … ro", description: "Solo lectura (nunca uses rw sin necesidad)." },
+        { flag: "… 5", description: "ACL con los equipos que pueden consultar." },
+        { flag: "snmp-server location / contact", description: "Datos de inventario." }
+      ],
+      example: { command: "configure terminal\naccess-list 5 permit 192.168.99.10\nsnmp-server community M0n1tor! ro 5\nsnmp-server location CPD-Madrid-Rack3\nsnmp-server contact soporte@empresa.com\nend", explanation: "El servidor de monitorización puede leer el estado del router; nadie más puede consultarlo." },
+      tags: ["snmp", "monitorizacion", "community", "mib", "gestion"]
+    },
+    {
+      id: "pt-cdp-lldp", name: "cdp run / lldp run", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Activa o desactiva el descubrimiento de vecinos (CDP de Cisco, LLDP estándar), global o por interfaz.",
+      syntax: "cdp run | no cdp run | lldp run | interface X → no cdp enable | show lldp neighbors",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "no cdp run", description: "Desactiva CDP en todo el equipo." },
+        { flag: "interface … no cdp enable", description: "Lo desactiva en un puerto (p. ej. hacia Internet)." },
+        { flag: "lldp run", description: "Activa LLDP (multimarca)." },
+        { flag: "show lldp neighbors detail", description: "Vecinos LLDP con IP y puerto." }
+      ],
+      example: { command: "configure terminal\nlldp run\ninterface GigabitEthernet0/1\n no cdp enable\nend\nshow lldp neighbors", explanation: "Buena práctica: no anunciar información del equipo por la interfaz hacia el ISP, y usar LLDP para descubrir equipos de otros fabricantes." },
+      tags: ["cdp", "lldp", "vecinos", "descubrimiento", "seguridad"]
+    },
+
+    // ---- IPv6
+    {
+      id: "pt-ipv6", name: "ipv6 unicast-routing / ipv6 address", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Activa el enrutamiento IPv6 y asigna direcciones globales y link-local a las interfaces.",
+      syntax: "ipv6 unicast-routing | interface X → ipv6 address PREFIJO/64 → ipv6 address FE80::1 link-local | show ipv6 interface brief",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ipv6 unicast-routing", description: "Imprescindible para que el router enrute y envíe RA (SLAAC)." },
+        { flag: "ipv6 address 2001:db8:acad:10::1/64", description: "Dirección global." },
+        { flag: "… FE80::1 link-local", description: "Link-local fácil de reconocer." },
+        { flag: "show ipv6 interface brief", description: "Direcciones IPv6 por interfaz." }
+      ],
+      example: { command: "configure terminal\nipv6 unicast-routing\ninterface GigabitEthernet0/0\n ipv6 address 2001:db8:acad:10::1/64\n ipv6 address FE80::1 link-local\n no shutdown\nend\nshow ipv6 interface brief", explanation: "Doble pila en la LAN de Ventas: los PC configurados en «Automatic» obtienen IPv6 por SLAAC." },
+      tags: ["ipv6", "doble pila", "slaac", "link-local", "direccionamiento"]
+    },
+    {
+      id: "pt-ipv6-route", name: "ipv6 route / show ipv6 route", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Rutas estáticas y por defecto en IPv6 y consulta de la tabla de enrutamiento IPv6.",
+      syntax: "ipv6 route PREFIJO/LONG siguiente-salto|interfaz | ipv6 route ::/0 … | show ipv6 route",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS.",
+      flags: [
+        { flag: "ipv6 route ::/0 …", description: "Ruta por defecto IPv6." },
+        { flag: "Siguiente salto link-local", description: "Necesita también la interfaz: Gi0/1 FE80::2." },
+        { flag: "show ipv6 route static", description: "Solo las estáticas." }
+      ],
+      example: { command: "configure terminal\nipv6 route 2001:db8:acad:30::/64 2001:db8:acad:100::2\nipv6 route ::/0 GigabitEthernet0/1 FE80::2\nend\nshow ipv6 route", explanation: "Ruta hacia la LAN IPv6 de R2 y salida por defecto usando la link-local del vecino." },
+      tags: ["ipv6", "ruta estatica", "ruta por defecto", "routing", "tabla de rutas"]
+    },
+    {
+      id: "pt-ospfv3", name: "ipv6 router ospf / ipv6 ospf area", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "OSPFv3 para IPv6: se activa por interfaz y necesita un router-id en formato IPv4.",
+      syntax: "ipv6 router ospf ID → router-id X.X.X.X | interface X → ipv6 ospf ID area A | show ipv6 ospf neighbor",
+      requires: "Cisco Packet Tracer 8.x o un router con Cisco IOS; ipv6 unicast-routing activado.",
+      flags: [
+        { flag: "router-id 1.1.1.1", description: "Obligatorio si el router no tiene ninguna IPv4." },
+        { flag: "ipv6 ospf 1 area 0", description: "Activa OSPFv3 en la interfaz (no hay comando network)." },
+        { flag: "passive-interface", description: "Igual que en OSPFv2." },
+        { flag: "show ipv6 ospf neighbor", description: "Vecinos OSPFv3." }
+      ],
+      example: { command: "configure terminal\nipv6 router ospf 1\n router-id 1.1.1.1\ninterface GigabitEthernet0/0\n ipv6 ospf 1 area 0\ninterface GigabitEthernet0/1\n ipv6 ospf 1 area 0\nend\nshow ipv6 ospf neighbor", explanation: "Enrutamiento dinámico IPv6 entre R1 y R2 en la práctica de doble pila." },
+      tags: ["ospfv3", "ipv6", "routing dinamico", "area", "vecinos"]
+    },
+
+    // ---- Diagnóstico
+    {
+      id: "pt-ping-traceroute", name: "ping / traceroute (extendidos)", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Pruebas de conectividad desde el router: ping simple, ping desde una interfaz de origen concreta y traceroute.",
+      syntax: "ping IP [source IF] [repeat N] | ping (extendido, interactivo) | traceroute IP",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "!!!!!", description: "Éxito; «.» = sin respuesta; «U» = destino inalcanzable." },
+        { flag: "source Gi0/0", description: "Usa la IP de esa interfaz como origen (prueba la ruta de vuelta)." },
+        { flag: "repeat 100", description: "Más paquetes para detectar pérdidas." },
+        { flag: "traceroute", description: "Saltos hasta el destino." }
+      ],
+      example: { command: "ping 192.168.30.10 source GigabitEthernet0/0 repeat 20\ntraceroute 192.168.30.10", explanation: "El ping desde la LAN de R1 comprueba que R2 también sabe volver a ella, algo que un ping simple no prueba." },
+      tags: ["ping", "traceroute", "conectividad", "diagnostico", "origen"]
+    },
+    {
+      id: "pt-debug", name: "debug / terminal monitor / undebug all", os: "network", shell: "ios", category: "packettracer", risk: "caution",
+      description: "Muestra en tiempo real lo que hace un proceso (OSPF, DHCP, NAT…). En equipos reales puede saturar la CPU: desactívalo siempre al terminar.",
+      syntax: "debug ip ospf adj | debug ip dhcp server events | debug ip nat | terminal monitor | undebug all",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS (modo privilegiado).",
+      flags: [
+        { flag: "terminal monitor", description: "Muestra los debug también en sesiones SSH." },
+        { flag: "debug ip ospf adj", description: "Formación de adyacencias OSPF." },
+        { flag: "debug ip nat", description: "Cada traducción NAT." },
+        { flag: "undebug all (u all)", description: "Desactiva todos los debug." }
+      ],
+      example: { command: "terminal monitor\ndebug ip dhcp server events\nundebug all", explanation: "Ver por qué un PC no obtiene IP: observa la petición y la respuesta DHCP y desactiva el debug al terminar." },
+      tags: ["debug", "diagnostico", "tiempo real", "ospf", "dhcp"]
+    },
+    {
+      id: "pt-show-arp", name: "show arp / show mac address-table dynamic", os: "network", shell: "ios", category: "packettracer", risk: "safe",
+      description: "Tablas de resolución: IP–MAC conocidas por el router (ARP) y MAC aprendidas por el switch en cada puerto.",
+      syntax: "show arp | show ip arp IF | show mac address-table dynamic | clear mac address-table dynamic",
+      requires: "Cisco Packet Tracer 8.x o un equipo con Cisco IOS.",
+      flags: [
+        { flag: "show arp", description: "IP, MAC, interfaz y antigüedad de cada entrada." },
+        { flag: "show mac address-table dynamic vlan 10", description: "MAC aprendidas en una VLAN." },
+        { flag: "clear arp-cache", description: "Vacía la caché ARP del router." },
+        { flag: "clear mac address-table dynamic", description: "Vacía la tabla MAC del switch." }
+      ],
+      example: { command: "show arp\nshow mac address-table dynamic vlan 10", explanation: "Sigue un paquete paso a paso: qué MAC tiene la IP del PC y por qué puerto del switch está conectado." },
+      tags: ["arp", "mac", "tabla", "diagnostico", "capa 2"]
+    },
+    {
+      id: "pt-password-recovery", name: "Recuperación de contraseña (confreg 0x2142)", os: "network", shell: "ios", category: "packettracer", risk: "danger",
+      description: "Recupera el acceso a un router del que se ha perdido la contraseña arrancando sin cargar la configuración.",
+      syntax: "rommon → confreg 0x2142 → reset → copy startup-config running-config → enable secret … → config-register 0x2102",
+      requires: "Acceso físico por consola; interrumpir el arranque (Ctrl+Break) para entrar en ROMMON. Packet Tracer lo simula en los routers.",
+      flags: [
+        { flag: "confreg 0x2142", description: "Arranca ignorando la startup-config." },
+        { flag: "copy startup-config running-config", description: "Carga la configuración (las interfaces quedan apagadas)." },
+        { flag: "config-register 0x2102", description: "Vuelve al arranque normal. ¡No lo olvides!" },
+        { flag: "no shutdown", description: "Reactiva las interfaces tras la recuperación." }
+      ],
+      example: { command: "rommon 1 > confreg 0x2142\nrommon 2 > reset\nRouter> enable\nRouter# copy startup-config running-config\nR1# configure terminal\nR1(config)# enable secret NuevaClave!2026\nR1(config)# config-register 0x2102\nR1(config)# end\nR1# copy running-config startup-config", explanation: "Recupera el router sin perder su configuración. Si olvidas volver al registro 0x2102, en el siguiente reinicio arrancará vacío." },
+      tags: ["contraseña", "recuperacion", "rommon", "confreg", "acceso"]
     }
   ]
 };
