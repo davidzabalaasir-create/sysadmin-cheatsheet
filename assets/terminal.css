@@ -1,0 +1,89 @@
+/* =========================================================================
+ * Terminal simulada — estilos del componente (web y prototipo de docs/terminal).
+ * Consola oscura «retro» con fósforo ámbar y los tokens de Sysadmin; sin neón.
+ * La línea de entrada queda fija abajo y solo se desplaza la salida.
+ * ========================================================================= */
+.term {
+  --term-bg: #0d0c0a; --term-bar: #1b1a16; --term-line: #2f2c25; --term-line2: #3d3930;
+  --term-text: #ece6d9; --term-mute: #8f897c;
+  --term-amber: #ffb454; --term-sky: #8cc4ff; --term-sage: #9fd8a6; --term-blood: #ff6b5e;
+  --term-font: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --term-size: 14px;
+
+  display: flex; flex-direction: column;
+  height: min(60vh, 560px);
+  border: 1px solid var(--term-line); border-radius: 16px; overflow: hidden;
+  color: var(--term-text);
+  background: var(--term-bg) repeating-linear-gradient(to bottom, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 180, 84, .04);
+}
+.term:focus-within { border-color: rgba(255, 180, 84, .55); }
+
+/* Barra superior */
+.term-bar {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--term-line); background: var(--term-bar);
+}
+.term-bar .dots { display: flex; gap: 6px; }
+.term-bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--term-line2); }
+.term-bar .dots i:nth-child(1) { background: rgba(255, 107, 94, .7); }
+.term-bar .dots i:nth-child(2) { background: rgba(255, 180, 84, .7); }
+.term-bar .dots i:nth-child(3) { background: rgba(159, 216, 166, .7); }
+.term-bar h2 { margin: 0; flex: 1; min-width: 0; font: 400 12px var(--term-font); color: var(--term-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.term-bar .badge {
+  font: 10px var(--term-font); text-transform: uppercase; letter-spacing: .12em; white-space: nowrap;
+  color: var(--term-sage); border: 1px solid rgba(159, 216, 166, .4); border-radius: 999px; padding: 2px 8px;
+}
+.term-close {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
+  border: 0; background: transparent; color: var(--term-mute); cursor: pointer;
+}
+.term-close:hover { color: var(--term-text); background: rgba(255, 255, 255, .05); }
+
+/* Cuerpo: salida desplazable + entrada fija */
+.term-body {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  padding: 12px 16px 14px;
+  font: var(--term-size)/1.6 var(--term-font);
+}
+.term-output {
+  flex: 1; min-height: 0; overflow-y: auto; cursor: text;
+  scrollbar-width: thin; scrollbar-color: var(--term-line2) transparent;
+}
+.t-line { white-space: pre-wrap; word-break: break-word; min-height: 1.6em; }
+.t-echo { margin-top: 4px; }
+.t-prompt, .term-prompt { color: var(--term-amber); font-weight: 600; }
+.t-ok { color: var(--term-sage); }
+.t-error { color: var(--term-blood); }
+.t-warn { color: var(--term-amber); }
+.t-info { color: var(--term-sky); }
+.t-dim { color: var(--term-mute); }
+.t-line a { color: var(--term-amber); text-underline-offset: 3px; }
+
+.term-input {
+  display: flex; align-items: baseline; gap: 8px; flex-shrink: 0;
+  margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--term-line);
+}
+.term-prompt { white-space: nowrap; }
+.term-input input {
+  flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent;
+  font: inherit; color: var(--term-text); caret-color: var(--term-amber); outline: none;
+}
+.term-input input[aria-busy="true"] { caret-color: transparent; }
+
+/* Panel modal de la web */
+.term-dialog {
+  width: min(980px, calc(100vw - 2rem)); height: min(680px, calc(100vh - 2rem));
+  max-width: none; max-height: none; padding: 0; border: 0; background: transparent; overflow: visible;
+}
+.term-dialog::backdrop { background: rgba(0, 0, 0, .7); }
+.term-dialog .term { height: 100%; }
+
+@media (max-width: 640px) {
+  .term { --term-size: 13px; }
+  .term-bar .badge { display: none; }
+  /* 16px evita que iOS haga zoom al enfocar la entrada */
+  .term-input input { font-size: 16px; }
+  .term-dialog { width: 100vw; height: 100dvh; margin: 0; }
+  .term-dialog .term { border-radius: 0; border-width: 0; }
+}

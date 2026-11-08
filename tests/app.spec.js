@@ -235,3 +235,61 @@ test("accesibilidad básica: enlace de salto, sin controles anidados y todos los
   }).length);
   expect(unnamed).toBe(0);
 });
+
+// ---------------------------------------------------------------- Terminal simulada
+const termRun = async (page, cmd) => {
+  await page.locator("#term-in").fill(cmd);
+  await page.locator("#term-in").press("Enter");
+};
+const termText = (page) => page.locator("#termDialog [data-term-output]");
+
+test("la terminal se abre desde la cabecera, ejecuta comandos y responde a errores", async ({ page }) => {
+  await page.locator("#btnTerm").click();
+  await expect(page.locator("#termDialog")).toBeVisible();
+  await expect(page.locator("#term-in")).toBeFocused();
+  await termRun(page, "ss -tln");
+  await expect(termText(page)).toContainText("LISTEN");
+  await termRun(page, "ss -z");
+  await expect(termText(page)).toContainText("opción inválida -- 'z'");
+  await termRun(page, "sss");
+  await expect(termText(page)).toContainText("¿Quisiste decir «ss»?");
+  await termRun(page, "cd /etc");
+  await expect(page.locator("[data-term-prompt]")).toHaveText("admin@srv01:/etc$");
+  await page.locator("#term-in").press("Escape");
+  await expect(page.locator("#termDialog")).toBeHidden();
+});
+
+test("la terminal no interpreta HTML ni acepta nombres peligrosos", async ({ page }) => {
+  const dialogs = [];
+  page.on("dialog", (d) => { dialogs.push(d.message()); d.dismiss(); });
+  await page.locator("#btnTerm").click();
+  for (const cmd of ['echo "<img src=x onerror=alert(1)>"', 'cat "<svg onload=alert(2)>"', "<script>alert(3)</script>", "__proto__", "constructor"]) await termRun(page, cmd);
+  await expect(termText(page)).toContainText("<img src=x onerror=alert(1)>");
+  expect(await page.locator("#termDialog [data-term-output] img, #termDialog [data-term-output] svg, #termDialog [data-term-output] script").count()).toBe(0);
+  await expect(termText(page)).toContainText("constructor: orden no encontrada");
+  expect(dialogs).toEqual([]);
+});
+
+test("el botón Probar de una ficha abre la terminal con su comando", async ({ page, isMobile }) => {
+  await page.goto("/#linux-ss");
+  const probar = page.locator("#detail [data-try]");
+  await expect(probar).toBeVisible();
+  await probar.click();
+  await expect(page.locator("#termDialog")).toBeVisible();
+  await expect(termText(page)).toContainText("LISTEN");
+  // Fichas sin simulación no muestran el botón
+  await page.locator("#termDialog .term-close").click();
+  if (!isMobile) {
+    await page.goto("/#win-robocopy");
+    await expect(page.locator("#detailTitle")).toHaveText("robocopy");
+    await expect(page.locator("#detail [data-try]")).toHaveCount(0);
+  }
+});
+
+test("la terminal habla el idioma de la página", async ({ page }) => {
+  await page.locator("#btnLang").click();
+  await page.locator("#btnTerm").click();
+  await termRun(page, "nope");
+  await expect(termText(page)).toContainText("nope: command not found");
+  await expect(page.locator("#termTitle")).toHaveText("Simulated terminal");
+});

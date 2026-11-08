@@ -592,7 +592,7 @@
         <p class="font-mono text-[11px] text-bone-mute mb-2">${SHELL[c.shell]}</p>
         <div class="flex items-start justify-between gap-4">
           <h2 id="detailTitle" class="font-mono text-3xl sm:text-4xl font-semibold text-bone break-words">${esc(cName(c))}</h2>
-          <div class="pt-2 flex items-center gap-3">${favBtn(c, "lg")}${copyBtn(c.id, "name", t("copy"))}</div>
+          <div class="pt-2 flex items-center gap-3">${tryBtn(c)}${favBtn(c, "lg")}${copyBtn(c.id, "name", t("copy"))}</div>
         </div>
         <p class="font-serif text-2xl sm:text-[1.7rem] leading-snug text-bone-dim mt-4">${hl(cDesc(c))}</p>
 
@@ -751,6 +751,43 @@
 
   // ------------------------------------------------------------ Modo práctica
   const quiz = { score: 0, total: 0, streak: 0, best: store.get("mc.quizBest", 0), current: null, options: [], answered: false };
+  // ------------------------------------------------------------ Terminal simulada
+  const termDialog = $("#termDialog");
+  /** libraryId → órdenes que se pueden probar en la terminal (assets/terminal-data.js). */
+  const TRY = window.SysTerminal ? window.SysTerminal.examples() : {};
+
+  /** Orden de prueba para una ficha: la del comando simulado cuyo nombre aparece en la ficha. */
+  function tryLineFor(c) {
+    const list = TRY[c.id];
+    if (!list) return null;
+    const words = c.name.toLowerCase().split(/[\s/(),]+/);
+    return (list.find((x) => words.includes(x.name)) || list[0]).line;
+  }
+  function tryBtn(c) {
+    const line = tryLineFor(c);
+    if (!line) return "";
+    return `<button type="button" data-try="${esc(line)}" title="${esc(t("term.try.title", { cmd: line }))}"
+      class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber/50 text-amber font-mono text-[10px] uppercase tracking-widest hover:bg-amber hover:text-paper transition">
+      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>${esc(t("term.try"))}</button>`;
+  }
+
+  function openTerminal(line) {
+    if (!window.SysTerminal) return;
+    if (!termDialog.open) termDialog.showModal();
+    const term = window.SysTerminal.mount(termDialog.querySelector("[data-terminal]"));
+    if (!term) return;
+    if (line) term.run(line); else term.focus();
+  }
+  // Un enlace «Abrir la ficha» dentro de la terminal cierra el panel (el cambio de #hash abre la ficha).
+  termDialog.addEventListener("click", (e) => {
+    if (e.target === termDialog) return termDialog.close();
+    const a = e.target.closest("a[data-library-link]");
+    if (a) {
+      termDialog.close();
+      if (location.hash === a.getAttribute("href")) goTo(a.dataset.libraryLink);
+    }
+  });
+
   const quizDialog = $("#quizDialog");
 
   /** Palabras del nombre que identifican el comando (deben aparecer en el ejemplo). */
@@ -890,6 +927,9 @@
     if (e.target.closest("#btnBack")) return closeSheet();
     if (e.target.closest("#btnVars, [data-open-vars]")) return openVars();
     if (e.target.closest("#btnQuiz")) return openQuiz();
+    if (e.target.closest("#btnTerm")) return openTerminal();
+    const tryEl = e.target.closest("[data-try]");
+    if (tryEl) return openTerminal(tryEl.dataset.try);
     if (e.target.closest("#btnPrint")) return printList();
     if (e.target.closest("#btnLang")) return setLang(lang === "es" ? "en" : "es");
     if (e.target.closest("#btnShowAllOs")) return setOs("all");

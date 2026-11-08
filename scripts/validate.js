@@ -56,6 +56,46 @@ const es = Object.keys(window.I18N.es), en = Object.keys(window.I18N.en);
 es.filter((k) => !en.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en inglés`));
 en.filter((k) => !es.includes(k)).forEach((k) => errors.push(`i18n.js: falta la clave '${k}' en español`));
 
+// ---- Terminal simulada (assets/terminal-data.js)
+require(path.join(__dirname, "..", "assets", "terminal-data.js"));
+const TD = window.SYS_TERMINAL_DATA;
+if (!TD || !TD.commands || !TD.fs || !TD.env) errors.push("terminal-data.js: faltan commands, fs o env");
+else {
+  const STYLES_OK = new Set(["ok", "error", "warn", "dim", "info"]);
+  const textOk = (v, where) => {
+    if (typeof v === "string") return;
+    if (v && typeof v === "object" && typeof v.es === "string" && typeof v.en === "string") return;
+    errors.push(`terminal ${where}: el texto debe ser un string o { es, en }`);
+  };
+  const lineOk = (l, where) => {
+    if (typeof l === "string") return;
+    if (l && typeof l === "object" && Object.prototype.hasOwnProperty.call(l, "text")) {
+      textOk(l.text, where);
+      if (l.style !== undefined && !STYLES_OK.has(l.style)) errors.push(`terminal ${where}: estilo '${l.style}' no permitido`);
+      return;
+    }
+    textOk(l, where);
+  };
+  for (const [name, def] of Object.entries(TD.commands)) {
+    const w = `«${name}»`;
+    if (!/^[a-z][\w-]*$/.test(name)) errors.push(`terminal ${w}: nombre de comando no válido`);
+    if (def.libraryId && !seen.has(def.libraryId)) errors.push(`terminal ${w}: libraryId '${def.libraryId}' no existe en data.js`);
+    if (!def.summary) errors.push(`terminal ${w}: falta summary`); else textOk(def.summary, `${w} summary`);
+    const flags = def.flags || {};
+    for (const [f, d] of Object.entries(flags)) textOk(d && typeof d === "object" && "description" in d ? d.description : d, `${w} ${f}`);
+    const subs = new Set(Object.values(def.subcommands || {}));
+    (def.variants || []).forEach((v, i) => {
+      (v.flags || []).forEach((f) => { if (!(f in flags)) errors.push(`terminal ${w} variants[${i}]: flag ${f} no declarado`); });
+      if (v.sub && !subs.has(v.sub)) errors.push(`terminal ${w} variants[${i}]: subcomando '${v.sub}' no declarado`);
+      if (!Array.isArray(v.output)) errors.push(`terminal ${w} variants[${i}]: falta output`);
+      else v.output.forEach((l, j) => lineOk(l, `${w} variants[${i}].output[${j}]`));
+    });
+    (def.output || []).forEach((l, j) => lineOk(l, `${w} output[${j}]`));
+    (def.usage || []).forEach((l, j) => lineOk(l, `${w} usage[${j}]`));
+    if (!def.output && !(def.variants || []).length) errors.push(`terminal ${w}: no tiene output ni variantes`);
+  }
+}
+
 // ---- Versión: data.js e index.html deben coincidir (evita mezclar versiones con cachés antiguas)
 const html = require("fs").readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const appVersion = (html.match(/APP_VERSION = "([^"]+)"/) || [])[1];

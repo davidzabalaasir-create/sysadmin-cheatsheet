@@ -1,6 +1,6 @@
 {
   "name": "sysadmin-cheatsheet",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "private": true,
   "description": "Sysadmin: biblioteca de comandos para administradores de sistemas (Linux y Windows).",
   "license": "MIT",

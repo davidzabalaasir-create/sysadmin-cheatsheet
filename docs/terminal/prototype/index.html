@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- CSP: solo scripts, estilos y fuentes del propio sitio; nada inline, nada externo. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Terminal simulada · Prototipo · Sysadmin</title>
+  <link rel="icon" href="../../../assets/icons/favicon.svg" type="image/svg+xml" />
+  <!-- El prototipo usa el mismo motor, datos y estilos que la web -->
+  <link rel="stylesheet" href="../../../assets/terminal.css" />
+  <link rel="stylesheet" href="page.css" />
+</head>
+<body>
+  <main class="page">
+    <p class="kicker">Prototipo · Terminal simulada · <a href="../../../index.html">volver a Sysadmin</a></p>
+    <h1>Sys<em>admin</em> <span>terminal</span></h1>
+    <p class="lead">Prueba comandos de forma segura: todo es simulado y se muestra como texto. Escribe <code>help</code>, usa <kbd>Tab</kbd> para autocompletar y <kbd>↑</kbd> <kbd>↓</kbd> para el historial.</p>
+
+    <section class="term" data-terminal data-autostart data-link-base="../../../index.html" aria-busy="true" aria-labelledby="termTitle">
+      <header class="term-bar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <h2 id="termTitle">admin@srv01 — simulador</h2>
+        <span class="badge">sin ejecución real</span>
+      </header>
+      <div class="term-body">
+        <div class="term-output" data-term-output role="log" aria-live="polite" aria-relevant="additions" aria-label="Salida de la terminal"></div>
+        <form class="term-input" data-term-form autocomplete="off">
+          <label for="term-in" class="term-prompt" data-term-prompt>admin@srv01:~$</label>
+          <input id="term-in" data-term-input type="text" maxlength="256" spellcheck="false" autocapitalize="off" autocorrect="off"
+                 enterkeyhint="send" aria-describedby="term-help" autofocus />
+        </form>
+      </div>
+      <p id="term-help" class="sr-only">Escribe un comando y pulsa Intro. Tab autocompleta, flechas arriba y abajo recorren el historial, Control L limpia la pantalla y Control C cancela.</p>
+    </section>
+
+    <p class="hint">Prueba: <code>ss -tln</code> · <code>df -h</code> · <code>ip -br a</code> · <code>ping -c 3 dc01</code> · <code>systemctl status nginx</code> · <code>cat /etc/hosts</code> · <code>rm -rf /</code></p>
+  </main>
+  <script src="../../../assets/i18n.js"></script>
+  <script src="../../../assets/terminal-data.js"></script>
+  <script src="../../../assets/terminal.js"></script>
+</body>
+</html>
