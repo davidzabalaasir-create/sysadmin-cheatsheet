@@ -47,6 +47,9 @@
   const L = (v) => (v && typeof v === "object" ? v[lang()] ?? v.es ?? "" : v ?? "");
   const flagText = (d) => (d && typeof d === "object" && has(d, "description") ? L(d.description) : L(d));
 
+  /** Animaciones solo si el usuario no pidió reducir el movimiento. */
+  const motion = () => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
   const sameSet = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
   function levenshtein(a, b) {
     const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
@@ -122,7 +125,7 @@
 
   // ------------------------------------------------------------------ 5. Pantalla (salida segura)
   class Screen {
-    constructor(el, linkBase) { this.el = el; this.linkBase = linkBase || ""; }
+    constructor(el, linkBase) { this.el = el; this.linkBase = linkBase || ""; this.batch = 0; this.batchTimer = null; }
     print(line) {
       const { text, style } = typeof line === "string" ? { text: line } : line;
       const div = document.createElement("div");
@@ -151,6 +154,13 @@
       this.append(div);
     }
     append(node) {
+      // Las líneas que llegan juntas aparecen en cascada (retardo por CSSOM, permitido por la CSP).
+      if (motion()) {
+        node.classList.add("t-in");
+        node.style.setProperty("--t-delay", `${Math.min(this.batch++, 24) * 18}ms`);
+        clearTimeout(this.batchTimer);
+        this.batchTimer = setTimeout(() => { this.batch = 0; }, 0);
+      }
       this.el.append(node);
       while (this.el.childElementCount > LIMITS.lines) this.el.firstElementChild.remove();
       this.el.scrollTop = this.el.scrollHeight;
@@ -218,9 +228,30 @@
     /** Escribe y ejecuta una orden como si la tecleara el usuario (botones «Probar»). */
     run(line) {
       if (this.busy) this.busy.cancel();
-      this.input.value = line;
-      this.submit();
+      this.stopTyping();
       this.focus();
+      if (!motion()) { this.input.value = line; return this.submit(); }
+      // Efecto de mecanografía: letra a letra, como mucho ~0,9 s en total.
+      const chars = Array.from(line), step = Math.max(12, Math.min(38, 900 / chars.length));
+      let i = 0;
+      this.input.value = "";
+      this.input.dataset.typing = "";
+      const tick = () => {
+        this.input.value = chars.slice(0, ++i).join("");
+        if (i < chars.length) this.typing = { timer: setTimeout(tick, step), line };
+        else { this.typing = null; delete this.input.dataset.typing; this.submit(); }
+      };
+      this.typing = { timer: setTimeout(tick, 220), line };
+    }
+    /** Termina al instante la mecanografía en curso (al pulsar una tecla); con submit, la ejecuta. */
+    stopTyping(submit = false) {
+      if (!this.typing) return false;
+      clearTimeout(this.typing.timer);
+      const { line } = this.typing;
+      this.typing = null;
+      delete this.input.dataset.typing;
+      if (submit) { this.input.value = line; this.submit(); }
+      return true;
     }
 
     // ---------------- Entrada
@@ -231,6 +262,7 @@
     }
 
     onKey(e) {
+      if (this.typing) { e.preventDefault(); this.stopTyping(true); return; }
       if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
         if (!this.history.length) return;
