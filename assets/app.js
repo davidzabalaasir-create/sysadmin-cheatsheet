@@ -953,7 +953,61 @@
     }).catch(() => { /* sin service worker la web sigue funcionando online */ });
   }
 
+  // ------------------------------------------------------------ Título que se descifra
+  /** Efecto de descifrado del título: cada letra muestra glifos aleatorios y se fija
+   *  en su valor real de izquierda a derecha. El <h1> conserva aria-label="Sysadmin",
+   *  así que los lectores de pantalla nunca leen los glifos intermedios. */
+  function decryptBrand() {
+    const h1 = $("#brand");
+    if (!h1 || reducedMotion() || typeof requestAnimationFrame !== "function") return;
+    const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$%&/<>_";
+    const original = h1.innerHTML;
+    const chars = [];
+    // Sustituye cada nodo de texto («Sys» y el «admin» del <em>) por una letra por span.
+    const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      const frag = document.createDocumentFragment();
+      for (const ch of node.nodeValue.trim()) {
+        const s = document.createElement("span");
+        s.className = "decrypt-ch";
+        s.setAttribute("aria-hidden", "true");
+        s.textContent = ch;
+        frag.appendChild(s);
+        chars.push({ el: s, final: ch });
+      }
+      node.replaceWith(frag);
+    });
+    // Fija el ancho de cada letra con su glifo final (tras cargar la fuente) para evitar saltos.
+    // Las fuentes son locales y se precargan, así que la espera es mínima.
+    const start = () => {
+      chars.forEach((c) => { c.el.style.width = c.el.getBoundingClientRect().width + "px"; });
+      const t0 = performance.now(), STEP = 70, SPIN = 380, TICK = 45;
+      let last = 0;
+      const frame = (now) => {
+        const elapsed = now - t0;
+        const tick = now - last >= TICK;
+        if (tick) last = now;
+        let done = true;
+        chars.forEach((c, i) => {
+          if (elapsed >= SPIN + i * STEP) {
+            if (c.el.textContent !== c.final) { c.el.textContent = c.final; c.el.classList.remove("is-scrambling"); }
+          } else {
+            done = false;
+            if (tick) { c.el.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)]; c.el.classList.add("is-scrambling"); }
+          }
+        });
+        if (!done) requestAnimationFrame(frame);
+        else h1.innerHTML = original; // deja el marcado original, con su kerning
+      };
+      requestAnimationFrame(frame);
+    };
+    (document.fonts?.ready || Promise.resolve()).then(start, start);
+  }
+
   // ------------------------------------------------------------ Arranque
+  decryptBrand();
   buildIndex();
   applyStaticI18n();
   renderVarsBadge();

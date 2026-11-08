@@ -88,6 +88,11 @@ input:focus-visible { outline-offset: 4px; }
 }
 
 /* Respeta la preferencia del sistema de reducir animaciones */
+/* Título que se descifra al cargar (assets/app.js · decryptBrand). Cada letra tiene
+   el ancho de la letra final para que el título no baile mientras cambian los glifos. */
+.decrypt-ch { display: inline-block; text-align: center; white-space: pre; }
+.decrypt-ch.is-scrambling { color: var(--decrypt-color, #8f897c); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }

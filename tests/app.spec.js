@@ -21,6 +21,24 @@ test("muestra todos los comandos del dataset", async ({ page }) => {
   await expect(page.locator("#listMeta")).toContainText(String(await total(page)));
 });
 
+test("el título se descifra y termina como «Sysadmin» con su marcado original", async ({ page }) => {
+  const h1 = page.locator("#brand");
+  await expect(page.getByRole("heading", { level: 1, name: "Sysadmin" })).toBeVisible();
+  await expect(h1).toHaveText("Sysadmin", { timeout: 5000 });
+  await expect(h1.locator(".decrypt-ch")).toHaveCount(0);
+  await expect(h1.locator("em")).toHaveText("admin");
+});
+
+test("con prefers-reduced-motion el título no se anima", async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: "reduce" });
+  const p = await ctx.newPage();
+  await p.goto("/");
+  await expect(p.locator("#list .row").first()).toBeVisible();
+  await expect(p.locator("#brand .decrypt-ch")).toHaveCount(0);
+  await expect(p.locator("#brand")).toHaveText("Sysadmin");
+  await ctx.close();
+});
+
 test("la búsqueda filtra en tiempo real y sin tener en cuenta los acentos", async ({ page }) => {
   await page.locator("#search").fill("bloquear cuenta");
   await expect(row(page, "linux-usermod")).toBeVisible();
