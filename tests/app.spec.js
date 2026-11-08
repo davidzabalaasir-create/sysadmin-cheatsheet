@@ -41,6 +41,28 @@ test("el filtro de sistema muestra solo Windows y oculta Active Directory en Lin
   await expect(page.locator('#catRail [data-cat="ad"]')).toHaveCount(0);
 });
 
+test("la opción Red muestra Cisco/Packet Tracer y el selector cabe en pantalla", async ({ page }) => {
+  await page.locator('[data-os="network"]').click();
+  const netCount = await page.evaluate(() => window.CHEATSHEET.commands.filter((c) => c.os === "network").length);
+  await expect(page.locator("#list .row")).toHaveCount(netCount);
+  await expect(page.locator('#catRail [data-cat="packettracer"]')).toBeVisible();
+  await page.locator('#catRail [data-cat="packettracer"]').click();
+  await expect(row(page, "pt-ospf")).toBeVisible();
+  expect(await page.evaluate(() => { const s = document.getElementById("osSwitch"); return s.scrollWidth <= s.clientWidth + 1; })).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("si el sistema elegido no tiene resultados, ofrece verlos en Todo", async ({ page }) => {
+  await page.locator('[data-os="windows"]').click();
+  await expect(page.locator('#catRail [data-cat="packettracer"]')).toHaveCount(0);
+  await page.locator("#search").fill("ospf");
+  await expect(page.locator("#empty")).toBeVisible();
+  await expect(page.locator("#btnShowAllOs")).toBeVisible();
+  await page.locator("#btnShowAllOs").click();
+  await expect(page.locator('[data-os="all"]')).toHaveAttribute("aria-selected", "true");
+  await expect(row(page, "pt-ospf")).toBeVisible();
+});
+
 test("el filtro de riesgo oculta los comandos peligrosos", async ({ page }) => {
   await page.locator('[data-risk="danger"]').click();
   await expect(page.locator('[data-risk="danger"]')).toHaveAttribute("aria-pressed", "false");

@@ -12,6 +12,7 @@ window.I18N = {
     "os.label": "Sistema operativo",
     "os.all": "Todo", "os.linux": "Linux", "os.windows": "Windows", "os.network": "Equipos de red",
     "os.short.linux": "LNX", "os.short.windows": "WIN", "os.short.network": "RED",
+    "os.tab.network": "Red",
     "counter": "comandos · {l} linux / {w} windows / {r} red",
     "cat.nav": "Categorías", "cat.all": "Todo", "cat.fav": "Favoritos", "cat.recent": "Recientes",
     "rail.prev": "Ver categorías anteriores", "rail.next": "Ver más categorías",
@@ -20,6 +21,7 @@ window.I18N = {
     "risk.hide": "Ocultar comandos: {risk}", "risk.show": "Mostrar comandos: {risk}",
     "meta.entries": "entradas", "meta.result": "resultado para", "meta.results": "resultados para",
     "empty.title": "Nada por aquí.", "empty.text": "Prueba otra palabra, cambia de sistema o restablece los filtros.", "empty.reset": "Restablecer filtros",
+    "empty.otherOs": "No hay resultados en {os}, pero sí {n} en otros sistemas.", "empty.showAll": "Ver en «Todo»",
     "empty.fav.title": "Aún no tienes favoritos.", "empty.fav.text": "Pulsa la estrella ☆ de cualquier comando para tenerlo siempre a mano aquí.",
     "empty.recent.title": "Todavía no has copiado nada.", "empty.recent.text": "Los últimos 20 comandos que copies aparecerán aquí, del más reciente al más antiguo.",
     "fav.add": "Añadir {name} a favoritos", "fav.remove": "Quitar {name} de favoritos",
@@ -56,7 +58,7 @@ window.I18N = {
     "quiz.correct": "✓ ¡Correcto!", "quiz.wrong": "✗ Era {name}.", "quiz.openCard": "Abrir su ficha →",
     "quiz.next": "Siguiente", "quiz.skip": "Saltar",
     "footer.tip": "Lee antes de pulsar Intro. Prueba en laboratorio antes que en producción.",
-    "footer.keys": "↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1/2/3 sistema",
+    "footer.keys": "↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1–4 sistema",
     "footer.license": "Código MIT · Contenido CC BY 4.0"
   },
 
@@ -71,6 +73,7 @@ window.I18N = {
     "os.label": "Operating system",
     "os.all": "All", "os.linux": "Linux", "os.windows": "Windows", "os.network": "Network devices",
     "os.short.linux": "LNX", "os.short.windows": "WIN", "os.short.network": "NET",
+    "os.tab.network": "Network",
     "counter": "commands · {l} linux / {w} windows / {r} network",
     "cat.nav": "Categories", "cat.all": "All", "cat.fav": "Favourites", "cat.recent": "Recent",
     "rail.prev": "Show previous categories", "rail.next": "Show more categories",
@@ -79,6 +82,7 @@ window.I18N = {
     "risk.hide": "Hide commands: {risk}", "risk.show": "Show commands: {risk}",
     "meta.entries": "entries", "meta.result": "result for", "meta.results": "results for",
     "empty.title": "Nothing here.", "empty.text": "Try another word, change the system or reset the filters.", "empty.reset": "Reset filters",
+    "empty.otherOs": "No results in {os}, but there are {n} in other systems.", "empty.showAll": "Show in “All”",
     "empty.fav.title": "No favourites yet.", "empty.fav.text": "Tap the ☆ star on any command to keep it handy here.",
     "empty.recent.title": "You haven't copied anything yet.", "empty.recent.text": "The last 20 commands you copy will appear here, newest first.",
     "fav.add": "Add {name} to favourites", "fav.remove": "Remove {name} from favourites",
@@ -115,7 +119,7 @@ window.I18N = {
     "quiz.correct": "✓ Correct!", "quiz.wrong": "✗ It was {name}.", "quiz.openCard": "Open its details →",
     "quiz.next": "Next", "quiz.skip": "Skip",
     "footer.tip": "Read before you hit Enter. Test in a lab before production.",
-    "footer.keys": "↑ ↓ navigate · Enter open · Ctrl K search · Alt 1/2/3 system",
+    "footer.keys": "↑ ↓ navigate · Enter open · Ctrl K search · Alt 1–4 system",
     "footer.license": "Code MIT · Content CC BY 4.0"
   }
 };

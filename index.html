@@ -119,6 +119,7 @@
       <div id="empty" class="hidden py-20 text-center">
         <p id="emptyTitle" class="font-serif text-4xl italic text-bone-dim">Nada por aquí.</p>
         <p id="emptyText" class="text-sm text-bone-mute mt-2">Prueba otra palabra, cambia de sistema o restablece los filtros.</p>
+        <button id="btnShowAllOs" type="button" class="hidden mt-5 mr-4 px-4 py-2 rounded-full bg-bone text-paper font-mono text-xs font-semibold hover:bg-amber transition">Ver en «Todo»</button>
         <button id="btnReset" type="button" class="mt-5 font-mono text-xs uppercase tracking-widest text-amber border-b border-amber/40 hover:border-amber pb-0.5" data-i18n="empty.reset">Restablecer filtros</button>
       </div>
     </section>
@@ -135,7 +136,7 @@
   <footer class="border-t border-paper-line mt-10 screen-only">
     <div class="max-w-[1500px] mx-auto px-5 lg:px-10 py-6 flex flex-wrap justify-between gap-3 font-mono text-[11px] text-bone-mute">
       <span data-i18n="footer.tip">Lee antes de pulsar Intro. Prueba en laboratorio antes que en producción.</span>
-      <span data-i18n="footer.keys">↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1/2/3 sistema</span>
+      <span data-i18n="footer.keys">↑ ↓ navegar · Intro abrir · Ctrl K buscar · Alt 1–4 sistema</span>
       <span><a href="https://github.com/davidzabalaasir-create/sysadmin-cheatsheet" class="hover:text-amber underline-offset-2 hover:underline">GitHub</a> · <span data-i18n="footer.license">Código MIT · Contenido CC BY 4.0</span></span>
     </div>
   </footer>
@@ -198,7 +199,7 @@
     /* Si un service worker antiguo sirvió datos de otra versión (HTML nuevo con JS/datos viejos),
        se limpia la caché y se recarga una sola vez. Solo con conexión, para no romper el modo sin conexión. */
     (function () {
-      var APP_VERSION = "1.4.0";
+      var APP_VERSION = "1.4.1";
       if ((window.CHEATSHEET || {}).version === APP_VERSION || !navigator.onLine || sessionStorage.getItem("sw-refresh")) return;
       sessionStorage.setItem("sw-refresh", "1");
       var regs = "serviceWorker" in navigator ? navigator.serviceWorker.getRegistrations() : Promise.resolve([]);

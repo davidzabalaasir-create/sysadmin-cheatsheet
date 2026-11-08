@@ -40,7 +40,7 @@
   const catSub = (cat) => (lang === "en" ? cat.label : cat.labelEn);
 
   // ------------------------------------------------------------ Config
-  const OS_IDS = ["all", "linux", "windows"];
+  const OS_IDS = ["all", "linux", "windows", "network"];
   const OS_STYLE = {
     linux:   { letter: "L", ring: "border-amber/60 text-amber", text: "text-amber" },
     windows: { letter: "W", ring: "border-sky/60 text-sky",     text: "text-sky" },
@@ -59,9 +59,14 @@
         M10.6 9.6a1.4 .75 0 1 0 2.8 0a1.4 .75 0 1 0-2.8 0z"/>
       <ellipse cx="7.9" cy="21" rx="2.7" ry="1.25"/><ellipse cx="16.1" cy="21" rx="2.7" ry="1.25"/></svg>`,
     windows: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3 5.6l7.4-1v6.9H3zM11.4 4.4L21 3v8.5h-9.6zM3 12.5h7.4v6.9L3 18.4zM11.4 12.5H21V21l-9.6-1.4z"/></svg>`
+      <path d="M3 5.6l7.4-1v6.9H3zM11.4 4.4L21 3v8.5h-9.6zM3 12.5h7.4v6.9L3 18.4zM11.4 12.5H21V21l-9.6-1.4z"/></svg>`,
+    // Equipo de red (switch/router) para Cisco y MikroTik
+    network: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+      <rect x="2.5" y="8" width="19" height="9" rx="1.8"/><path d="M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 8V5M16 8V5"/></svg>`
   };
-  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-amber", windows: "text-sky" };
+  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-amber", windows: "text-sky", network: "text-sage" };
+  /** Nombre corto para el selector (el largo, «Equipos de red», no cabe en móvil). */
+  const osTab = (id) => (id === "network" ? t("os.tab.network") : osName(id));
 
   /* Iconos (trazo, 24×24). La clave coincide con categories[].icon. */
   const CAT_ICONS = {
@@ -293,6 +298,13 @@
     return s;
   }
 
+  /** Ejecuta fn() como si estuviera seleccionado otro sistema (sin cambiar el estado real). */
+  function withOs(os, fn) {
+    const prev = state.os;
+    state.os = os;
+    try { return fn(); } finally { state.os = prev; }
+  }
+
   function filter({ ignoreCategory = false } = {}) {
     const ts = terms(), out = [];
     for (const e of index) {
@@ -322,8 +334,8 @@
       const n = id === "all" ? commands.length : commands.filter((c) => c.os === id).length;
       return `<button type="button" role="tab" aria-selected="${on}" data-os="${id}"
         class="flex flex-1 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
-        <span class="${on ? "" : OS_LOGO_COLOR[id]}">${OS_LOGO[id]}</span>
-        ${esc(osName(id))} <span class="hidden sm:inline ${on ? "text-paper/70" : "text-bone-mute"}">${n}</span></button>`;
+        <span class="hidden sm:inline ${on ? "" : OS_LOGO_COLOR[id]}">${OS_LOGO[id]}</span>
+        ${esc(osTab(id))} <span class="hidden sm:inline ${on ? "text-paper/70" : "text-bone-mute"}">${n}</span></button>`;
     }).join("");
 
     const pool = filter({ ignoreCategory: true });
@@ -487,6 +499,13 @@
       $("#emptyTitle").textContent = special ? t(`empty.${special}.title`) : t("empty.title");
       $("#emptyText").textContent = special ? t(`empty.${special}.text`) : t("empty.text");
       $("#btnReset").classList.toggle("hidden", !!special);
+      // Si el filtro de sistema oculta resultados que sí existen en otros sistemas, se avisa.
+      const other = !special && state.os !== "all" ? withOs("all", () => filter().length) : 0;
+      $("#btnShowAllOs").classList.toggle("hidden", !other);
+      if (other) {
+        $("#emptyText").textContent = t("empty.otherOs", { n: other, os: osName(state.os) });
+        $("#btnShowAllOs").textContent = t("empty.showAll");
+      }
     }
     $("#listMeta").innerHTML = state.query
       ? `<span class="text-bone">${list.length}</span> ${esc(t(list.length === 1 ? "meta.result" : "meta.results"))} «${esc(state.query)}»`
@@ -830,6 +849,7 @@
     if (e.target.closest("#btnQuiz")) return openQuiz();
     if (e.target.closest("#btnPrint")) return printList();
     if (e.target.closest("#btnLang")) return setLang(lang === "es" ? "en" : "es");
+    if (e.target.closest("#btnShowAllOs")) return setOs("all");
     if (e.target.closest("dialog")) return; // los diálogos gestionan sus propios clics
     const el = e.target.closest("[data-fav],[data-os],[data-cat],[data-risk],[data-copy],[data-tag],[data-id]");
     if (!el) return;
@@ -875,7 +895,7 @@
       if (search.value) { search.value = ""; state.query = ""; render(); }
       search.blur(); return;
     }
-    if (e.altKey && ["1", "2", "3"].includes(e.key)) { e.preventDefault(); return setOs(OS_IDS[+e.key - 1]); }
+    if (e.altKey && ["1", "2", "3", "4"].includes(e.key)) { e.preventDefault(); return setOs(OS_IDS[+e.key - 1]); }
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       if (!state.visible.length || (document.activeElement && document.activeElement.closest("#catRail, #osSwitch"))) return;
       e.preventDefault();

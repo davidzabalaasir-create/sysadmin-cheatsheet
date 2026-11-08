@@ -91,7 +91,7 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
 - Diseño editorial de manual impreso: negro cálido (`paper`), texto hueso (`bone`), acento ámbar, Instrument Serif para títulos e IBM Plex Sans/Mono para el resto. **No vuelvas al estilo terminal neón**: el usuario lo descartó porque ya lo usa en otros proyectos.
 - Distribución en dos columnas: índice a la izquierda y ficha a la derecha. En móvil (<1024 px) la ficha se abre como hoja a pantalla completa.
 - Cada fila del índice tiene un botón «Copiar» que copia el ejemplo. En la ficha se puede copiar el comando, la sintaxis y el ejemplo.
-- Enlaces directos `#id-del-comando`, navegación con ↑ ↓, `Ctrl+K` o `/` para buscar y `Alt+1/2/3` para elegir sistema.
+- Enlaces directos `#id-del-comando`, navegación con ↑ ↓, `Ctrl+K` o `/` para buscar y `Alt+1–4` para elegir sistema (Todo, Linux, Windows, Red).
 - Accesibilidad: botones reales (nunca controles anidados), `aria-label` en los botones de solo icono, foco visible, contraste AA (el gris más tenue es `bone-mute` #8f897c). Las pruebas lo comprueban.
 - Prueba en escritorio (1440 px) y en móvil (360–375 px) sin errores en la consola; `npm test` en verde.
 

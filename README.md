@@ -7,7 +7,7 @@ Biblioteca y cheat sheet de **307 comandos** para administradores de sistemas y 
 ## Características
 
 - Diseño **maestro-detalle** estilo manual impreso: índice a la izquierda y ficha completa a la derecha (en móvil, hoja a pantalla completa).
-- Selector **Todo / Linux / Windows** e índice de **15 categorías** desplazable (flechas, rueda, arrastre).
+- Selector **Todo / Linux / Windows / Red** e índice de **15 categorías** desplazable (flechas, rueda, arrastre).
 - **Búsqueda en tiempo real** (`Ctrl+K` o `/`) por comando, descripción, parámetros o etiqueta, sin importar los acentos, en los dos idiomas.
 - Fichas con sintaxis resaltada, parámetros habituales, **ejemplo real**, requisitos, comandos relacionados y botones de **copiar**; también en cada fila de la lista.
 - Niveles de riesgo **Seguro**, **Precaución** y **Peligroso**, con aviso al copiar comandos destructivos.
