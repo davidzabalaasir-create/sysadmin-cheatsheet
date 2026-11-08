@@ -93,7 +93,39 @@ input:focus-visible { outline-offset: 4px; }
 .decrypt-ch { display: inline-block; text-align: center; white-space: pre; }
 .decrypt-ch.is-scrambling { color: var(--decrypt-color, #8f897c); }
 
+/* Indicador que se desliza entre pestañas (assets/app.js · slideTabInk). Solo existe
+   durante la animación; después cada pestaña activa vuelve a pintar su propio indicador. */
+#osSwitch { position: relative; isolation: isolate; }
+.tab-ink { position: absolute; pointer-events: none; z-index: 2; }
+/* La píldora va por encima con mix-blend-mode: difference, así el texto que tiene
+   debajo se invierte (claro → oscuro) y se lee durante todo el recorrido. */
+.tab-ink--pill { border-radius: 9999px; background: #ece6d9; mix-blend-mode: difference; }
+.tab-ink--line { height: 2px; background: #ffb454; }
+#osSwitch > button.tab-sliding { background-color: transparent; }
+#osSwitch > button.tab-sliding, #osSwitch > button.tab-sliding * { color: #a39d90; transition: none; }
+#catRail > button.tab-sliding { border-bottom-color: transparent; }
+
+/* Modo práctica: respuesta correcta con un pulso verde, fallo con una sacudida roja
+   y la explicación aparece con un fundido (assets/app.js · renderQuiz). */
+@keyframes quiz-hit {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(159, 216, 166, .55); }
+  40%  { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(159, 216, 166, .18); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 10px rgba(159, 216, 166, 0); }
+}
+@keyframes quiz-miss {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+@keyframes quiz-reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.quiz-hit    { animation: quiz-hit .5s cubic-bezier(.2,.7,.2,1); }
+.quiz-miss   { animation: quiz-miss .4s ease-out; }
+.quiz-reveal { animation: quiz-reveal .3s ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
+  .quiz-hit, .quiz-miss, .quiz-reveal { animation: none !important; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 

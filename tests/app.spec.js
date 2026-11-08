@@ -39,6 +39,58 @@ test("con prefers-reduced-motion el título no se anima", async ({ browser }) =>
   await ctx.close();
 });
 
+test("el indicador de la pestaña activa se desliza y luego desaparece", async ({ page }) => {
+  // Registra qué indicadores llegan a aparecer (duran 240 ms, demasiado poco para sondearlos).
+  await page.evaluate(() => {
+    window.__inks = [];
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => {
+      if (n.classList?.contains("tab-ink")) window.__inks.push(n.className);
+    }))).observe(document.body, { childList: true, subtree: true });
+  });
+  await page.locator('[data-os="linux"]').click();
+  await expect.poll(() => page.evaluate(() => window.__inks)).toContainEqual(expect.stringContaining("tab-ink--pill"));
+  await expect(page.locator("#osSwitch .tab-ink")).toHaveCount(0);   // al terminar queda el estado normal
+  await expect(page.locator('[data-os="linux"]')).not.toHaveClass(/tab-sliding/);
+  await expect(page.locator('[data-os="linux"]')).toHaveClass(/bg-bone/);
+  await page.locator('#catRail [data-cat="network"]').click();
+  await expect.poll(() => page.evaluate(() => window.__inks)).toContainEqual(expect.stringContaining("tab-ink--line"));
+  await expect(page.locator("#catRail .tab-ink")).toHaveCount(0);
+  await expect(page.locator('#catRail [data-cat="network"]')).toHaveClass(/border-amber/);
+});
+
+test("con prefers-reduced-motion las pestañas cambian sin deslizar", async ({ browser }) => {
+  const ctx = await browser.newContext({ reducedMotion: "reduce" });
+  const p = await ctx.newPage();
+  await p.goto("/");
+  await expect(p.locator("#list .row").first()).toBeVisible();
+  await p.evaluate(() => {
+    window.__inks = 0;
+    new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => {
+      if (n.classList?.contains("tab-ink")) window.__inks++;
+    }))).observe(document.body, { childList: true, subtree: true });
+  });
+  await p.locator('[data-os="windows"]').click();
+  await p.locator('#catRail [data-cat="network"]').click();
+  await expect(p.locator('[data-os="windows"]')).toHaveAttribute("aria-selected", "true");
+  expect(await p.evaluate(() => window.__inks)).toBe(0);
+  await ctx.close();
+});
+
+test("el modo práctica anima el acierto o el fallo solo al responder", async ({ page }) => {
+  await page.locator("#btnQuiz").click();
+  const dialog = page.locator("#quizDialog");
+  await expect(dialog.locator(".quiz-hit, .quiz-miss, .quiz-reveal")).toHaveCount(0);  // antes de responder, nada
+  const first = dialog.locator("[data-answer]").first();
+  const chosen = await first.getAttribute("data-answer");
+  await first.click();
+  await expect(dialog.locator(".quiz-hit")).toHaveCount(1);               // la correcta siempre late en verde
+  await expect(dialog.locator("#quizFeedback.quiz-reveal")).toHaveCount(1);
+  const hitId = await dialog.locator(".quiz-hit").getAttribute("data-answer");
+  // Si fallas, tu opción se sacude en rojo; si aciertas, no hay sacudida.
+  await expect(dialog.locator(".quiz-miss")).toHaveCount(hitId === chosen ? 0 : 1);
+  if (hitId !== chosen) await expect(dialog.locator(`.quiz-miss[data-answer="${chosen}"]`)).toHaveCount(1);
+});
+
 test("la búsqueda filtra en tiempo real y sin tener en cuenta los acentos", async ({ page }) => {
   await page.locator("#search").fill("bloquear cuenta");
   await expect(row(page, "linux-usermod")).toBeVisible();

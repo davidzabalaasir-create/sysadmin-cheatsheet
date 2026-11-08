@@ -328,7 +328,46 @@
   }
 
   // ------------------------------------------------------------ Render: cabecera
+  /** Posición de la pestaña activa de un grupo, antes de volver a pintarlo. */
+  function activeTabBox(host, sel) {
+    const el = host.querySelector(sel);
+    return el ? { key: el.dataset.os || el.dataset.cat, left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight } : null;
+  }
+  /** Desliza el indicador (píldora del sistema o subrayado ámbar de la categoría) desde la
+   *  pestaña anterior hasta la nueva. Mientras dura, la pestaña nueva oculta su propio
+   *  indicador; al acabar se quita el elemento y queda el estado normal de siempre. */
+  function slideTabInk(host, sel, from, kind) {
+    const to = host.querySelector(sel);
+    if (!from || !to || from.key === (to.dataset.os || to.dataset.cat) || reducedMotion() || !to.animate) return;
+    host.querySelector(".tab-ink")?.remove();
+    const ink = document.createElement("span");
+    ink.className = `tab-ink tab-ink--${kind}`;
+    ink.setAttribute("aria-hidden", "true");
+    host.appendChild(ink);
+    to.classList.add("tab-sliding");
+    const box = (b) => kind === "pill"
+      ? { left: b.left + "px", top: b.top + "px", width: b.width + "px", height: b.height + "px" }
+      : { left: b.left + "px", width: b.width + "px" };
+    const end = { left: to.offsetLeft, top: to.offsetTop, width: to.offsetWidth, height: to.offsetHeight };
+    if (kind === "line") ink.style.top = end.top + end.height - 2 + "px"; // sobre el borde inferior de la pestaña
+    const anim = ink.animate([box(from), box(end)], { duration: 240, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" });
+    const done = () => {
+      // Cambio instantáneo al estado final (sin la transición de color del botón) para que no parpadee.
+      to.style.transition = "none";
+      to.querySelectorAll("*").forEach((el) => { el.style.transition = "none"; });
+      to.classList.remove("tab-sliding");
+      ink.remove();
+      void to.offsetWidth;
+      to.style.transition = "";
+      to.querySelectorAll("*").forEach((el) => { el.style.transition = ""; });
+    };
+    anim.onfinish = done; anim.oncancel = done;
+  }
+
   function renderHeader() {
+    const osHost = $("#osSwitch"), catHost = $("#catRail");
+    const prevOs = activeTabBox(osHost, '[aria-selected="true"]');
+    const prevCat = activeTabBox(catHost, '[aria-current="page"]');
     $("#osSwitch").innerHTML = OS_IDS.map((id) => {
       const on = state.os === id;
       const n = id === "all" ? commands.length : commands.filter((c) => c.os === id).length;
@@ -368,6 +407,8 @@
     // Sin requestAnimationFrame: así funciona aunque la pestaña esté en segundo plano.
     if (lastCenteredCat !== state.category) { centerActiveCat(lastCenteredCat !== null); lastCenteredCat = state.category; }
     updateRailArrows();
+    slideTabInk(osHost, '[aria-selected="true"]', prevOs, "pill");
+    slideTabInk(catHost, '[aria-current="page"]', prevCat, "line");
 
     $("#riskToggles").innerHTML = Object.entries(RISK).map(([id, r]) => {
       const on = state.risks.has(id);
@@ -757,7 +798,9 @@
     quiz.answered = false;
     renderQuiz();
   }
-  function renderQuiz(chosenId = null) {
+  /** animate: solo al responder (no al repintar por un cambio de idioma). */
+  function renderQuiz(chosenId = null, animate = false) {
+    const fx = (cls) => (animate ? ` ${cls}` : "");
     const c = quiz.current;
     $("#quizScope").textContent = quizScopeLabel();
     $("#quizScore").textContent = t("quiz.score", { ok: quiz.score, total: quiz.total, streak: quiz.streak, best: quiz.best });
@@ -767,12 +810,12 @@
       <div class="grid sm:grid-cols-2 gap-2 mt-5" role="group" aria-label="${esc(t("quiz.options"))}">
         ${quiz.options.map((o, i) => {
           let cls = "border-paper-line2 hover:border-amber hover:text-amber";
-          if (quiz.answered) cls = o.id === c.id ? "border-sage text-sage bg-sage/10" : o.id === chosenId ? "border-blood text-blood bg-blood-soft" : "border-paper-line text-bone-mute opacity-70";
+          if (quiz.answered) cls = o.id === c.id ? "border-sage text-sage bg-sage/10" + fx("quiz-hit") : o.id === chosenId ? "border-blood text-blood bg-blood-soft" + fx("quiz-miss") : "border-paper-line text-bone-mute opacity-70";
           return `<button type="button" data-answer="${o.id}" ${quiz.answered ? "disabled" : ""} class="flex items-center gap-3 text-left rounded-lg border px-4 py-3 font-mono text-sm transition ${cls}">
             <span class="grid place-items-center w-6 h-6 rounded border border-current text-[11px] shrink-0" aria-hidden="true">${i + 1}</span><span>${esc(shortName(o))}</span></button>`;
         }).join("")}
       </div>
-      <div id="quizFeedback" class="mt-5" aria-live="polite">${quiz.answered ? `
+      <div id="quizFeedback" class="mt-5${quiz.answered ? fx("quiz-reveal") : ""}" aria-live="polite">${quiz.answered ? `
         <p class="font-mono text-sm ${chosenId === c.id ? "text-sage" : "text-blood"}">${esc(chosenId === c.id ? t("quiz.correct") : t("quiz.wrong", { name: shortName(c) }))}</p>
         <pre class="mt-3 px-4 py-3 rounded-lg bg-[#0d0c0a] border border-paper-line font-mono text-[13px] whitespace-pre-wrap break-words"><code>${exampleHtml(c)}</code></pre>
         <p class="mt-2 text-sm text-bone-dim">${esc(cExpl(c))}</p>
@@ -787,7 +830,7 @@
     quiz.total++;
     if (id === quiz.current.id) { quiz.score++; quiz.streak++; if (quiz.streak > quiz.best) { quiz.best = quiz.streak; store.set("mc.quizBest", quiz.best); } }
     else quiz.streak = 0;
-    renderQuiz(id);
+    renderQuiz(id, true);
   }
   function openQuiz() {
     quizDialog.showModal();
