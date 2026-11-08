@@ -1,0 +1,26 @@
+# Dependabot: abre PR semanales para actualizar las dependencias de desarrollo (npm)
+# y las GitHub Actions (que van fijadas por SHA). Cada PR pasa por la CI antes de fusionarse.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+    groups:
+      dependencias-desarrollo:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns: ["*"]

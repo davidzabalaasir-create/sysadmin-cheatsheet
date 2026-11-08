@@ -54,6 +54,6 @@ La web es estática (sin backend, sin cuentas, sin formularios que envíen datos
 
 ## Recomendaciones pendientes (requieren decisión del propietario)
 
-1. **Dependabot** (`.github/dependabot.yml`) para npm y GitHub Actions, para recibir PR automáticos de actualización, incluidas las Actions fijadas por SHA (las versiones actuales son la v4; ya hay versiones más recientes).
+1. ~~Dependabot~~ — **hecho**: `.github/dependabot.yml` abre cada lunes PR agrupados para npm y GitHub Actions (actualiza también los SHA fijados).
 2. **Correo noreply de GitHub** para los commits futuros (`git config user.email <id>+<usuario>@users.noreply.github.com`) y activar «Block command line pushes that expose my email». No se reescribe el historial existente.
 3. Si en el futuro se necesitan cabeceras reales (`frame-ancestors`, `Permissions-Policy`), servir la web detrás de un proxy o CDN que permita añadirlas (Cloudflare Pages, Netlify…).

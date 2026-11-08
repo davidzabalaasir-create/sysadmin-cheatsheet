@@ -25,6 +25,7 @@ assets/terminal.css                Estilos de la terminal (web y docs/terminal/p
 docs/terminal/HANDOFF.md           Especificación de la terminal (arquitectura, datos, seguridad, a11y)
 tests/app.spec.js                  Pruebas de interfaz (Playwright) · playwright.config.js
 .github/workflows/ci.yml           CI: validación, CSS al día y pruebas en cada push/PR
+.github/dependabot.yml             PR semanales de actualización (npm y Actions); revísalos y fusiónalos si la CI pasa
 data/commands.example.json         Ejemplo documentado del modelo de datos
 docs/auditoria-ubuntu-apache-mariadb.md   Informe de auditoría del stack web del usuario
 scripts/validate.js                Validador del dataset, traducciones e i18n
