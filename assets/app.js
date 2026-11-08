@@ -761,25 +761,29 @@
 
   /** Orden de prueba para una ficha: la del comando simulado cuyo nombre aparece en la ficha. */
   function tryLineFor(c) {
-    const list = TRY[c.id];
-    if (!list) return null;
+    const all = TRY[c.id];
+    if (!all) return null;
+    // Las fichas de Windows se prueban en PowerShell y las demás en bash.
+    const list = all.filter((x) => x.os === (c.os === "windows" ? "windows" : "linux"));
+    if (!list.length) return null;
     const words = c.name.toLowerCase().split(/[\s/(),]+/);
-    return (list.find((x) => words.includes(x.name)) || list[0]).line;
+    return list.find((x) => [x.name, ...x.aliases].some((n) => words.includes(n.toLowerCase()))) || list[0];
   }
   function tryBtn(c) {
-    const line = tryLineFor(c);
-    if (!line) return "";
-    return `<button type="button" data-try="${esc(line)}" title="${esc(t("term.try.title", { cmd: line }))}"
+    const found = tryLineFor(c);
+    if (!found) return "";
+    const line = found.line;
+    return `<button type="button" data-try="${esc(line)}" data-try-os="${esc(found.os)}" title="${esc(t("term.try.title", { cmd: line }))}"
       class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber/50 text-amber font-mono text-[10px] uppercase tracking-widest hover:bg-amber hover:text-paper transition">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>${esc(t("term.try"))}</button>`;
   }
 
-  function openTerminal(line) {
+  function openTerminal(line, os) {
     if (!window.SysTerminal) return;
     if (!termDialog.open) termDialog.showModal();
     const term = window.SysTerminal.mount(termDialog.querySelector("[data-terminal]"));
     if (!term) return;
-    if (line) term.run(line); else term.focus();
+    if (line) term.run(line, os); else term.focus();
   }
   // Un enlace «Abrir la ficha» dentro de la terminal cierra el panel (el cambio de #hash abre la ficha).
   termDialog.addEventListener("click", (e) => {
@@ -932,7 +936,7 @@
     if (e.target.closest("#btnQuiz")) return openQuiz();
     if (e.target.closest("#btnTerm")) return openTerminal();
     const tryEl = e.target.closest("[data-try]");
-    if (tryEl) return openTerminal(tryEl.dataset.try);
+    if (tryEl) return openTerminal(tryEl.dataset.try, tryEl.dataset.tryOs);
     if (e.target.closest("#btnPrint")) return printList();
     if (e.target.closest("#btnLang")) return setLang(lang === "es" ? "en" : "es");
     if (e.target.closest("#btnShowAllOs")) return setOs("all");

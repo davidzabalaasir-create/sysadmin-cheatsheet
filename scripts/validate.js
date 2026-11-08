@@ -76,16 +76,32 @@ else {
     }
     textOk(l, where);
   };
-  for (const [name, def] of Object.entries(TD.commands)) {
-    const w = `«${name}»`;
-    if (!/^[a-z][\w-]*$/.test(name)) errors.push(`terminal ${w}: nombre de comando no válido`);
+  const checkCommands = (commands, os) => {
+  const NAME_RE = os === "windows" ? /^[A-Za-z][\w-]*$/ : /^[a-z][\w-]*$/;
+  const seenNames = new Set();
+  for (const [name, def] of Object.entries(commands)) {
+    const w = `«${name}» (${os})`;
+    if (!NAME_RE.test(name)) errors.push(`terminal ${w}: nombre de comando no válido`);
+    for (const a of [name, ...(def.aliases || [])]) {
+      const k = os === "windows" ? a.toLowerCase() : a;
+      if (seenNames.has(k)) errors.push(`terminal ${w}: el nombre o alias «${a}» está repetido`);
+      seenNames.add(k);
+      if (!NAME_RE.test(a)) errors.push(`terminal ${w}: alias «${a}» no válido`);
+    }
+    if (os === "windows") {
+      const lower = Object.keys(def.flags || {}).map((f) => f.toLowerCase());
+      if (new Set(lower).size !== lower.length) errors.push(`terminal ${w}: hay parámetros que solo se diferencian en mayúsculas`);
+    }
     if (def.libraryId && !seen.has(def.libraryId)) errors.push(`terminal ${w}: libraryId '${def.libraryId}' no existe en data.js`);
     if (!def.summary) errors.push(`terminal ${w}: falta summary`); else textOk(def.summary, `${w} summary`);
     const flags = def.flags || {};
     for (const [f, d] of Object.entries(flags)) textOk(d && typeof d === "object" && "description" in d ? d.description : d, `${w} ${f}`);
     const subs = new Set(Object.values(def.subcommands || {}));
     (def.variants || []).forEach((v, i) => {
-      (v.flags || []).forEach((f) => { if (!(f in flags)) errors.push(`terminal ${w} variants[${i}]: flag ${f} no declarado`); });
+      (v.flags || []).forEach((f) => {
+        const ok = os === "windows" ? Object.keys(flags).some((k) => k.toLowerCase() === f.toLowerCase()) : f in flags;
+        if (!ok) errors.push(`terminal ${w} variants[${i}]: flag ${f} no declarado`);
+      });
       if (v.sub && !subs.has(v.sub)) errors.push(`terminal ${w} variants[${i}]: subcomando '${v.sub}' no declarado`);
       if (!Array.isArray(v.output)) errors.push(`terminal ${w} variants[${i}]: falta output`);
       else v.output.forEach((l, j) => lineOk(l, `${w} variants[${i}].output[${j}]`));
@@ -93,6 +109,12 @@ else {
     (def.output || []).forEach((l, j) => lineOk(l, `${w} output[${j}]`));
     (def.usage || []).forEach((l, j) => lineOk(l, `${w} usage[${j}]`));
     if (!def.output && !(def.variants || []).length) errors.push(`terminal ${w}: no tiene output ni variantes`);
+  }
+  };
+  checkCommands(TD.commands, "linux");
+  if (TD.windows) {
+    if (!TD.windows.commands || !TD.windows.fs || !TD.windows.env) errors.push("terminal-data.js: windows necesita commands, fs y env");
+    else checkCommands(TD.windows.commands, "windows");
   }
 }
 

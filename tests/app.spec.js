@@ -286,6 +286,44 @@ test("el botón Probar de una ficha abre la terminal con su comando", async ({ p
   }
 });
 
+test("la terminal también simula Windows PowerShell", async ({ page }) => {
+  await page.locator("#btnTerm").click();
+  await page.locator('#termDialog [data-term-os="windows"]').click();
+  await expect(page.locator('#termDialog [data-term-os="windows"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("[data-term-prompt]")).toHaveText("PS C:\\Users\\admin>");
+  // Sin distinguir mayúsculas, con parámetros de PowerShell y de cmd
+  await termRun(page, "get-service -name SPOOLER");
+  await expect(termText(page)).toContainText("Print Spooler");
+  await termRun(page, "ipconfig /all");
+  await expect(termText(page)).toContainText("Physical Address");
+  await termRun(page, "netstat -ano");
+  await expect(termText(page)).toContainText("LISTENING       1188");
+  await termRun(page, "tnc srv01 -Port 443");
+  await expect(termText(page)).toContainText("RemotePort       : 443");
+  // Sistema de archivos con rutas C:\ y alias dir / type
+  await termRun(page, "cd \\Windows\\System32\\drivers\\etc");
+  await expect(page.locator("[data-term-prompt]")).toHaveText("PS C:\\Windows\\System32\\drivers\\etc>");
+  await termRun(page, "type hosts");
+  await expect(termText(page)).toContainText("dc01.corp.local");
+  await termRun(page, "dir C:\\Users\\admin");
+  await expect(termText(page)).toContainText("Directory: C:\\Users\\admin");
+  // Errores al estilo de PowerShell
+  await termRun(page, "Get-Nada");
+  await expect(termText(page)).toContainText("El término 'Get-Nada' no se reconoce");
+  await termRun(page, "Get-Process -Foo");
+  await expect(termText(page)).toContainText("nombre del parámetro 'foo'");
+  // «linux» vuelve a bash
+  await termRun(page, "linux");
+  await expect(page.locator("[data-term-prompt]")).toHaveText("admin@srv01:~$");
+});
+
+test("el botón Probar de una ficha de Windows abre PowerShell", async ({ page }) => {
+  await page.goto("/#win-ipconfig");
+  await page.locator("#detail [data-try]").click();
+  await expect(page.locator("[data-term-prompt]")).toHaveText("PS C:\\Users\\admin>");
+  await expect(termText(page)).toContainText("Windows IP Configuration");
+});
+
 test("la terminal habla el idioma de la página", async ({ page }) => {
   await page.locator("#btnLang").click();
   await page.locator("#btnTerm").click();

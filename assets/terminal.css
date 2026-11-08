@@ -34,6 +34,19 @@
   font: 10px var(--term-font); text-transform: uppercase; letter-spacing: .12em; white-space: nowrap;
   color: var(--term-sage); border: 1px solid rgba(159, 216, 166, .4); border-radius: 999px; padding: 2px 8px;
 }
+/* Selector Linux / Windows */
+.term-os { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--term-line2); border-radius: 999px; }
+.term-os button {
+  font: 11px var(--term-font); letter-spacing: .06em; color: var(--term-mute); cursor: pointer;
+  border: 0; border-radius: 999px; padding: 3px 10px; background: transparent; transition: color .15s, background-color .15s;
+}
+.term-os button:hover { color: var(--term-text); }
+.term-os button[aria-pressed="true"] { color: #141310; background: var(--term-amber); }
+.term-os button:focus-visible, .term-close:focus-visible { outline: 2px solid var(--term-amber); outline-offset: 2px; }
+/* PowerShell: prompt en azul cielo para distinguir el sistema de un vistazo */
+.t-prompt.is-win, .term[data-os="windows"] .term-prompt { color: var(--term-sky); }
+.term[data-os="windows"] .term-input input { caret-color: var(--term-sky); }
+
 .term-close {
   display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
   border: 0; background: transparent; color: var(--term-mute); cursor: pointer;

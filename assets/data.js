@@ -4,7 +4,7 @@
  * la app funcione abriendo index.html directamente, sin servidor).
  * ========================================================================= */
 window.CHEATSHEET = {
-  version: "1.5.2", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
+  version: "1.6.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
   categories: [
     { id: "users",      label: "Usuarios y Permisos",      labelEn: "User & Privilege Management", icon: "users",   os: ["linux", "windows"] },
     { id: "filesystem", label: "Archivos y Directorios",   labelEn: "File System",                 icon: "folder",  os: ["linux", "windows"] },

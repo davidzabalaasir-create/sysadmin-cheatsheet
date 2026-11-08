@@ -65,7 +65,7 @@ window.I18N = {
     "term.try": "Probar", "term.try.title": "Probar «{cmd}» en la terminal simulada",
     "term.keys": "Escribe un comando y pulsa Intro. Tab autocompleta, las flechas arriba y abajo recorren el historial, Control L limpia la pantalla, Control C cancela y Escape cierra la terminal.",
     "term.welcome": "Terminal simulada de Sysadmin — nada de lo que escribas se ejecuta de verdad.",
-    "term.welcome2": "Escribe «help» para ver los comandos. Tab autocompleta, ↑ ↓ recorren el historial, Esc cierra.",
+    "term.welcome2": "Escribe «help» para ver los comandos y «windows» para PowerShell. Tab autocompleta, ↑ ↓ recorren el historial, Esc cierra.",
     "term.unsupported": "simulador: «{op}» (tuberías, redirecciones y encadenado) no está disponible. Prueba los comandos de uno en uno.",
     "term.unclosed": "simulador: falta cerrar unas comillas.",
     "term.notFound": "{name}: orden no encontrada", "term.didYouMean": "¿Quisiste decir «{name}»?",
@@ -81,7 +81,19 @@ window.I18N = {
     "term.b.help": "Ayuda general o de un comando: help [comando].", "term.b.man": "Alias de help.",
     "term.b.clear": "Limpia la pantalla (también Ctrl+L).", "term.b.history": "Historial de órdenes de esta sesión.",
     "term.b.echo": "Repite el texto (como texto, nunca como código).", "term.b.pwd": "Directorio actual.",
-    "term.b.cd": "Cambia de directorio.", "term.b.ls": "Lista un directorio: ls [-l] [-a] [ruta].", "term.b.cat": "Muestra un archivo: cat <ruta>."
+    "term.b.cd": "Cambia de directorio.", "term.b.ls": "Lista un directorio: ls [-l] [-a] [ruta].", "term.b.cat": "Muestra un archivo: cat <ruta>.",
+    "term.b.windows": "Cambia a Windows PowerShell (SRV02).", "term.b.linux": "Vuelve a Linux bash (srv01).",
+    "term.wb.dir": "Lista una carpeta: dir [ruta] [-Name].", "term.wb.type": "Muestra un archivo: type <ruta> [-Tail N].",
+    "term.help.aliases": "Alias",
+    "term.os.label": "Sistema de la terminal",
+    "term.os.linux": "Linux · bash en srv01 (Ubuntu 24.04).", "term.os.linux.hint": "Escribe «help» para ver los comandos; «windows» cambia a PowerShell.",
+    "term.os.windows": "Windows PowerShell · SRV02 (Windows Server 2022).", "term.os.windows.hint": "Escribe «help» para ver los cmdlets (no distinguen mayúsculas); «linux» vuelve a bash.",
+    "term.win.notFound": "{name} : El término '{name}' no se reconoce como nombre de un cmdlet, función, archivo de script o programa ejecutable.",
+    "term.win.invalidOption": "{name} : No se encuentra ningún parámetro que coincida con el nombre del parámetro '{opt}'.",
+    "term.win.noEnt": "{cmd} : No se encuentra la ruta de acceso '{path}' porque no existe.",
+    "term.win.notDir": "{cmd} : '{path}' no es una carpeta.",
+    "term.win.isDir": "{cmd} : No se puede obtener el contenido porque es una carpeta: '{path}'. Usa «Get-ChildItem».",
+    "term.win.gc.usage": "Uso: Get-Content <archivo> [-Tail N]   (prueba: type C:\Windows\System32\drivers\etc\hosts)"
   },
 
   en: {
@@ -148,7 +160,7 @@ window.I18N = {
     "term.try": "Try it", "term.try.title": "Try “{cmd}” in the simulated terminal",
     "term.keys": "Type a command and press Enter. Tab completes, the up and down arrows browse the history, Control L clears the screen, Control C cancels and Escape closes the terminal.",
     "term.welcome": "Sysadmin simulated terminal — nothing you type is actually run.",
-    "term.welcome2": "Type “help” to list the commands. Tab completes, ↑ ↓ browse the history, Esc closes.",
+    "term.welcome2": "Type “help” to list the commands and “windows” for PowerShell. Tab completes, ↑ ↓ browse the history, Esc closes.",
     "term.unsupported": "simulator: “{op}” (pipes, redirections and chaining) isn't available. Try the commands one at a time.",
     "term.unclosed": "simulator: unclosed quotes.",
     "term.notFound": "{name}: command not found", "term.didYouMean": "Did you mean “{name}”?",
@@ -164,6 +176,18 @@ window.I18N = {
     "term.b.help": "General or command help: help [command].", "term.b.man": "Alias for help.",
     "term.b.clear": "Clears the screen (also Ctrl+L).", "term.b.history": "Command history for this session.",
     "term.b.echo": "Repeats the text (as text, never as code).", "term.b.pwd": "Current directory.",
-    "term.b.cd": "Changes directory.", "term.b.ls": "Lists a directory: ls [-l] [-a] [path].", "term.b.cat": "Shows a file: cat <path>."
+    "term.b.cd": "Changes directory.", "term.b.ls": "Lists a directory: ls [-l] [-a] [path].", "term.b.cat": "Shows a file: cat <path>.",
+    "term.b.windows": "Switches to Windows PowerShell (SRV02).", "term.b.linux": "Goes back to Linux bash (srv01).",
+    "term.wb.dir": "Lists a folder: dir [path] [-Name].", "term.wb.type": "Shows a file: type <path> [-Tail N].",
+    "term.help.aliases": "Aliases",
+    "term.os.label": "Terminal system",
+    "term.os.linux": "Linux · bash on srv01 (Ubuntu 24.04).", "term.os.linux.hint": "Type “help” to list the commands; “windows” switches to PowerShell.",
+    "term.os.windows": "Windows PowerShell · SRV02 (Windows Server 2022).", "term.os.windows.hint": "Type “help” to list the cmdlets (case-insensitive); “linux” goes back to bash.",
+    "term.win.notFound": "{name} : The term '{name}' is not recognized as the name of a cmdlet, function, script file, or operable program.",
+    "term.win.invalidOption": "{name} : A parameter cannot be found that matches parameter name '{opt}'.",
+    "term.win.noEnt": "{cmd} : Cannot find path '{path}' because it does not exist.",
+    "term.win.notDir": "{cmd} : '{path}' is not a folder.",
+    "term.win.isDir": "{cmd} : Unable to get content because it is a folder: '{path}'. Use “Get-ChildItem” instead.",
+    "term.win.gc.usage": "Usage: Get-Content <file> [-Tail N]   (try: type C:\Windows\System32\drivers\etc\hosts)"
   }
 };

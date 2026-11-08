@@ -94,6 +94,23 @@ Datos reales: [`assets/terminal-data.js`](../../assets/terminal-data.js) (`windo
 
 **Reglas de resolución:** subcomando → flags desconocidos (error) → argumentos obligatorios → variante exacta → `output` por defecto → «esta combinación no está simulada todavía» + sugerencia de `help`.
 
+### Windows (PowerShell) — desde v1.6.0
+
+`SYS_TERMINAL_DATA.windows` tiene la misma forma (`env`, `fs`, `commands`) y se activa con el selector **Linux / Windows** de la barra, con las órdenes `windows` / `linux` o al pulsar «Probar» en una ficha `win-`. Diferencias:
+
+| Aspecto | Linux | Windows |
+|---|---|---|
+| Prompt | `admin@srv01:~$` | `PS C:\Users\admin>` (azul cielo) |
+| Nombres y parámetros | distinguen mayúsculas | **no** distinguen (`Get-Service -Name` = `get-service -name`) |
+| Parámetros | `-x`, `--largo`, agrupados `-tln` | `-Name`, `/all`; `-ano` se agrupa solo si cada letra existe |
+| Rutas | `/etc/hosts` | `C:\Windows\…`, `\Users`, `..`; en el FS se guardan con `/` |
+| Integrados | help, man, clear, history, echo, pwd, cd, ls, cat | Get-Help, Clear-Host, Get-History, Write-Output, Get-Location, Set-Location, Get-ChildItem, Get-Content (con sus alias: cls, dir, ls, gci, type, cat, gc…) |
+| Errores | `orden no encontrada`, `opción inválida` | los de PowerShell (`El término 'x' no se reconoce…`, `No se encuentra ningún parámetro…`) |
+
+Campos extra de un comando de Windows: `aliases` (otros nombres: `gsv`, `gps`…) y `sample` (valor que sustituye a `*` en los ejemplos de `help`). Los parámetros con valor quedan disponibles como plantilla con su nombre en minúsculas: `-Port 443` → `{port}`.
+
+Si se envía una orden mientras otra está mostrando su salida poco a poco (`ping`, `tnc`), la salida pendiente se muestra de golpe y la nueva orden se ejecuta (no se pierde).
+
 ---
 
 ## 3. Código de ejemplo
