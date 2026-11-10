@@ -3,7 +3,7 @@
   /* Si un service worker antiguo sirvió datos de otra versión (HTML nuevo con JS/datos viejos),
      se limpia la caché y se recarga una sola vez. Solo con conexión, para no romper el modo sin conexión. */
   (function () {
-    var APP_VERSION = "1.7.1";
+    var APP_VERSION = "1.8.0";
     if ((window.CHEATSHEET || {}).version === APP_VERSION || !navigator.onLine || sessionStorage.getItem("sw-refresh")) return;
     sessionStorage.setItem("sw-refresh", "1");
     var regs = "serviceWorker" in navigator ? navigator.serviceWorker.getRegistrations() : Promise.resolve([]);

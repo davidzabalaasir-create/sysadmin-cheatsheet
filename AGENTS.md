@@ -14,7 +14,8 @@ Web estática que funciona como biblioteca y cheat sheet de comandos para admini
 
 ```
 index.html                         Maquetación (clases de Tailwind compiladas en assets/tailwind.css)
-assets/styles.css                  Estilos complementarios (resaltado de sintaxis, franja de peligro…)
+assets/styles.css                  Variables de color de los temas claro y oscuro y estilos complementarios
+assets/theme.js                    Fija el tema (<html data-theme>) antes del primer pintado; se carga en <head>
 assets/app.js                      Lógica en JavaScript vanilla: filtros, búsqueda, ficha, copiar, favoritos/recientes, práctica, PDF, idioma
 assets/data.js                     Dataset: window.CHEATSHEET = { categories, commands }
 assets/data-en.js                  Traducción al inglés del contenido: window.CHEATSHEET_EN[id] = { n?, d, f[], x, r? }
@@ -95,15 +96,16 @@ Las categorías se definen en `categories` (id, label, labelEn, icon, os). El or
 
 ## Convenciones de interfaz
 
-- Nombre de la web: **Sysadmin** (título «Sys» en hueso + «admin» en ámbar cursiva).
-- Diseño editorial de manual impreso: negro cálido (`paper`), texto hueso (`bone`), acento ámbar, Instrument Serif para títulos e IBM Plex Sans/Mono para el resto. **No vuelvas al estilo terminal neón**: el usuario lo descartó porque ya lo usa en otros proyectos.
-- Distribución en dos columnas: índice a la izquierda y ficha a la derecha. En móvil (<1024 px) la ficha se abre como hoja a pantalla completa.
+- Nombre de la web: **Sysadmin** (título «Sys» + «admin» en el color de acento).
+- Diseño de **documentación moderna** (desde v1.8.0, elegido por el usuario en sustitución del diseño editorial ámbar): limpio, IBM Plex Sans para todo el texto e IBM Plex Mono para comandos y etiquetas. **No vuelvas al estilo terminal neón** ni a la tipografía serif.
+- **Tema claro y oscuro** con botón (`#btnTheme`); sin elección guardada (`mc.theme`) sigue al sistema. Los colores de Tailwind salen de variables CSS definidas en `assets/styles.css` (`--c-paper`, `--c-bone`, `--c-accent`…): **no escribas colores hexadecimales** en clases ni en CSS; usa los tokens `paper`, `bone`, `accent` (marca), `warn` (precaución y Linux), `sky` (Windows y parámetros), `sage` (seguro y red), `blood` (peligro) y `code` (bloques de código). Comprueba siempre los dos temas. La terminal simulada es oscura en ambos.
+- Distribución en escritorio (≥1024 px): barra lateral fija con la marca y las categorías en vertical, barra superior fija con el buscador y el sistema, índice y ficha. En móvil hay una sola columna, las categorías son un carril horizontal y la ficha se abre como hoja a pantalla completa. Es un único DOM: `contents` + `order-N` recolocan los bloques.
 - Cada fila del índice tiene un botón «Copiar» que copia el ejemplo. En la ficha se puede copiar el comando, la sintaxis y el ejemplo.
 - Orden de la ficha: 01 ejemplo («En el mundo real»), 02 sintaxis, 03 parámetros, 04 etiquetas. El ejemplo va primero porque es lo que más se copia.
 - En móvil el buscador (`#searchBar`) queda fijo arriba al desplazarse; por eso la barra de control está fuera de `<header>`. Los filtros de riesgo llevan texto también en móvil.
 - Tamaño mínimo de letra: 11 px (no uses `text-[10px]`, salvo la insignia circular de variables).
 - Enlaces directos `#id-del-comando`, navegación con ↑ ↓, `Ctrl+K` o `/` para buscar y `Alt+1–4` para elegir sistema (Todo, Linux, Windows, Red).
-- Accesibilidad: botones reales (nunca controles anidados), `aria-label` en los botones de solo icono, foco visible, contraste AA (el gris más tenue es `bone-mute` #8f897c). Las pruebas lo comprueban.
+- Accesibilidad: botones reales (nunca controles anidados), `aria-label` en los botones de solo icono, foco visible, contraste AA (el texto más tenue es `bone-mute`, que cumple AA en los dos temas). Las pruebas lo comprueban.
 - Prueba en escritorio (1440 px) y en móvil (360–375 px) sin errores en la consola; `npm test` en verde.
 
 ## Git

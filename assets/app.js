@@ -42,7 +42,7 @@
   // ------------------------------------------------------------ Config
   const OS_IDS = ["all", "linux", "windows", "network"];
   const OS_STYLE = {
-    linux:   { letter: "L", ring: "border-amber/60 text-amber", text: "text-amber" },
+    linux:   { letter: "L", ring: "border-warn/60 text-warn", text: "text-warn" },
     windows: { letter: "W", ring: "border-sky/60 text-sky",     text: "text-sky" },
     network: { letter: "N", ring: "border-sage/60 text-sage",   text: "text-sage" }
   };
@@ -64,7 +64,7 @@
     network: `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
       <rect x="2.5" y="8" width="19" height="9" rx="1.8"/><path d="M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 8V5M16 8V5"/></svg>`
   };
-  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-amber", windows: "text-sky", network: "text-sage" };
+  const OS_LOGO_COLOR = { all: "text-bone-dim", linux: "text-warn", windows: "text-sky", network: "text-sage" };
   /** Nombre corto para el selector (el largo, «Equipos de red», no cabe en móvil). */
   const osTab = (id) => (id === "network" ? t("os.tab.network") : osName(id));
 
@@ -99,7 +99,7 @@
   const PROMPT = { bash: "root@srv01:~#", powershell: "PS C:\\>", cmd: "C:\\>", ios: "SW-CORE-01#", routeros: "[admin@MikroTik] >" };
   const RISK = {
     safe:    { text: "text-sage",  dot: "bg-sage",  border: "border-sage/40" },
-    caution: { text: "text-amber", dot: "bg-amber", border: "border-amber/50" },
+    caution: { text: "text-warn", dot: "bg-warn", border: "border-warn/50" },
     danger:  { text: "text-blood", dot: "bg-blood", border: "border-blood/60" }
   };
   const riskLabel = (r) => t(`risk.${r}`);
@@ -235,7 +235,7 @@
           <span class="font-mono text-[11px] text-bone-mute">${esc(t("vars.example"))}: ${esc(v.sample)}</span>
         </span>
         <input data-var="${v.key}" value="${esc(userVars[v.key] || "")}" placeholder="${esc(v.sample)}" autocomplete="off" spellcheck="false"
-          class="mt-1.5 w-full rounded-lg bg-paper border border-paper-line2 focus:border-amber px-3 py-2 font-mono text-sm text-amber placeholder:text-bone-mute" />
+          class="mt-1.5 w-full rounded-lg bg-paper border border-paper-line2 focus:border-accent px-3 py-2 font-mono text-sm text-accent placeholder:text-bone-mute" />
         ${I18N[lang][`var.${v.key}.hint`] ? `<span class="block mt-1 text-xs text-bone-mute">${esc(t(`var.${v.key}.hint`))}</span>` : ""}
       </label>`).join("");
   }
@@ -258,7 +258,7 @@
     document.querySelectorAll(`[data-fav="${id}"]`).forEach((b) => {
       const on = favs.has(id);
       b.setAttribute("aria-pressed", on);
-      b.classList.toggle("text-amber", on);
+      b.classList.toggle("text-accent", on);
       b.innerHTML = starIcon(on, b.dataset.size === "lg" ? "w-5 h-5" : "w-4 h-4");
       b.setAttribute("aria-label", t(on ? "fav.remove" : "fav.add", { name: shortName(cmdById[id]) }));
     });
@@ -270,7 +270,7 @@
   const favBtn = (c, size = "sm") => {
     const on = favs.has(c.id);
     return `<button type="button" data-fav="${c.id}" data-size="${size}" aria-pressed="${on}" aria-label="${esc(t(on ? "fav.remove" : "fav.add", { name: shortName(c) }))}"
-      class="p-1 rounded-md transition hover:text-amber ${on ? "text-amber" : "text-bone-mute"}">${starIcon(on, size === "lg" ? "w-5 h-5" : "w-4 h-4")}</button>`;
+      class="p-1 rounded-md transition hover:text-accent ${on ? "text-accent" : "text-bone-mute"}">${starIcon(on, size === "lg" ? "w-5 h-5" : "w-4 h-4")}</button>`;
   };
 
   // ------------------------------------------------------------ Búsqueda
@@ -348,11 +348,14 @@
     ink.setAttribute("aria-hidden", "true");
     host.appendChild(ink);
     to.classList.add("tab-sliding");
+    const vertical = kind === "line" && getComputedStyle(host).flexDirection === "column";
     const box = (b) => kind === "pill"
       ? { left: b.left + "px", top: b.top + "px", width: b.width + "px", height: b.height + "px" }
+      : vertical ? { top: b.top + 6 + "px", height: Math.max(8, b.height - 12) + "px" }
       : { left: b.left + "px", width: b.width + "px" };
     const end = { left: to.offsetLeft, top: to.offsetTop, width: to.offsetWidth, height: to.offsetHeight };
-    if (kind === "line") ink.style.top = end.top + end.height - 2 + "px"; // sobre el borde inferior de la pestaña
+    if (vertical) { ink.style.left = "0px"; ink.style.width = "3px"; ink.style.borderRadius = "3px"; } // barra lateral
+    else if (kind === "line") ink.style.top = end.top + end.height - 2 + "px"; // sobre el borde inferior de la pestaña
     const anim = ink.animate([box(from), box(end)], { duration: 240, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" });
     const done = () => {
       // Cambio instantáneo al estado final (sin la transición de color del botón) para que no parpadee.
@@ -375,9 +378,9 @@
       const on = state.os === id;
       const n = id === "all" ? commands.length : commands.filter((c) => c.os === id).length;
       return `<button type="button" role="tab" aria-selected="${on}" data-os="${id}"
-        class="flex flex-1 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 rounded-full transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
+        class="flex flex-1 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-1.5 rounded-lg transition ${on ? "bg-bone text-paper" : "text-bone-dim hover:text-bone"}">
         <span class="hidden sm:inline ${on ? "" : OS_LOGO_COLOR[id]}">${OS_LOGO[id]}</span>
-        ${esc(osTab(id))} <span class="hidden sm:inline ${on ? "text-paper/70" : "text-bone-mute"}">${n}</span></button>`;
+        ${esc(osTab(id))} <span class="hidden sm:inline lg:hidden xl:inline ${on ? "text-paper/70" : "text-bone-mute"}">${n}</span></button>`;
     }).join("");
 
     const pool = filter({ ignoreCategory: true });
@@ -392,11 +395,12 @@
     };
     const tab = (id, num, label, n, icon, extra = "") => {
       const on = state.category === id;
-      return `<button type="button" data-cat="${id}" aria-current="${on ? "page" : "false"}" class="group shrink-0 flex items-center gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
-        ${on ? "border-amber text-bone" : "border-transparent text-bone-dim hover:text-bone"} ${n ? "" : "opacity-50"}">
-        <span class="font-mono text-[11px] ${on ? "text-amber" : "text-bone-mute"}" aria-hidden="true">${num}</span>
-        <span class="${on ? "text-amber" : "text-bone-mute group-hover:text-amber"} transition-colors">${catIcon(icon)}</span>
-        <span class="text-sm">${esc(label)}</span>${extra}
+      return `<button type="button" data-cat="${id}" title="${esc(label)}" aria-current="${on ? "page" : "false"}" class="group shrink-0 flex items-center gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
+        lg:w-full lg:py-2 lg:border-b-0 lg:rounded-lg
+        ${on ? "border-accent text-bone lg:bg-accent-soft" : "border-transparent text-bone-dim hover:text-bone lg:hover:bg-paper-3"} ${n ? "" : "opacity-50"}">
+        <span class="font-mono text-[11px] lg:hidden ${on ? "text-accent" : "text-bone-mute"}" aria-hidden="true">${num}</span>
+        <span class="${on ? "text-accent" : "text-bone-mute group-hover:text-accent"} transition-colors">${catIcon(icon)}</span>
+        <span class="text-sm ${on ? "font-medium" : ""} lg:flex-1 lg:min-w-0 lg:truncate lg:text-left">${esc(label)}</span>${extra}
         <span class="font-mono text-[11px] text-bone-mute"><span class="sr-only">, </span>${n}</span></button>`;
     };
     const favN = pool.filter((c) => favs.has(c.id)).length;
@@ -405,7 +409,7 @@
       tab("all", "§", t("cat.all"), pool.length, "all") +
       tab("fav", "★", t("cat.fav"), favN, "star") +
       tab("recent", "↺", t("cat.recent"), recN, "history") +
-      `<span class="shrink-0 w-px my-3 bg-paper-line" aria-hidden="true"></span>` +
+      `<span class="shrink-0 w-px my-3 bg-paper-line lg:w-auto lg:h-px lg:my-2 lg:mx-3" aria-hidden="true"></span>` +
       cats.map((c) => tab(c.id, catNum[c.id], catLabel(c), counts[c.id] || 0, c.icon, badge(c))).join("");
     // Sin requestAnimationFrame: así funciona aunque la pestaña esté en segundo plano.
     if (lastCenteredCat !== state.category) { centerActiveCat(lastCenteredCat !== null); lastCenteredCat = state.category; }
@@ -423,8 +427,8 @@
 
     const n = (os) => commands.filter((c) => c.os === os).length;
     $("#counter").innerHTML = `
-      <p class="font-serif text-5xl leading-none text-bone">${commands.length}</p>
-      <p class="font-mono text-[11px] uppercase tracking-widest text-bone-mute mt-1">${esc(t("counter", { l: n("linux"), w: n("windows"), r: n("network") }))}</p>`;
+      <p class="font-mono text-[11px] leading-relaxed text-bone-mute"><span class="text-sm font-semibold text-bone">${commands.length}</span>
+        ${esc(t("counter", { l: n("linux"), w: n("windows"), r: n("network") }))}</p>`;
   }
 
   // ------------------------------------------------------------ Barra de categorías desplazable
@@ -461,7 +465,7 @@
   // Arrastrar con el ratón para desplazar (en táctil ya funciona el gesto nativo).
   let drag = null, suppressClick = false;
   rail.addEventListener("pointerdown", (e) => {
-    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    if (e.pointerType !== "mouse" || e.button !== 0 || rail.scrollWidth <= rail.clientWidth) return;
     drag = { x: e.clientX, left: rail.scrollLeft, moved: false };
   });
   window.addEventListener("pointermove", (e) => {
@@ -490,7 +494,7 @@
       <span class="mt-0.5 grid place-items-center w-7 h-7 rounded-full border font-mono text-[11px] ${o.ring}" aria-hidden="true">${o.letter}</span>
       <button type="button" data-id="${c.id}" class="row-main min-w-0 text-left rounded" aria-current="${sel}">
         <span class="flex items-baseline gap-2 flex-wrap">
-          <code class="font-mono text-[15px] font-medium ${sel ? "text-amber" : "text-bone"}">${hl(cName(c))}</code>
+          <code class="font-mono text-[15px] font-medium ${sel ? "text-accent" : "text-bone"}">${hl(cName(c))}</code>
           <span class="font-mono text-[11px] text-bone-mute"><span class="sr-only">${esc(osName(c.os))}, </span>${SHELL[c.shell]}</span>
         </span>
         <span class="block text-[13px] text-bone-dim leading-snug mt-0.5 line-clamp-2">${hl(cDesc(c))}</span>
@@ -502,7 +506,7 @@
         <span class="flex items-center gap-1 row-actions">
           ${favBtn(c)}
           <button type="button" data-copy="${c.id}" data-field="example" title="${esc(t("copy.exampleTitle", { cmd: applyVars(c.example.command).split("\n")[0].slice(0, 80) }))}" aria-label="${esc(t("copy.exampleOf", { name: shortName(c) }))}"
-            class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[11px] uppercase tracking-wider hover:text-amber hover:border-amber/60 transition">
+            class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[11px] uppercase tracking-wider hover:text-accent hover:border-accent/60 transition">
             ${ICON_COPY}<span>${esc(t("copy"))}</span>
           </button>
         </span>
@@ -522,9 +526,9 @@
           current = c.category;
           const cat = catById[c.category];
           html += `<div class="mb-6"><h2 class="flex items-baseline gap-3 px-3 pb-2 mb-1 border-b border-paper-line">
-            <span class="font-mono text-xs text-amber">§${catNum[cat.id]}</span>
-            <span class="self-center text-amber/80">${catIcon(cat.icon, "w-5 h-5")}</span>
-            <span class="font-serif text-2xl text-bone">${esc(catLabel(cat))}</span>
+            <span class="font-mono text-xs text-accent">§${catNum[cat.id]}</span>
+            <span class="self-center text-accent/80">${catIcon(cat.icon, "w-5 h-5")}</span>
+            <span class="text-lg font-semibold tracking-tight text-bone">${esc(catLabel(cat))}</span>
             <span class="ml-auto font-mono text-[11px] text-bone-mute uppercase tracking-wider hidden sm:inline" lang="${lang === "en" ? "es" : "en"}">${esc(catSub(cat))}</span></h2>`;
         }
         html += row(c);
@@ -558,11 +562,11 @@
 
   // ------------------------------------------------------------ Render: ficha
   const copyBtn = (id, field, label) => `
-    <button type="button" data-copy="${id}" data-field="${field}" class="shrink-0 font-mono text-[11px] uppercase tracking-widest text-bone-mute hover:text-amber transition flex items-center gap-1.5">
+    <button type="button" data-copy="${id}" data-field="${field}" class="shrink-0 font-mono text-[11px] uppercase tracking-widest text-bone-mute hover:text-accent transition flex items-center gap-1.5">
       ${ICON_COPY}<span>${esc(label)}</span></button>`;
 
   const sectionTitle = (n, title, extra = "") =>
-    `<div class="flex items-center gap-3 mb-3"><span class="font-mono text-[11px] text-amber" aria-hidden="true">${n}</span>
+    `<div class="flex items-center gap-3 mb-3"><span class="font-mono text-[11px] text-accent" aria-hidden="true">${n}</span>
      <h3 class="font-mono text-[11px] uppercase tracking-[0.2em] text-bone-dim">${esc(title)}</h3>
      <span class="flex-1 h-px bg-paper-line" aria-hidden="true"></span>${extra}</div>`;
 
@@ -571,7 +575,7 @@
     const c = cmdById[state.selected];
     if (!c) {
       box.innerHTML = `<div class="h-full grid place-items-center p-10 text-center">
-        <div><p class="font-serif text-6xl text-amber" aria-hidden="true">§</p><p class="font-serif text-3xl italic text-bone-dim mt-3">${esc(t("detail.emptyTitle"))}</p>
+        <div><p class="font-mono text-5xl text-accent" aria-hidden="true">§</p><p class="text-xl font-semibold tracking-tight text-bone mt-3">${esc(t("detail.emptyTitle"))}</p>
         <p class="text-sm text-bone-mute mt-2">${esc(t("detail.emptyText"))}</p></div></div>`;
       return;
     }
@@ -593,11 +597,11 @@
 
       <div class="px-5 sm:px-8 py-7">
         <p class="font-mono text-[11px] text-bone-mute mb-2">${SHELL[c.shell]}</p>
-        <div class="flex items-start justify-between gap-4">
-          <h2 id="detailTitle" class="font-mono text-3xl sm:text-4xl font-semibold text-bone break-words">${esc(cName(c))}</h2>
+        <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <h2 id="detailTitle" class="font-mono text-2xl sm:text-3xl font-semibold text-bone break-words">${esc(cName(c))}</h2>
           <div class="pt-2 flex items-center gap-3">${tryBtn(c)}${favBtn(c, "lg")}${copyBtn(c.id, "name", t("copy"))}</div>
         </div>
-        <p class="font-serif text-2xl sm:text-[1.7rem] leading-snug text-bone-dim mt-4">${hl(cDesc(c))}</p>
+        <p class="text-base sm:text-lg leading-relaxed text-bone-dim mt-3">${hl(cDesc(c))}</p>
 
         ${c.risk === "danger" ? `
         <div class="mt-6 rounded-xl overflow-hidden border border-blood/50" role="note">
@@ -607,7 +611,7 @@
             <p class="text-sm text-bone"><strong class="text-blood font-semibold">${esc(t("danger.title"))}</strong> ${esc(t("danger.text"))}</p>
           </div>
         </div>` : c.risk === "caution" ? `
-        <p class="mt-6 text-sm text-bone-dim border-l-2 border-amber pl-3" role="note"><span class="text-amber font-medium">${esc(t("caution.title"))}</span> ${esc(t("caution.text"))}</p>` : ""}
+        <p class="mt-6 text-sm text-bone-dim border-l-2 border-warn pl-3" role="note"><span class="text-warn font-medium">${esc(t("caution.title"))}</span> ${esc(t("caution.text"))}</p>` : ""}
 
         ${c.requires ? `
         <div class="mt-6 flex gap-3 rounded-lg border border-sky/30 bg-sky-soft px-4 py-3">
@@ -617,14 +621,14 @@
 
         <section class="mt-9">
           ${sectionTitle("01", t("detail.example"), copyBtn(c.id, "example", t("copy.example")))}
-          <div class="rounded-xl bg-[#0d0c0a] border ${c.risk === "danger" ? "border-blood/40" : "border-paper-line"} overflow-hidden">
+          <div class="rounded-xl bg-code border ${c.risk === "danger" ? "border-blood/40" : "border-paper-line"} overflow-hidden">
             <div class="flex items-center justify-between gap-3 px-4 py-2 border-b border-paper-line font-mono text-[11px] text-bone-mute">
               <span aria-hidden="true">${esc(PROMPT[c.shell])}</span>
-              <button type="button" data-open-vars class="${varsOn ? "text-amber hover:underline" : "hover:text-amber"}">${esc(varsOn ? t("vars.applied") : t("vars.customize"))}</button>
+              <button type="button" data-open-vars class="${varsOn ? "text-accent hover:underline" : "hover:text-accent"}">${esc(varsOn ? t("vars.applied") : t("vars.customize"))}</button>
             </div>
             <pre class="px-4 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap break-words" tabindex="0"><code>${exampleHtml(c)}</code></pre>
           </div>
-          <p class="mt-4 font-serif text-xl italic leading-snug text-bone">“${hl(cExpl(c))}”</p>
+          <p class="mt-3 text-sm leading-relaxed text-bone-dim">${hl(cExpl(c))}</p>
         </section>
 
         <section class="mt-9">
@@ -645,7 +649,7 @@
         <section class="mt-9">
           ${sectionTitle("04", t("detail.tags"))}
           <div class="flex flex-wrap gap-2">
-            ${(c.tags || []).map((tag) => `<button type="button" data-tag="${esc(tag)}" class="font-mono text-xs px-2.5 py-1 rounded-full border border-paper-line2 text-bone-dim hover:border-amber hover:text-amber transition" lang="es">${hl(tag)}</button>`).join("")}
+            ${(c.tags || []).map((tag) => `<button type="button" data-tag="${esc(tag)}" class="font-mono text-xs px-2.5 py-1 rounded-full border border-paper-line2 text-bone-dim hover:border-accent hover:text-accent transition" lang="es">${hl(tag)}</button>`).join("")}
           </div>
         </section>
 
@@ -701,7 +705,7 @@
       const on = el.dataset.id === id;
       el.setAttribute("aria-current", on);
       el.querySelector(".row-main")?.setAttribute("aria-current", on);
-      el.querySelector("code")?.classList.toggle("text-amber", on);
+      el.querySelector("code")?.classList.toggle("text-accent", on);
       el.querySelector("code")?.classList.toggle("text-bone", !on);
       if (on && scroll) el.scrollIntoView({ block: "nearest" });
     });
@@ -774,7 +778,7 @@
     if (!found) return "";
     const line = found.line;
     return `<button type="button" data-try="${esc(line)}" data-try-os="${esc(found.os)}" title="${esc(t("term.try.title", { cmd: line }))}"
-      class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber/50 text-amber font-mono text-[11px] uppercase tracking-widest hover:bg-amber hover:text-paper transition">
+      class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-accent/50 text-accent font-mono text-[11px] uppercase tracking-widest hover:bg-accent hover:text-paper transition">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>${esc(t("term.try"))}</button>`;
   }
 
@@ -849,11 +853,11 @@
     $("#quizScope").textContent = quizScopeLabel();
     $("#quizScore").textContent = t("quiz.score", { ok: quiz.score, total: quiz.total, streak: quiz.streak, best: quiz.best });
     $("#quizBody").innerHTML = `
-      <p class="font-mono text-[11px] uppercase tracking-[0.25em] text-amber">${esc(t("quiz.question"))} · ${esc(osName(c.os))} · ${esc(catLabel(catById[c.category]))}</p>
-      <p class="font-serif text-2xl leading-snug text-bone mt-2">${esc(maskName(cDesc(c), c))}</p>
+      <p class="font-mono text-[11px] uppercase tracking-[0.25em] text-accent">${esc(t("quiz.question"))} · ${esc(osName(c.os))} · ${esc(catLabel(catById[c.category]))}</p>
+      <p class="text-lg font-medium leading-snug text-bone mt-2">${esc(maskName(cDesc(c), c))}</p>
       <div class="grid sm:grid-cols-2 gap-2 mt-5" role="group" aria-label="${esc(t("quiz.options"))}">
         ${quiz.options.map((o, i) => {
-          let cls = "border-paper-line2 hover:border-amber hover:text-amber";
+          let cls = "border-paper-line2 hover:border-accent hover:text-accent";
           if (quiz.answered) cls = o.id === c.id ? "border-sage text-sage bg-sage/10" + fx("quiz-hit") : o.id === chosenId ? "border-blood text-blood bg-blood-soft" + fx("quiz-miss") : "border-paper-line text-bone-mute opacity-70";
           return `<button type="button" data-answer="${o.id}" ${quiz.answered ? "disabled" : ""} class="flex items-center gap-3 text-left rounded-lg border px-4 py-3 font-mono text-sm transition ${cls}">
             <span class="grid place-items-center w-6 h-6 rounded border border-current text-[11px] shrink-0" aria-hidden="true">${i + 1}</span><span>${esc(shortName(o))}</span></button>`;
@@ -861,9 +865,9 @@
       </div>
       <div id="quizFeedback" class="mt-5${quiz.answered ? fx("quiz-reveal") : ""}" aria-live="polite">${quiz.answered ? `
         <p class="font-mono text-sm ${chosenId === c.id ? "text-sage" : "text-blood"}">${esc(chosenId === c.id ? t("quiz.correct") : t("quiz.wrong", { name: shortName(c) }))}</p>
-        <pre class="mt-3 px-4 py-3 rounded-lg bg-[#0d0c0a] border border-paper-line font-mono text-[13px] whitespace-pre-wrap break-words"><code>${exampleHtml(c)}</code></pre>
+        <pre class="mt-3 px-4 py-3 rounded-lg bg-code border border-paper-line font-mono text-[13px] whitespace-pre-wrap break-words"><code>${exampleHtml(c)}</code></pre>
         <p class="mt-2 text-sm text-bone-dim">${esc(cExpl(c))}</p>
-        <button type="button" data-quiz-open="${c.id}" class="mt-2 font-mono text-[11px] uppercase tracking-widest text-amber hover:underline">${esc(t("quiz.openCard"))}</button>` : ""}
+        <button type="button" data-quiz-open="${c.id}" class="mt-2 font-mono text-[11px] uppercase tracking-widest text-accent hover:underline">${esc(t("quiz.openCard"))}</button>` : ""}
       </div>`;
     $("#quizNext").textContent = quiz.answered ? t("quiz.next") : t("quiz.skip");
     if (quiz.answered) $("#quizNext").focus();
@@ -924,6 +928,21 @@
     $("#search").setAttribute("placeholder", t(narrow.matches ? "search.placeholder.short" : "search.placeholder"));
   }
   narrow.addEventListener("change", shortPlaceholder);
+  // ------------------------------------------------------------ Tema claro / oscuro
+  // assets/theme.js ya puso <html data-theme> antes del primer pintado; aquí va el botón.
+  const THEME_COLOR = { dark: "#0f1115", light: "#ffffff" };
+  const systemLight = window.matchMedia("(prefers-color-scheme: light)");
+  function setTheme(theme, remember) {
+    document.documentElement.dataset.theme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+    $("#btnTheme").setAttribute("aria-pressed", String(theme === "light"));
+    if (remember) store.set("mc.theme", theme);
+  }
+  setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark", false);
+  $("#btnTheme").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light", true));
+  // Si no se ha elegido a mano, sigue al sistema.
+  systemLight.addEventListener("change", (e) => { if (!store.get("mc.theme", null)) setTheme(e.matches ? "light" : "dark", false); });
+
   function setLang(l) {
     lang = l;
     store.set("mc.lang", l);
@@ -959,8 +978,8 @@
       await copy(d.field === "example" ? applyVars(c.example.command) : d.field === "syntax" ? c.syntax : c.name.replace(/\s*\(.*\)\s*$/, ""));
       pushRecent(c.id);
       const span = el.querySelector("span"), prev = span.textContent;
-      span.textContent = t("copied"); el.classList.add("!text-amber");
-      setTimeout(() => { span.textContent = prev; el.classList.remove("!text-amber"); }, 1200);
+      span.textContent = t("copied"); el.classList.add("!text-accent");
+      setTimeout(() => { span.textContent = prev; el.classList.remove("!text-accent"); }, 1200);
       if (state.category !== "recent") renderHeader();
       return toast(c.risk === "danger" ? t("toast.copiedDanger") : t("toast.copied"));
     }

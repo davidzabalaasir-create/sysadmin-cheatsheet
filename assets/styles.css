@@ -1,23 +1,38 @@
 /* Sysadmin — estilos complementarios a Tailwind */
-:root { color-scheme: dark; }
 
-body, #searchBar {
-  /* Grano de papel sutil (el buscador fijo de móvil lleva el mismo fondo que la página) */
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+/* ------------------------------------------------------------ Temas
+ * Los colores de Tailwind (tailwind.config.js) leen estas variables, en formato «R G B».
+ * El tema lo fija assets/theme.js en <html data-theme="dark|light"> antes del primer pintado. */
+:root, [data-theme="dark"] {
+  color-scheme: dark;
+  --c-paper: 15 17 21;      --c-paper-2: 21 24 33;    --c-paper-3: 28 32 43;
+  --c-line: 37 42 54;       --c-line-2: 52 59 74;
+  --c-bone: 230 233 239;    --c-bone-dim: 167 175 189; --c-bone-mute: 136 145 161;
+  --c-accent: 122 162 255;  --c-warn: 245 183 89;     --c-sky: 125 211 252;
+  --c-sage: 134 217 160;    --c-blood: 255 123 114;   --c-code: 10 12 16;
+  --c-tk-var: 216 160 255;  --c-tk-op: 255 138 122;
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --c-paper: 255 255 255;   --c-paper-2: 247 248 250; --c-paper-3: 238 240 244;
+  --c-line: 227 230 236;    --c-line-2: 207 212 221;
+  --c-bone: 23 26 33;       --c-bone-dim: 74 82 97;   --c-bone-mute: 98 107 123;
+  --c-accent: 47 95 224;    --c-warn: 154 91 0;       --c-sky: 11 107 176;
+  --c-sage: 26 127 60;      --c-blood: 198 40 40;     --c-code: 246 247 249;
+  --c-tk-var: 130 60 190;   --c-tk-op: 190 60 40;
 }
 
-::selection { background: #ffb45455; color: #fff; }
+::selection { background: rgb(var(--c-accent) / .3); }
 
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
-.thin-scroll { scrollbar-width: thin; scrollbar-color: #3d3930 transparent; }
+.thin-scroll { scrollbar-width: thin; scrollbar-color: rgb(var(--c-line-2)) transparent; }
 .thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-.thin-scroll::-webkit-scrollbar-thumb { background: #3d3930; border-radius: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgb(var(--c-line-2)); border-radius: 8px; }
 
 .key {
   font-family: "IBM Plex Mono", monospace; font-size: 11px; line-height: 1;
-  padding: 4px 6px; border: 1px solid #3d3930; border-bottom-width: 2px; border-radius: 4px; color: #a39d90;
+  padding: 4px 6px; border: 1px solid rgb(var(--c-line-2)); border-bottom-width: 2px; border-radius: 4px; color: rgb(var(--c-bone-dim));
 }
 
 /* Barra de categorías desplazable */
@@ -28,35 +43,35 @@ body, #searchBar {
 .rail-arrow[hidden] { display: flex; opacity: 0; pointer-events: none; }
 .rail-btn {
   display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px;
-  border: 1px solid #3d3930; background: #1b1a16; color: #ece6d9; transition: border-color .15s, color .15s;
+  border: 1px solid rgb(var(--c-line-2)); background: rgb(var(--c-paper-2)); color: rgb(var(--c-bone)); transition: border-color .15s, color .15s;
 }
-.rail-arrow:hover .rail-btn { border-color: #ffb454; color: #ffb454; }
+.rail-arrow:hover .rail-btn { border-color: rgb(var(--c-accent)); color: rgb(var(--c-accent)); }
 #catRail.dragging { cursor: grabbing; scroll-behavior: auto; }
 #catRail.dragging button { pointer-events: none; }
 
 /* Filas de la lista */
 .row { position: relative; }
-.row[aria-current="true"] { background: #1b1a16; }
+.row[aria-current="true"] { background: rgb(var(--c-paper-2)); }
 .row[aria-current="true"]::before {
-  content: ""; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: #ffb454;
+  content: ""; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: rgb(var(--c-accent));
 }
 @media (max-width: 1023px) { .row[aria-current="true"]::before { left: -20px; } }
 
 /* Franja de advertencia para comandos destructivos */
 .hazard {
-  background-image: repeating-linear-gradient(-45deg, #ff6b5e 0 10px, #141310 10px 20px);
+  background-image: repeating-linear-gradient(-45deg, rgb(var(--c-blood)) 0 10px, rgb(var(--c-paper)) 10px 20px);
 }
 
 /* Resaltado de sintaxis */
-.tk-cmd  { color: #ffb454; font-weight: 600; }
-.tk-flag { color: #8cc4ff; }
-.tk-str  { color: #9fd8a6; }
-.tk-var  { color: #e7a6ff; }
-.tk-op   { color: #ff8a7a; }
-.tk-com  { color: #8f897c; font-style: italic; }
-.tk-user { color: #141310; background: #ffb454; border-radius: 3px; padding: 0 3px; font-weight: 600; }
+.tk-cmd  { color: rgb(var(--c-accent)); font-weight: 600; }
+.tk-flag { color: rgb(var(--c-sky)); }
+.tk-str  { color: rgb(var(--c-sage)); }
+.tk-var  { color: rgb(var(--c-tk-var)); }
+.tk-op   { color: rgb(var(--c-tk-op)); }
+.tk-com  { color: rgb(var(--c-bone-mute)); font-style: italic; }
+.tk-user { color: rgb(var(--c-paper)); background: rgb(var(--c-accent)); border-radius: 3px; padding: 0 3px; font-weight: 600; }
 
-mark { background: transparent; color: #ffb454; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+mark { background: transparent; color: rgb(var(--c-accent)); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 .fade-in { animation: fade .22s ease both; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -67,14 +82,14 @@ body.sheet-open { overflow: hidden; }
 /* ------------------------------------------------------------ Accesibilidad */
 /* Indicador de foco visible solo al navegar con teclado */
 :focus { outline: none; }
-:focus-visible { outline: 2px solid #ffb454; outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 2px solid rgb(var(--c-accent)); outline-offset: 2px; border-radius: 4px; }
 input:focus-visible { outline-offset: 4px; }
 .row-main:focus-visible { outline-offset: 4px; }
 
 /* Enlace «saltar a la lista» (visible al recibir el foco) */
 .skip-link {
   position: absolute; left: 1rem; top: -100px; z-index: 100;
-  background: #ffb454; color: #141310; padding: .6rem 1rem; border-radius: 999px;
+  background: rgb(var(--c-accent)); color: rgb(var(--c-paper)); padding: .6rem 1rem; border-radius: 999px;
   font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600; text-decoration: none;
 }
 .skip-link:focus { top: 1rem; }
@@ -91,7 +106,7 @@ input:focus-visible { outline-offset: 4px; }
 /* Título que se descifra al cargar (assets/app.js · decryptBrand). Cada letra tiene
    el ancho de la letra final para que el título no baile mientras cambian los glifos. */
 .decrypt-ch { display: inline-block; text-align: center; white-space: pre; }
-.decrypt-ch.is-scrambling { color: var(--decrypt-color, #8f897c); }
+.decrypt-ch.is-scrambling { color: var(--decrypt-color, rgb(var(--c-bone-mute))); }
 
 /* Indicador que se desliza entre pestañas (assets/app.js · slideTabInk). Solo existe
    durante la animación; después cada pestaña activa vuelve a pintar su propio indicador. */
@@ -99,10 +114,10 @@ input:focus-visible { outline-offset: 4px; }
 .tab-ink { position: absolute; pointer-events: none; z-index: 2; }
 /* La píldora va por encima con mix-blend-mode: difference, así el texto que tiene
    debajo se invierte (claro → oscuro) y se lee durante todo el recorrido. */
-.tab-ink--pill { border-radius: 9999px; background: #ece6d9; mix-blend-mode: difference; }
-.tab-ink--line { height: 2px; background: #ffb454; }
+.tab-ink--pill { border-radius: 9999px; background: #fff; mix-blend-mode: difference; }
+.tab-ink--line { height: 2px; background: rgb(var(--c-accent)); }
 #osSwitch > button.tab-sliding { background-color: transparent; }
-#osSwitch > button.tab-sliding, #osSwitch > button.tab-sliding * { color: #a39d90; transition: none; }
+#osSwitch > button.tab-sliding, #osSwitch > button.tab-sliding * { color: rgb(var(--c-bone-dim)); transition: none; }
 #catRail > button.tab-sliding { border-bottom-color: transparent; }
 
 /* Modo práctica: respuesta correcta con un pulso verde, fallo con una sacudida roja
@@ -159,3 +174,21 @@ input:focus-visible { outline-offset: 4px; }
   #printArea code { font-family: "IBM Plex Mono", monospace; }
   #printArea .p-foot { margin-top: 10pt; font-size: 8pt; color: #777; }
 }
+
+/* ------------------------------------------------------------ Estructura de documentación */
+/* Icono del botón de tema: luna en oscuro (para pasar a claro no hace falta texto), sol en claro. */
+.theme-sun { display: none; }
+[data-theme="light"] .theme-sun { display: block; }
+[data-theme="light"] .theme-moon { display: none; }
+
+/* Buscador: sin el aspa nativa desalineada y con anillo de foco suave */
+#search:focus-visible { outline: none; box-shadow: 0 0 0 3px rgb(var(--c-accent) / .25); }
+
+@media (min-width: 1024px) {
+  /* En la barra lateral las categorías van en vertical: sobran las flechas del carril. */
+  .rail-arrow, .rail-arrow[hidden] { display: none; }
+  #catRail > button.tab-sliding { background-color: transparent; }
+}
+
+/* Tema claro: sombra ligera en la ficha y bloques de código con borde visible */
+[data-theme="light"] #detail { box-shadow: 0 1px 2px rgb(16 24 40 / .04), 0 8px 24px -12px rgb(16 24 40 / .12); }

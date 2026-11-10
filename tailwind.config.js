@@ -1,21 +1,27 @@
 /** Configuración de Tailwind. Tras cambiar clases en index.html o assets/app.js:
  *  npm run build:css   (genera assets/tailwind.css, que es lo que se publica) */
+const v = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 module.exports = {
   content: ["./index.html", "./assets/app.js"],
   theme: {
     extend: {
       fontFamily: {
-        serif: ['"Instrument Serif"', "Georgia", "serif"],
         sans: ['"IBM Plex Sans"', "system-ui", "sans-serif"],
         mono: ['"IBM Plex Mono"', "ui-monospace", "Consolas", "monospace"]
       },
+      // Los colores salen de variables CSS (assets/styles.css) para tener tema claro y oscuro.
+      // paper = fondos, bone = texto, accent = color de marca, warn = precaución / Linux,
+      // sky = Windows y parámetros, sage = seguro / red, blood = peligro, code = bloques de código.
       colors: {
-        paper: { DEFAULT: "#141310", 2: "#1b1a16", 3: "#23211c", line: "#2f2c25", line2: "#3d3930" },
-        bone:  { DEFAULT: "#ece6d9", dim: "#a39d90", mute: "#8f897c" },
-        amber: { DEFAULT: "#ffb454", soft: "#ffb45422" },
-        sky:   { DEFAULT: "#8cc4ff", soft: "#8cc4ff22" },
-        sage:  { DEFAULT: "#9fd8a6" },
-        blood: { DEFAULT: "#ff6b5e", soft: "#ff6b5e1f" }
+        paper: { DEFAULT: v("paper"), 2: v("paper-2"), 3: v("paper-3"), line: v("line"), line2: v("line-2") },
+        bone:  { DEFAULT: v("bone"), dim: v("bone-dim"), mute: v("bone-mute") },
+        accent: { DEFAULT: v("accent"), soft: "rgb(var(--c-accent) / 0.13)" },
+        warn:  { DEFAULT: v("warn"), soft: "rgb(var(--c-warn) / 0.13)" },
+        sky:   { DEFAULT: v("sky"), soft: "rgb(var(--c-sky) / 0.13)" },
+        sage:  { DEFAULT: v("sage") },
+        blood: { DEFAULT: v("blood"), soft: "rgb(var(--c-blood) / 0.12)" },
+        code:  { DEFAULT: v("code") }
       }
     }
   }

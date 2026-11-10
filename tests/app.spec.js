@@ -55,7 +55,7 @@ test("el indicador de la pestaña activa se desliza y luego desaparece", async (
   await page.locator('#catRail [data-cat="network"]').click();
   await expect.poll(() => page.evaluate(() => window.__inks)).toContainEqual(expect.stringContaining("tab-ink--line"));
   await expect(page.locator("#catRail .tab-ink")).toHaveCount(0);
-  await expect(page.locator('#catRail [data-cat="network"]')).toHaveClass(/border-amber/);
+  await expect(page.locator('#catRail [data-cat="network"]')).toHaveClass(/border-accent/);
 });
 
 test("con prefers-reduced-motion las pestañas cambian sin deslizar", async ({ browser }) => {
@@ -246,6 +246,38 @@ test("la ficha muestra primero el ejemplo y el buscador sigue visible en móvil"
     await page.evaluate(() => window.scrollTo(0, 1500));
     await expect(page.locator("#search")).toBeInViewport();
     await expect(page.locator('#riskToggles [data-risk="danger"]')).toContainText(/peligroso/i);
+  }
+});
+
+test("el botón de tema cambia entre claro y oscuro y lo recuerda", async ({ page }) => {
+  const html = page.locator("html");
+  const before = await html.getAttribute("data-theme");
+  expect(["light", "dark"]).toContain(before);
+  await page.locator("#btnTheme").click();
+  const after = before === "light" ? "dark" : "light";
+  await expect(html).toHaveAttribute("data-theme", after);
+  // El fondo cambia de verdad (los colores salen de variables CSS)
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const bgAfter = await bg();
+  await page.reload();
+  await expect(html).toHaveAttribute("data-theme", after);   // assets/theme.js lo aplica antes de pintar
+  expect(await bg()).toBe(bgAfter);
+  await page.locator("#btnTheme").click();
+  await expect(html).toHaveAttribute("data-theme", before);
+  expect(await bg()).not.toBe(bgAfter);
+});
+
+test("las categorías van en una barra lateral en escritorio y en un carril en móvil", async ({ page, isMobile }) => {
+  const dir = await page.evaluate(() => getComputedStyle(document.getElementById("catRail")).flexDirection);
+  expect(dir).toBe(isMobile ? "row" : "column");
+  if (!isMobile) {
+    // La barra lateral y el buscador siguen visibles al desplazarse por la lista
+    await page.evaluate(() => window.scrollTo(0, 3000));
+    await expect(page.locator("#brand")).toBeInViewport();
+    await expect(page.locator("#search")).toBeInViewport();
+    await page.locator('#catRail [data-cat="storage"]').click();
+    await expect(page.locator("#list .row").first()).toBeVisible();
+    await expect(page.locator('#catRail [data-cat="storage"]')).toHaveAttribute("aria-current", "page");
   }
 });
 
