@@ -232,7 +232,7 @@
       <label class="block">
         <span class="flex items-baseline justify-between gap-3">
           <span class="text-sm text-bone">${esc(t(`var.${v.key}`))}</span>
-          <span class="font-mono text-[10px] text-bone-mute">${esc(t("vars.example"))}: ${esc(v.sample)}</span>
+          <span class="font-mono text-[11px] text-bone-mute">${esc(t("vars.example"))}: ${esc(v.sample)}</span>
         </span>
         <input data-var="${v.key}" value="${esc(userVars[v.key] || "")}" placeholder="${esc(v.sample)}" autocomplete="off" spellcheck="false"
           class="mt-1.5 w-full rounded-lg bg-paper border border-paper-line2 focus:border-amber px-3 py-2 font-mono text-sm text-amber placeholder:text-bone-mute" />
@@ -394,10 +394,10 @@
       const on = state.category === id;
       return `<button type="button" data-cat="${id}" aria-current="${on ? "page" : "false"}" class="group shrink-0 flex items-center gap-2 px-3 py-3.5 border-b-2 transition whitespace-nowrap
         ${on ? "border-amber text-bone" : "border-transparent text-bone-dim hover:text-bone"} ${n ? "" : "opacity-50"}">
-        <span class="font-mono text-[10px] ${on ? "text-amber" : "text-bone-mute"}" aria-hidden="true">${num}</span>
+        <span class="font-mono text-[11px] ${on ? "text-amber" : "text-bone-mute"}" aria-hidden="true">${num}</span>
         <span class="${on ? "text-amber" : "text-bone-mute group-hover:text-amber"} transition-colors">${catIcon(icon)}</span>
         <span class="text-sm">${esc(label)}</span>${extra}
-        <span class="font-mono text-[10px] text-bone-mute"><span class="sr-only">, </span>${n}</span></button>`;
+        <span class="font-mono text-[11px] text-bone-mute"><span class="sr-only">, </span>${n}</span></button>`;
     };
     const favN = pool.filter((c) => favs.has(c.id)).length;
     const recN = pool.filter((c) => recents.includes(c.id)).length;
@@ -416,15 +416,15 @@
     $("#riskToggles").innerHTML = Object.entries(RISK).map(([id, r]) => {
       const on = state.risks.has(id);
       return `<button type="button" data-risk="${id}" aria-pressed="${on}" title="${esc(t(on ? "risk.hide" : "risk.show", { risk: riskLabel(id) }))}"
-        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-mono text-[10px] uppercase tracking-wider transition
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-mono text-[11px] uppercase tracking-wider transition
         ${on ? `${r.border} ${r.text}` : "border-paper-line text-bone-mute line-through"}">
-        <span class="w-1.5 h-1.5 rounded-full ${on ? r.dot : "bg-bone-mute/40"}" aria-hidden="true"></span><span class="hidden sm:inline">${esc(riskLabel(id))}</span><span class="sm:hidden sr-only">${esc(riskLabel(id))}</span></button>`;
+        <span class="w-1.5 h-1.5 rounded-full ${on ? r.dot : "bg-bone-mute/40"}" aria-hidden="true"></span><span>${esc(riskLabel(id))}</span></button>`;
     }).join("");
 
     const n = (os) => commands.filter((c) => c.os === os).length;
     $("#counter").innerHTML = `
       <p class="font-serif text-5xl leading-none text-bone">${commands.length}</p>
-      <p class="font-mono text-[10px] uppercase tracking-widest text-bone-mute mt-1">${esc(t("counter", { l: n("linux"), w: n("windows"), r: n("network") }))}</p>`;
+      <p class="font-mono text-[11px] uppercase tracking-widest text-bone-mute mt-1">${esc(t("counter", { l: n("linux"), w: n("windows"), r: n("network") }))}</p>`;
   }
 
   // ------------------------------------------------------------ Barra de categorías desplazable
@@ -491,18 +491,18 @@
       <button type="button" data-id="${c.id}" class="row-main min-w-0 text-left rounded" aria-current="${sel}">
         <span class="flex items-baseline gap-2 flex-wrap">
           <code class="font-mono text-[15px] font-medium ${sel ? "text-amber" : "text-bone"}">${hl(cName(c))}</code>
-          <span class="font-mono text-[10px] text-bone-mute"><span class="sr-only">${esc(osName(c.os))}, </span>${SHELL[c.shell]}</span>
+          <span class="font-mono text-[11px] text-bone-mute"><span class="sr-only">${esc(osName(c.os))}, </span>${SHELL[c.shell]}</span>
         </span>
         <span class="block text-[13px] text-bone-dim leading-snug mt-0.5 line-clamp-2">${hl(cDesc(c))}</span>
       </button>
       <span class="flex flex-col items-end gap-1.5">
-        <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider ${r.text}">
+        <span class="mt-1.5 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${r.text}">
           ${c.risk === "safe" ? `<span class="sr-only">${esc(riskLabel(c.risk))}</span>` : `<span class="hidden sm:inline">${esc(riskLabel(c.risk))}</span><span class="sm:hidden sr-only">${esc(riskLabel(c.risk))}</span>`}<span class="w-2 h-2 rounded-full ${r.dot}" aria-hidden="true"></span>
         </span>
         <span class="flex items-center gap-1 row-actions">
           ${favBtn(c)}
           <button type="button" data-copy="${c.id}" data-field="example" title="${esc(t("copy.exampleTitle", { cmd: applyVars(c.example.command).split("\n")[0].slice(0, 80) }))}" aria-label="${esc(t("copy.exampleOf", { name: shortName(c) }))}"
-            class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[10px] uppercase tracking-wider hover:text-amber hover:border-amber/60 transition">
+            class="flex items-center gap-1 px-2 py-1 rounded-md border border-paper-line2 text-bone-mute font-mono text-[11px] uppercase tracking-wider hover:text-amber hover:border-amber/60 transition">
             ${ICON_COPY}<span>${esc(t("copy"))}</span>
           </button>
         </span>
@@ -525,7 +525,7 @@
             <span class="font-mono text-xs text-amber">§${catNum[cat.id]}</span>
             <span class="self-center text-amber/80">${catIcon(cat.icon, "w-5 h-5")}</span>
             <span class="font-serif text-2xl text-bone">${esc(catLabel(cat))}</span>
-            <span class="ml-auto font-mono text-[10px] text-bone-mute uppercase tracking-wider hidden sm:inline" lang="${lang === "en" ? "es" : "en"}">${esc(catSub(cat))}</span></h2>`;
+            <span class="ml-auto font-mono text-[11px] text-bone-mute uppercase tracking-wider hidden sm:inline" lang="${lang === "en" ? "es" : "en"}">${esc(catSub(cat))}</span></h2>`;
         }
         html += row(c);
       });
@@ -558,11 +558,11 @@
 
   // ------------------------------------------------------------ Render: ficha
   const copyBtn = (id, field, label) => `
-    <button type="button" data-copy="${id}" data-field="${field}" class="shrink-0 font-mono text-[10px] uppercase tracking-widest text-bone-mute hover:text-amber transition flex items-center gap-1.5">
+    <button type="button" data-copy="${id}" data-field="${field}" class="shrink-0 font-mono text-[11px] uppercase tracking-widest text-bone-mute hover:text-amber transition flex items-center gap-1.5">
       ${ICON_COPY}<span>${esc(label)}</span></button>`;
 
   const sectionTitle = (n, title, extra = "") =>
-    `<div class="flex items-center gap-3 mb-3"><span class="font-mono text-[10px] text-amber" aria-hidden="true">${n}</span>
+    `<div class="flex items-center gap-3 mb-3"><span class="font-mono text-[11px] text-amber" aria-hidden="true">${n}</span>
      <h3 class="font-mono text-[11px] uppercase tracking-[0.2em] text-bone-dim">${esc(title)}</h3>
      <span class="flex-1 h-px bg-paper-line" aria-hidden="true"></span>${extra}</div>`;
 
@@ -587,7 +587,7 @@
         <p class="font-mono text-[11px] text-bone-mute truncate">
           <span class="${o.text}">${esc(osName(c.os))}</span> / <button type="button" data-cat="${cat.id}" class="hover:text-bone">§${catNum[cat.id]} ${esc(catLabel(cat))}</button>
         </p>
-        <span class="ml-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest ${r.text}">
+        <span class="ml-auto flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest ${r.text}">
           <span class="w-2 h-2 rounded-full ${r.dot}" aria-hidden="true"></span>${esc(riskLabel(c.risk))}</span>
       </div>
 
@@ -611,27 +611,12 @@
 
         ${c.requires ? `
         <div class="mt-6 flex gap-3 rounded-lg border border-sky/30 bg-sky-soft px-4 py-3">
-          <span class="font-mono text-[10px] uppercase tracking-widest text-sky pt-0.5 shrink-0">${esc(t("detail.requires"))}</span>
+          <span class="font-mono text-[11px] uppercase tracking-widest text-sky pt-0.5 shrink-0">${esc(t("detail.requires"))}</span>
           <p class="text-sm text-bone">${hl(cReq(c))}</p>
         </div>` : ""}
 
         <section class="mt-9">
-          ${sectionTitle("01", t("detail.syntax"), copyBtn(c.id, "syntax", t("copy")))}
-          <pre class="overflow-x-auto thin-scroll font-mono text-[13px] leading-relaxed bg-paper rounded-lg border border-paper-line px-4 py-3" tabindex="0"><code>${code(c.syntax, c.shell)}</code></pre>
-        </section>
-
-        ${c.flags?.length ? `
-        <section class="mt-9">
-          ${sectionTitle("02", t("detail.flags"))}
-          <dl class="divide-y divide-paper-line">
-            ${c.flags.map((f, i) => `<div class="grid sm:grid-cols-[minmax(0,15rem)_1fr] gap-x-6 gap-y-1 py-2.5">
-              <dt class="font-mono text-[13px] text-sky break-words">${esc(f.flag)}</dt>
-              <dd class="text-sm text-bone-dim">${hl(cFlag(c, i))}</dd></div>`).join("")}
-          </dl>
-        </section>` : ""}
-
-        <section class="mt-9">
-          ${sectionTitle("03", t("detail.example"), copyBtn(c.id, "example", t("copy.example")))}
+          ${sectionTitle("01", t("detail.example"), copyBtn(c.id, "example", t("copy.example")))}
           <div class="rounded-xl bg-[#0d0c0a] border ${c.risk === "danger" ? "border-blood/40" : "border-paper-line"} overflow-hidden">
             <div class="flex items-center justify-between gap-3 px-4 py-2 border-b border-paper-line font-mono text-[11px] text-bone-mute">
               <span aria-hidden="true">${esc(PROMPT[c.shell])}</span>
@@ -641,6 +626,21 @@
           </div>
           <p class="mt-4 font-serif text-xl italic leading-snug text-bone">“${hl(cExpl(c))}”</p>
         </section>
+
+        <section class="mt-9">
+          ${sectionTitle("02", t("detail.syntax"), copyBtn(c.id, "syntax", t("copy")))}
+          <pre class="overflow-x-auto thin-scroll font-mono text-[13px] leading-relaxed bg-paper rounded-lg border border-paper-line px-4 py-3" tabindex="0"><code>${code(c.syntax, c.shell)}</code></pre>
+        </section>
+
+        ${c.flags?.length ? `
+        <section class="mt-9">
+          ${sectionTitle("03", t("detail.flags"))}
+          <dl class="divide-y divide-paper-line">
+            ${c.flags.map((f, i) => `<div class="grid sm:grid-cols-[minmax(0,15rem)_1fr] gap-x-6 gap-y-1 py-2.5">
+              <dt class="font-mono text-[13px] text-sky break-words">${esc(f.flag)}</dt>
+              <dd class="text-sm text-bone-dim">${hl(cFlag(c, i))}</dd></div>`).join("")}
+          </dl>
+        </section>` : ""}
 
         <section class="mt-9">
           ${sectionTitle("04", t("detail.tags"))}
@@ -655,7 +655,7 @@
           <div class="grid sm:grid-cols-2 gap-2">
             ${related.map((x) => `<button type="button" data-id="${x.id}" class="text-left rounded-lg border border-paper-line hover:border-paper-line2 hover:bg-paper-3 px-3 py-2.5 transition">
               <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full ${RISK[x.risk].dot}" aria-hidden="true"></span><code class="font-mono text-sm text-bone">${esc(cName(x))}</code>
-              <span class="ml-auto font-mono text-[10px] ${OS_STYLE[x.os].text}" aria-hidden="true">${OS_STYLE[x.os].letter}</span></span>
+              <span class="ml-auto font-mono text-[11px] ${OS_STYLE[x.os].text}" aria-hidden="true">${OS_STYLE[x.os].letter}</span></span>
               <span class="block text-xs text-bone-mute mt-1 line-clamp-1">${esc(cDesc(x))}</span></button>`).join("")}
           </div>
         </section>` : ""}
@@ -774,7 +774,7 @@
     if (!found) return "";
     const line = found.line;
     return `<button type="button" data-try="${esc(line)}" data-try-os="${esc(found.os)}" title="${esc(t("term.try.title", { cmd: line }))}"
-      class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber/50 text-amber font-mono text-[10px] uppercase tracking-widest hover:bg-amber hover:text-paper transition">
+      class="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber/50 text-amber font-mono text-[11px] uppercase tracking-widest hover:bg-amber hover:text-paper transition">
       <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>${esc(t("term.try"))}</button>`;
   }
 
@@ -849,7 +849,7 @@
     $("#quizScope").textContent = quizScopeLabel();
     $("#quizScore").textContent = t("quiz.score", { ok: quiz.score, total: quiz.total, streak: quiz.streak, best: quiz.best });
     $("#quizBody").innerHTML = `
-      <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-amber">${esc(t("quiz.question"))} · ${esc(osName(c.os))} · ${esc(catLabel(catById[c.category]))}</p>
+      <p class="font-mono text-[11px] uppercase tracking-[0.25em] text-amber">${esc(t("quiz.question"))} · ${esc(osName(c.os))} · ${esc(catLabel(catById[c.category]))}</p>
       <p class="font-serif text-2xl leading-snug text-bone mt-2">${esc(maskName(cDesc(c), c))}</p>
       <div class="grid sm:grid-cols-2 gap-2 mt-5" role="group" aria-label="${esc(t("quiz.options"))}">
         ${quiz.options.map((o, i) => {
@@ -913,10 +913,17 @@
     document.querySelectorAll("[data-i18n-attr]").forEach((el) => {
       el.dataset.i18nAttr.split(";").forEach((pair) => { const [attr, key] = pair.split(":"); el.setAttribute(attr, t(key)); });
     });
+    shortPlaceholder();
     $("#btnLang").textContent = lang === "es" ? "EN" : "ES";
     $("#btnLang").setAttribute("aria-label", t("lang.switch"));
     $("#btnLang").setAttribute("lang", lang === "es" ? "en" : "es");
   }
+  /** En pantallas estrechas el texto de ayuda largo del buscador se corta: se usa uno corto. */
+  const narrow = window.matchMedia("(max-width: 639px)");
+  function shortPlaceholder() {
+    $("#search").setAttribute("placeholder", t(narrow.matches ? "search.placeholder.short" : "search.placeholder"));
+  }
+  narrow.addEventListener("change", shortPlaceholder);
   function setLang(l) {
     lang = l;
     store.set("mc.lang", l);

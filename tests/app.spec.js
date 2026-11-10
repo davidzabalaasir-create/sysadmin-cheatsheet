@@ -171,7 +171,7 @@ test("las variables sustituyen los valores de ejemplo", async ({ page }) => {
   await expect(page.locator("#varsBadge")).toHaveText("2");
   await page.goto("/#win-runas"); // en móvil, el enlace directo abre la ficha como hoja
   await expect(page.locator("#detailTitle")).toHaveText("runas");
-  const ex = page.locator("#detail pre").last();
+  const ex = page.locator("#detail pre").first(); // el ejemplo es la primera sección de la ficha
   await expect(ex).toContainText("MIEMPRESA\\adm.dzabala");
   await expect(page.locator("#detail .tk-user").first()).toBeVisible();
 });
@@ -180,7 +180,7 @@ test("el cambio de idioma traduce interfaz y contenido", async ({ page, isMobile
   await page.locator("#btnLang").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.locator("#btnQuiz")).toContainText("Practice");
-  await expect(page.locator("#search")).toHaveAttribute("placeholder", /Search by command/);
+  await expect(page.locator("#search")).toHaveAttribute("placeholder", isMobile ? /Search a command/ : /Search by command/);
   await expect(row(page, "linux-ss")).toContainText("Shows sockets");
   await page.locator("#btnLang").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "es");
@@ -234,6 +234,19 @@ test("accesibilidad básica: enlace de salto, sin controles anidados y todos los
     return !name;
   }).length);
   expect(unnamed).toBe(0);
+});
+
+test("la ficha muestra primero el ejemplo y el buscador sigue visible en móvil", async ({ page, isMobile }) => {
+  await page.goto("/#linux-ss");
+  const titles = page.locator("#detail section h3");
+  await expect(titles.first()).toContainText(/mundo real/i);
+  await expect(titles.nth(1)).toContainText(/sintaxis/i);
+  if (isMobile) {
+    await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await expect(page.locator("#search")).toBeInViewport();
+    await expect(page.locator('#riskToggles [data-risk="danger"]')).toContainText(/peligroso/i);
+  }
 });
 
 // ---------------------------------------------------------------- Terminal simulada
