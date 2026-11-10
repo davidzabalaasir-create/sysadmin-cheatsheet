@@ -2,7 +2,7 @@
 
 🌐 **Web:** https://davidzabalaasir-create.github.io/sysadmin-cheatsheet/ · [![CI](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml/badge.svg)](https://github.com/davidzabalaasir-create/sysadmin-cheatsheet/actions/workflows/ci.yml)
 
-Biblioteca y cheat sheet de **307 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** **equipos de red** (Cisco IOS, MikroTik RouterOS) y **Cisco IOS para Packet Tracer** (51 comandos del temario CCNA: VLAN, trunks, STP, EtherChannel, OSPF, EIGRP, DHCP, NAT, ACL, HSRP, IPv6…). En español e inglés.
+Biblioteca y cheat sheet de **395 comandos** para administradores de sistemas y redes: **Linux (Bash)**, **Windows (CMD / PowerShell)**, **Active Directory**, **contenedores y Kubernetes**, **Git**, **virtualización** (Hyper-V, VMware, KVM), **Exchange / Microsoft 365** **equipos de red** (Cisco IOS, MikroTik RouterOS) y **Cisco IOS para Packet Tracer** (51 comandos del temario CCNA: VLAN, trunks, STP, EtherChannel, OSPF, EIGRP, DHCP, NAT, ACL, HSRP, IPv6…). En español e inglés.
 
 ## Características
 

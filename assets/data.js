@@ -4,7 +4,7 @@
  * la app funcione abriendo index.html directamente, sin servidor).
  * ========================================================================= */
 window.CHEATSHEET = {
-  version: "1.6.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
+  version: "1.7.0", // debe coincidir con APP_VERSION de index.html (ver AGENTS.md)
   categories: [
     { id: "users",      label: "Usuarios y Permisos",      labelEn: "User & Privilege Management", icon: "users",   os: ["linux", "windows"] },
     { id: "filesystem", label: "Archivos y Directorios",   labelEn: "File System",                 icon: "folder",  os: ["linux", "windows"] },
@@ -4221,6 +4221,1142 @@ window.CHEATSHEET = {
       ],
       example: { command: "rommon 1 > confreg 0x2142\nrommon 2 > reset\nRouter> enable\nRouter# copy startup-config running-config\nR1# configure terminal\nR1(config)# enable secret NuevaClave!2026\nR1(config)# config-register 0x2102\nR1(config)# end\nR1# copy running-config startup-config", explanation: "Recupera el router sin perder su configuración. Si olvidas volver al registro 0x2102, en el siguiente reinicio arrancará vacío." },
       tags: ["contraseña", "recuperacion", "rommon", "confreg", "acceso"]
+    },
+
+    // ---------------------------------------------------------------- Esenciales de Linux y Windows (v1.7.0)
+    {
+      id: "linux-passwd", name: "passwd", os: "linux", shell: "bash", category: "users", risk: "caution",
+      description: "Cambia la contraseña de un usuario y bloquea o desbloquea la cuenta.",
+      syntax: "passwd [-l|-u] [-e] [-S] [usuario]",
+      flags: [
+        { flag: "-l / -u", description: "Bloquea o desbloquea la contraseña de la cuenta." },
+        { flag: "-e", description: "Caduca la contraseña: obliga a cambiarla en el próximo inicio." },
+        { flag: "-S", description: "Muestra el estado de la contraseña (P, L o NP)." },
+        { flag: "-d", description: "Deja la cuenta sin contraseña (peligroso)." }
+      ],
+      example: { command: "sudo passwd jlopez && sudo passwd -e jlopez && sudo passwd -S jlopez", explanation: "Restablece la contraseña de un usuario que la ha olvidado y le obliga a elegir una nueva al entrar." },
+      tags: ["contraseña", "password", "bloquear", "cuenta", "restablecer"]
+    },
+    {
+      id: "linux-userdel", name: "userdel", os: "linux", shell: "bash", category: "users", risk: "danger",
+      description: "Elimina una cuenta de usuario y, opcionalmente, su directorio personal y su correo.",
+      syntax: "userdel [-r] [-f] usuario",
+      flags: [
+        { flag: "-r", description: "Borra también el home y la cola de correo." },
+        { flag: "-f", description: "Fuerza el borrado aunque el usuario tenga sesión abierta." }
+      ],
+      example: { command: "sudo tar -czf /root/bajas/aruiz-home.tar.gz /home/aruiz && sudo pkill -u aruiz; sudo userdel -r aruiz", explanation: "Baja de un empleado: guarda una copia de su home, cierra sus procesos y elimina la cuenta con sus archivos." },
+      tags: ["borrar", "usuario", "baja", "eliminar", "cuenta"]
+    },
+    {
+      id: "linux-groupadd", name: "groupadd / gpasswd", os: "linux", shell: "bash", category: "users", risk: "caution",
+      description: "Crea grupos y gestiona sus miembros sin tocar el resto de grupos del usuario.",
+      syntax: "groupadd [-g GID] grupo | gpasswd -a|-d usuario grupo",
+      flags: [
+        { flag: "-g 2001", description: "GID fijo, útil para que coincida entre servidores (NFS)." },
+        { flag: "gpasswd -a", description: "Añade un usuario al grupo." },
+        { flag: "gpasswd -d", description: "Quita un usuario del grupo." },
+        { flag: "getent group", description: "Comprueba el grupo y sus miembros." }
+      ],
+      example: { command: "sudo groupadd -g 2001 contabilidad && sudo gpasswd -a aruiz contabilidad && getent group contabilidad", explanation: "Crea el grupo del departamento con un GID fijo y añade a una usuaria; el cambio se aplica en su próximo inicio de sesión." },
+      tags: ["grupo", "miembros", "gid", "getent", "groupdel"]
+    },
+    {
+      id: "linux-sudo-l", name: "sudo -l / su -", os: "linux", shell: "bash", category: "users", risk: "caution",
+      description: "Muestra qué puede ejecutar un usuario con sudo y abre una sesión como otro usuario.",
+      syntax: "sudo -l [-U usuario] | sudo -u usuario comando | su - usuario",
+      flags: [
+        { flag: "-l", description: "Lista los comandos permitidos por sudoers." },
+        { flag: "-U usuario", description: "Consulta los permisos de otro usuario (como root)." },
+        { flag: "-u usuario", description: "Ejecuta el comando como ese usuario." },
+        { flag: "su -", description: "Sesión completa con el entorno del usuario destino." }
+      ],
+      example: { command: "sudo -l -U jlopez && sudo -u www-data test -w /var/www/html/uploads && echo \"www-data puede escribir\"", explanation: "Revisa los permisos de sudo de un usuario y comprueba, como el usuario del servidor web, si puede escribir en una carpeta." },
+      tags: ["sudo", "sudoers", "permisos", "root", "privilegios", "su"]
+    },
+    {
+      id: "linux-umask", name: "umask", os: "linux", shell: "bash", category: "users", risk: "caution",
+      description: "Define los permisos por defecto de los archivos y carpetas nuevos.",
+      syntax: "umask [-S] [máscara]",
+      flags: [
+        { flag: "-S", description: "Muestra la máscara en formato simbólico." },
+        { flag: "022", description: "Archivos 644 y carpetas 755 (lo habitual)." },
+        { flag: "027", description: "Sin acceso para «otros»: archivos 640 y carpetas 750." },
+        { flag: "077", description: "Solo el propietario: archivos 600 y carpetas 700." }
+      ],
+      example: { command: "umask 027 && touch informe.txt && mkdir datos && ls -ld informe.txt datos", explanation: "Endurece la sesión para que lo nuevo no sea legible por otros usuarios. Para hacerlo permanente, ponlo en /etc/profile.d/ o en ~/.bashrc." },
+      tags: ["permisos", "mascara", "defecto", "644", "755"]
+    },
+    {
+      id: "linux-head-wc", name: "head / wc", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Muestra el principio de un archivo y cuenta líneas, palabras o bytes.",
+      syntax: "head [-n N] archivo | wc [-l] [-w] [-c] archivo",
+      flags: [
+        { flag: "head -n 20", description: "Primeras 20 líneas." },
+        { flag: "head -c 1K", description: "Primeros 1024 bytes." },
+        { flag: "wc -l", description: "Cuenta líneas." },
+        { flag: "wc -c", description: "Cuenta bytes." }
+      ],
+      example: { command: "head -n 5 /var/log/apache2/access.log && wc -l /var/log/apache2/access.log", explanation: "Echa un vistazo al formato de un log y cuenta cuántas peticiones tiene antes de procesarlo." },
+      tags: ["primeras lineas", "contar", "lineas", "log"]
+    },
+    {
+      id: "linux-sort-uniq", name: "sort / uniq", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Ordena líneas y cuenta las repetidas: la base de casi cualquier resumen de logs.",
+      syntax: "sort [-n] [-r] [-k N] [-t sep] [-u] | uniq [-c] [-d]",
+      flags: [
+        { flag: "sort -n / -r", description: "Orden numérico / inverso." },
+        { flag: "sort -k 2 -t ','", description: "Ordena por la segunda columna con «,» como separador." },
+        { flag: "sort -h", description: "Entiende tamaños legibles (2K, 3M, 1G)." },
+        { flag: "uniq -c", description: "Cuenta repeticiones (requiere entrada ordenada)." }
+      ],
+      example: { command: "awk '{print $1}' /var/log/apache2/access.log | sort | uniq -c | sort -rn | head -n 10", explanation: "Las 10 IP con más peticiones en el log de Apache: extrae la IP, agrupa, cuenta y ordena de mayor a menor." },
+      tags: ["ordenar", "contar", "duplicados", "top", "ranking"]
+    },
+    {
+      id: "linux-cut-tr", name: "cut / tr", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Extrae columnas de un texto y sustituye o elimina caracteres.",
+      syntax: "cut -d sep -f campos | tr [-d] [-s] conjunto1 [conjunto2]",
+      flags: [
+        { flag: "cut -d: -f1,7", description: "Campos 1 y 7 con «:» como separador." },
+        { flag: "cut -c1-10", description: "Caracteres del 1 al 10." },
+        { flag: "tr 'a-z' 'A-Z'", description: "Convierte a mayúsculas." },
+        { flag: "tr -d '\\r'", description: "Elimina retornos de carro de archivos de Windows." }
+      ],
+      example: { command: "cut -d: -f1,7 /etc/passwd | grep -v -e nologin -e false | tr ':' '\\t'", explanation: "Lista las cuentas que tienen una shell de inicio real, en dos columnas: una revisión rápida de quién puede entrar." },
+      tags: ["columnas", "campos", "separador", "mayusculas", "csv"]
+    },
+    {
+      id: "linux-tee", name: "tee", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Escribe la salida en un archivo y a la vez la muestra; con sudo permite escribir donde la redirección no llega.",
+      syntax: "comando | tee [-a] archivo",
+      flags: [
+        { flag: "-a", description: "Añade al final en lugar de sobrescribir." },
+        { flag: "sudo tee", description: "Escribe como root (la redirección > se haría sin privilegios)." },
+        { flag: "> /dev/null", description: "Oculta la copia que saldría por pantalla." }
+      ],
+      example: { command: "echo \"vm.swappiness=10\" | sudo tee /etc/sysctl.d/99-swappiness.conf && sudo apt update 2>&1 | tee -a ~/mantenimiento.log", explanation: "Crea un archivo de configuración como root y guarda en un registro la salida de una actualización mientras la ves." },
+      tags: ["redireccion", "guardar salida", "log", "sudo", "escribir"]
+    },
+    {
+      id: "linux-zip", name: "zip / unzip", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Comprime y extrae archivos .zip, el formato que abre cualquier Windows.",
+      syntax: "zip -r archivo.zip ruta [-x patrón] | unzip [-l] [-d destino] archivo.zip",
+      requires: "sudo apt install zip unzip",
+      flags: [
+        { flag: "zip -r", description: "Incluye carpetas de forma recursiva." },
+        { flag: "zip -x '*.log'", description: "Excluye lo que coincida con el patrón." },
+        { flag: "unzip -l", description: "Lista el contenido sin extraer." },
+        { flag: "unzip -d", description: "Carpeta de destino." }
+      ],
+      example: { command: "zip -r /tmp/informes-2026.zip /srv/informes -x '*.tmp' && unzip -l /tmp/informes-2026.zip | tail -n 3", explanation: "Empaqueta una carpeta para enviarla a un usuario de Windows y comprueba el contenido antes de mandarla." },
+      tags: ["comprimir", "descomprimir", "zip", "extraer", "archivo"]
+    },
+    {
+      id: "linux-gzip", name: "gzip / zcat / zgrep", os: "linux", shell: "bash", category: "filesystem", risk: "caution",
+      description: "Comprime archivos y lee o busca dentro de los ya comprimidos, como los logs rotados.",
+      syntax: "gzip [-k] [-9] archivo | zcat archivo.gz | zgrep patrón archivo.gz",
+      flags: [
+        { flag: "-k", description: "Conserva el archivo original." },
+        { flag: "-9", description: "Máxima compresión (más lento)." },
+        { flag: "-d", description: "Descomprime (igual que gunzip)." },
+        { flag: "zgrep -c", description: "Cuenta coincidencias sin descomprimir." }
+      ],
+      example: { command: "zgrep -h \" 500 \" /var/log/apache2/access.log.*.gz | awk '{print $7}' | sort | uniq -c | sort -rn | head", explanation: "Busca errores 500 en los logs rotados de Apache sin descomprimirlos y muestra las rutas que más fallan." },
+      tags: ["comprimir", "gz", "logs rotados", "gunzip", "buscar"]
+    },
+    {
+      id: "linux-which", name: "which / whereis / command -v", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Localiza qué ejecutable se usará al escribir un comando y dónde están sus archivos.",
+      syntax: "which [-a] comando | whereis comando | command -v comando",
+      flags: [
+        { flag: "which -a", description: "Todas las coincidencias en el PATH, no solo la primera." },
+        { flag: "whereis", description: "Binario, fuentes y página de manual." },
+        { flag: "command -v", description: "Forma portable para scripts; detecta alias y funciones." },
+        { flag: "type -a", description: "Indica si es alias, función, integrado o archivo." }
+      ],
+      example: { command: "which -a python3 && command -v docker >/dev/null || echo \"docker no está instalado\"", explanation: "Averigua qué Python se ejecuta cuando hay varios instalados y comprueba en un script si existe una herramienta antes de usarla." },
+      tags: ["ruta", "path", "ejecutable", "localizar", "type"]
+    },
+    {
+      id: "linux-jq", name: "jq", os: "linux", shell: "bash", category: "filesystem", risk: "safe",
+      description: "Filtra, transforma y da formato a JSON desde la línea de comandos.",
+      syntax: "jq [-r] [-c] 'filtro' [archivo.json]",
+      requires: "sudo apt install jq",
+      flags: [
+        { flag: "-r", description: "Salida en texto plano, sin comillas." },
+        { flag: "-c", description: "Un objeto por línea (compacto)." },
+        { flag: ".campo[]", description: "Recorre los elementos de un array." },
+        { flag: "select(...)", description: "Filtra por una condición." }
+      ],
+      example: { command: "docker inspect $(docker ps -q) | jq -r '.[] | [.Name, .State.Status, .HostConfig.RestartPolicy.Name] | @tsv'", explanation: "Saca una tabla con el nombre, el estado y la política de reinicio de todos los contenedores en marcha." },
+      tags: ["json", "api", "filtrar", "parsear", "formato"]
+    },
+    {
+      id: "linux-ping", name: "ping", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Comprueba si un equipo responde por ICMP y mide la latencia y la pérdida de paquetes.",
+      syntax: "ping [-c N] [-i seg] [-W seg] [-s bytes] [-M do] destino",
+      flags: [
+        { flag: "-c 4", description: "Envía 4 paquetes y termina." },
+        { flag: "-i 0.2", description: "Intervalo entre paquetes." },
+        { flag: "-W 1", description: "Tiempo de espera por respuesta, en segundos." },
+        { flag: "-M do -s 1472", description: "Prohíbe fragmentar: sirve para probar la MTU." }
+      ],
+      example: { command: "ping -c 4 -W 1 srv01.corp.local && ping -c 2 -M do -s 1472 192.168.10.1", explanation: "Comprueba que un servidor responde y verifica que una MTU de 1500 pasa sin fragmentar hasta la puerta de enlace." },
+      tags: ["icmp", "conectividad", "latencia", "mtu", "perdida de paquetes"]
+    },
+    {
+      id: "linux-wget", name: "wget", os: "linux", shell: "bash", category: "network", risk: "safe",
+      description: "Descarga archivos por HTTP, HTTPS o FTP; reanuda descargas cortadas.",
+      syntax: "wget [-c] [-O archivo] [-P carpeta] [-q] [--limit-rate=N] URL",
+      flags: [
+        { flag: "-c", description: "Reanuda una descarga interrumpida." },
+        { flag: "-O archivo", description: "Nombre del archivo de salida." },
+        { flag: "-P carpeta", description: "Carpeta de destino." },
+        { flag: "--limit-rate=2m", description: "Limita el ancho de banda." }
+      ],
+      example: { command: "wget -c -P /tmp https://releases.ubuntu.com/24.04/SHA256SUMS && wget -q --spider https://empresa.com && echo \"web disponible\"", explanation: "Descarga un archivo con posibilidad de reanudarlo y comprueba, sin descargar nada, que una web responde." },
+      tags: ["descargar", "http", "reanudar", "spider", "url"]
+    },
+    {
+      id: "linux-ethtool", name: "ethtool", os: "linux", shell: "bash", category: "network", risk: "caution",
+      description: "Consulta y ajusta la tarjeta de red: velocidad, dúplex, enlace y errores.",
+      syntax: "ethtool [-i] [-S] [-s interfaz speed N duplex full] interfaz",
+      requires: "sudo apt install ethtool",
+      flags: [
+        { flag: "(sin opciones)", description: "Velocidad, dúplex y si hay enlace." },
+        { flag: "-i", description: "Controlador y versión del firmware." },
+        { flag: "-S", description: "Contadores de errores y paquetes descartados." },
+        { flag: "-s ... autoneg off", description: "Fija velocidad y dúplex a mano." }
+      ],
+      example: { command: "sudo ethtool ens18 | grep -E \"Speed|Duplex|Link detected\" && sudo ethtool -S ens18 | grep -iE \"err|drop\"", explanation: "Descarta un problema físico: comprueba que la tarjeta negocia a la velocidad esperada y que no acumula errores." },
+      tags: ["tarjeta de red", "velocidad", "duplex", "enlace", "nic"]
+    },
+    {
+      id: "linux-iperf3", name: "iperf3", os: "linux", shell: "bash", category: "network", risk: "caution",
+      description: "Mide el ancho de banda real entre dos equipos generando tráfico de prueba.",
+      syntax: "iperf3 -s | iperf3 -c servidor [-t seg] [-P N] [-R] [-u -b 100M]",
+      requires: "sudo apt install iperf3 (en los dos equipos)",
+      flags: [
+        { flag: "-s", description: "Modo servidor (escucha en el puerto 5201)." },
+        { flag: "-c servidor", description: "Modo cliente contra ese servidor." },
+        { flag: "-P 4", description: "Cuatro flujos en paralelo." },
+        { flag: "-R", description: "Prueba en sentido inverso (del servidor al cliente)." }
+      ],
+      example: { command: "iperf3 -c srv02 -t 10 -P 4 && iperf3 -c srv02 -t 10 -R", explanation: "Con «iperf3 -s» ya en marcha en srv02, mide la velocidad en los dos sentidos. Hazlo fuera de horas punta: satura el enlace." },
+      tags: ["ancho de banda", "velocidad", "rendimiento", "throughput", "prueba"]
+    },
+    {
+      id: "linux-resolvectl", name: "resolvectl", os: "linux", shell: "bash", category: "network", risk: "caution",
+      description: "Muestra qué servidores DNS usa cada interfaz con systemd-resolved y vacía su caché.",
+      syntax: "resolvectl status [interfaz] | query nombre | flush-caches | statistics",
+      flags: [
+        { flag: "status", description: "DNS y dominios de búsqueda por interfaz." },
+        { flag: "query nombre", description: "Resuelve un nombre usando la configuración real del sistema." },
+        { flag: "flush-caches", description: "Vacía la caché DNS local." },
+        { flag: "statistics", description: "Aciertos y fallos de la caché." }
+      ],
+      example: { command: "resolvectl status ens18 && sudo resolvectl flush-caches && resolvectl query srv01.corp.local", explanation: "Tras cambiar un registro DNS, comprueba qué servidor consulta la máquina, vacía la caché y resuelve de nuevo." },
+      tags: ["dns", "cache", "systemd-resolved", "resolv.conf", "resolver"]
+    },
+    {
+      id: "linux-netplan", name: "netplan", os: "linux", shell: "bash", category: "network", risk: "danger",
+      description: "Aplica la configuración de red de Ubuntu definida en YAML en /etc/netplan/.",
+      syntax: "netplan try [--timeout seg] | apply | get | status",
+      flags: [
+        { flag: "try", description: "Aplica y revierte solo si no confirmas: evita quedarte sin acceso." },
+        { flag: "apply", description: "Aplica la configuración sin vuelta atrás." },
+        { flag: "get", description: "Muestra la configuración combinada." },
+        { flag: "status", description: "Estado real de las interfaces." }
+      ],
+      example: { command: "sudo cp /etc/netplan/50-cloud-init.yaml /root/50-cloud-init.yaml.bak && sudo netplan try --timeout 60", explanation: "Cambia la IP de un servidor remoto con red de seguridad: si pierdes la conexión y no confirmas en 60 segundos, vuelve la configuración anterior." },
+      tags: ["ip estatica", "ubuntu", "yaml", "configurar red", "interfaz"]
+    },
+    {
+      id: "linux-pgrep", name: "pgrep / pidof", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Busca procesos por nombre, usuario o línea de comandos y devuelve sus PID.",
+      syntax: "pgrep [-a] [-f] [-u usuario] [-c] patrón | pidof programa",
+      flags: [
+        { flag: "-a", description: "Muestra también la línea de comandos." },
+        { flag: "-f", description: "Busca en toda la línea de comandos, no solo en el nombre." },
+        { flag: "-u usuario", description: "Solo los procesos de ese usuario." },
+        { flag: "-c", description: "Solo cuenta cuántos hay." }
+      ],
+      example: { command: "pgrep -a -u www-data apache2 | head -n 5 && pgrep -c apache2", explanation: "Comprueba que Apache está en marcha, bajo qué usuario y con cuántos procesos, sin el ruido de «ps | grep»." },
+      tags: ["pid", "buscar proceso", "nombre", "contar"]
+    },
+    {
+      id: "linux-strace", name: "strace", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Muestra las llamadas al sistema de un proceso: revela qué archivo no encuentra o dónde se queda colgado.",
+      syntax: "strace [-f] [-p PID] [-e trace=tipo] [-o archivo] [-c] comando",
+      requires: "sudo apt install strace",
+      flags: [
+        { flag: "-p PID", description: "Se engancha a un proceso en marcha." },
+        { flag: "-f", description: "Sigue también a los procesos hijos." },
+        { flag: "-e trace=openat,connect", description: "Solo aperturas de archivos y conexiones." },
+        { flag: "-c", description: "Resumen con el tiempo por llamada." }
+      ],
+      example: { command: "sudo strace -f -e trace=openat -o /tmp/traza.txt /usr/local/bin/backup.sh; grep ENOENT /tmp/traza.txt | tail", explanation: "Un script falla sin dar un error claro: la traza muestra qué archivos intenta abrir y no existen. Ralentiza el proceso; no lo dejes puesto en producción." },
+      tags: ["depurar", "syscall", "colgado", "enoent", "diagnostico"]
+    },
+    {
+      id: "linux-nohup", name: "nohup / jobs / fg / bg", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Lanza tareas que sobreviven al cierre de la sesión y gestiona las que están en segundo plano.",
+      syntax: "nohup comando > salida.log 2>&1 & | jobs -l | fg %N | bg %N | disown -h %N",
+      flags: [
+        { flag: "nohup ... &", description: "En segundo plano e inmune al cierre del terminal." },
+        { flag: "jobs -l", description: "Lista las tareas de la sesión con su PID." },
+        { flag: "Ctrl+Z, bg", description: "Pausa la tarea en curso y la reanuda en segundo plano." },
+        { flag: "disown -h", description: "Desvincula una tarea ya lanzada para que no muera al salir." }
+      ],
+      example: { command: "nohup rsync -a /srv/datos/ backup@srv02:/backups/datos/ > ~/rsync.log 2>&1 & jobs -l", explanation: "Lanza una copia larga por SSH que seguirá aunque se corte la conexión. Para trabajos interactivos es mejor tmux." },
+      tags: ["segundo plano", "background", "sesion", "desconectar", "tareas"]
+    },
+    {
+      id: "linux-lscpu", name: "lscpu / dmidecode", os: "linux", shell: "bash", category: "processes", risk: "safe",
+      description: "Inventario de hardware: procesador, memoria instalada, fabricante y número de serie.",
+      syntax: "lscpu | lsmem | dmidecode -t system|memory|bios | dmidecode -s system-serial-number",
+      flags: [
+        { flag: "lscpu", description: "Modelo, núcleos, hilos y virtualización." },
+        { flag: "dmidecode -t memory", description: "Módulos de RAM instalados y ranuras libres." },
+        { flag: "dmidecode -t system", description: "Fabricante, modelo y número de serie." },
+        { flag: "lsmem", description: "Memoria total que ve el sistema." }
+      ],
+      example: { command: "lscpu | grep -E \"Model name|^CPU\\(s\\)|Hypervisor\" && sudo dmidecode -t memory | grep -E \"Size|Speed|Locator\" | grep -v Bank", explanation: "Antes de pedir una ampliación de RAM, comprueba cuántos módulos hay, de qué tamaño y qué ranuras quedan libres." },
+      tags: ["hardware", "cpu", "ram", "inventario", "numero de serie"]
+    },
+    {
+      id: "linux-ulimit", name: "ulimit", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Consulta y ajusta los límites de recursos de la sesión: archivos abiertos, procesos, memoria.",
+      syntax: "ulimit [-a] [-n N] [-u N] [-S|-H]",
+      flags: [
+        { flag: "-a", description: "Muestra todos los límites." },
+        { flag: "-n", description: "Número máximo de archivos abiertos." },
+        { flag: "-u", description: "Número máximo de procesos del usuario." },
+        { flag: "-S / -H", description: "Límite blando / duro." }
+      ],
+      example: { command: "ulimit -n && grep \"open files\" /proc/$(pgrep -o mariadbd)/limits", explanation: "Ante un error «Too many open files», compara el límite de tu sesión con el que tiene de verdad el servicio. En servicios de systemd se cambia con LimitNOFILE." },
+      tags: ["limites", "archivos abiertos", "nofile", "too many open files"]
+    },
+    {
+      id: "linux-timedatectl", name: "timedatectl", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Consulta y configura la hora, la zona horaria y la sincronización NTP.",
+      syntax: "timedatectl [status] | set-timezone Zona | set-ntp true | timesync-status",
+      flags: [
+        { flag: "status", description: "Hora local, UTC, zona y si está sincronizado." },
+        { flag: "set-timezone", description: "Cambia la zona horaria." },
+        { flag: "set-ntp true", description: "Activa la sincronización automática." },
+        { flag: "timesync-status", description: "Servidor NTP en uso y desfase." }
+      ],
+      example: { command: "sudo timedatectl set-timezone Europe/Madrid && sudo timedatectl set-ntp true && timedatectl status", explanation: "Pone la zona horaria correcta y activa NTP: una hora desfasada rompe Kerberos, los certificados y la correlación de logs." },
+      tags: ["hora", "zona horaria", "ntp", "reloj", "sincronizar"]
+    },
+    {
+      id: "linux-shutdown", name: "shutdown / reboot", os: "linux", shell: "bash", category: "processes", risk: "danger",
+      description: "Apaga o reinicia el equipo, de inmediato o programado, avisando a los usuarios conectados.",
+      syntax: "shutdown [-r|-h] [+min|hh:mm|now] [mensaje] | shutdown -c | reboot",
+      flags: [
+        { flag: "-r", description: "Reinicia." },
+        { flag: "-h", description: "Apaga." },
+        { flag: "+10 / 23:00", description: "En 10 minutos / a una hora concreta." },
+        { flag: "-c", description: "Cancela un apagado programado." }
+      ],
+      example: { command: "sudo shutdown -r 23:00 \"Reinicio por actualización del kernel. Guarda tu trabajo.\"", explanation: "Programa el reinicio para la ventana de mantenimiento y avisa a quien tenga sesión abierta. Si cambian los planes, «sudo shutdown -c» lo cancela." },
+      tags: ["apagar", "reiniciar", "programar", "poweroff", "mantenimiento"]
+    },
+    {
+      id: "linux-sysctl", name: "sysctl", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Lee y cambia parámetros del kernel en caliente: red, memoria y límites.",
+      syntax: "sysctl [-a] [parámetro] | sysctl -w parámetro=valor | sysctl --system",
+      flags: [
+        { flag: "-a", description: "Lista todos los parámetros." },
+        { flag: "-w", description: "Cambia un valor hasta el próximo reinicio." },
+        { flag: "--system", description: "Recarga los archivos de /etc/sysctl.d/." },
+        { flag: "-p archivo", description: "Carga un archivo concreto." }
+      ],
+      example: { command: "sysctl net.ipv4.ip_forward vm.swappiness && echo \"net.ipv4.ip_forward=1\" | sudo tee /etc/sysctl.d/99-router.conf && sudo sysctl --system", explanation: "Activa el reenvío de paquetes de forma permanente para que el servidor pueda enrutar o hacer NAT." },
+      tags: ["kernel", "parametros", "ip_forward", "swappiness", "tuning"]
+    },
+    {
+      id: "linux-env", name: "env / export", os: "linux", shell: "bash", category: "processes", risk: "caution",
+      description: "Muestra y define variables de entorno para la sesión o para un único comando.",
+      syntax: "env | printenv VAR | export VAR=valor | VAR=valor comando | unset VAR",
+      flags: [
+        { flag: "env", description: "Lista todas las variables de entorno." },
+        { flag: "export", description: "Hace que la variable pase a los procesos hijos." },
+        { flag: "VAR=valor comando", description: "La define solo para ese comando." },
+        { flag: "env -i", description: "Ejecuta con un entorno vacío (como cron)." }
+      ],
+      example: { command: "export HTTPS_PROXY=http://proxy.corp.local:3128 && env | grep -i proxy && env -i /bin/bash -c /usr/local/bin/backup.sh", explanation: "Configura el proxy de la sesión y prueba un script con el entorno vacío para reproducir por qué falla desde cron." },
+      tags: ["variables", "entorno", "path", "proxy", "printenv"]
+    },
+    {
+      id: "linux-selinux", name: "getenforce / setenforce / restorecon", os: "linux", shell: "bash", category: "security", risk: "caution",
+      description: "Consulta el modo de SELinux, lo cambia temporalmente y repara los contextos de archivos.",
+      syntax: "getenforce | setenforce 0|1 | restorecon -Rv ruta | sestatus",
+      flags: [
+        { flag: "getenforce", description: "Enforcing, Permissive o Disabled." },
+        { flag: "setenforce 0", description: "Modo permisivo hasta el reinicio: registra pero no bloquea." },
+        { flag: "restorecon -Rv", description: "Restaura el contexto correcto de los archivos." },
+        { flag: "ls -Z", description: "Muestra el contexto de un archivo." }
+      ],
+      example: { command: "getenforce && sudo ausearch -m avc -ts recent | tail -n 5; sudo restorecon -Rv /var/www/html", explanation: "Apache devuelve 403 en RHEL o Rocky aunque los permisos son correctos: revisa las denegaciones recientes y repara el contexto de la carpeta web." },
+      tags: ["selinux", "contexto", "403", "rhel", "avc", "permisivo"]
+    },
+    {
+      id: "linux-gpg", name: "gpg", os: "linux", shell: "bash", category: "security", risk: "caution",
+      description: "Cifra, descifra, firma y verifica archivos con claves o con contraseña.",
+      syntax: "gpg -c archivo | gpg -d archivo.gpg | gpg --verify firma archivo | gpg -e -r destinatario archivo",
+      flags: [
+        { flag: "-c", description: "Cifrado simétrico con contraseña." },
+        { flag: "-e -r", description: "Cifra con la clave pública del destinatario." },
+        { flag: "-d", description: "Descifra." },
+        { flag: "--verify", description: "Comprueba una firma." }
+      ],
+      example: { command: "gpg -c --cipher-algo AES256 /root/backup-bd-20261108.sql.gz && rm /root/backup-bd-20261108.sql.gz", explanation: "Cifra una copia de la base de datos antes de subirla a un almacenamiento externo; pide la contraseña y genera el archivo .gpg." },
+      tags: ["cifrar", "firma", "pgp", "verificar", "clave"]
+    },
+    {
+      id: "linux-faillock", name: "faillock", os: "linux", shell: "bash", category: "security", risk: "caution",
+      description: "Muestra y borra los bloqueos de cuenta por intentos fallidos de inicio de sesión.",
+      syntax: "faillock [--user usuario] [--reset]",
+      flags: [
+        { flag: "(sin opciones)", description: "Intentos fallidos de todos los usuarios." },
+        { flag: "--user", description: "Solo los de un usuario." },
+        { flag: "--reset", description: "Borra el contador y desbloquea la cuenta." }
+      ],
+      example: { command: "sudo faillock --user jlopez && sudo faillock --user jlopez --reset", explanation: "Un usuario no puede entrar tras equivocarse varias veces: revisa desde dónde vinieron los intentos y desbloquea la cuenta." },
+      tags: ["bloqueo", "intentos fallidos", "desbloquear", "pam", "login"]
+    },
+    {
+      id: "linux-nft", name: "nft", os: "linux", shell: "bash", category: "security", risk: "danger",
+      description: "Gestiona nftables, el cortafuegos que sustituye a iptables en las distribuciones actuales.",
+      syntax: "nft list ruleset | nft add rule familia tabla cadena regla | nft -f archivo | nft -c -f archivo",
+      flags: [
+        { flag: "list ruleset", description: "Muestra todas las reglas activas." },
+        { flag: "-a", description: "Añade el identificador de cada regla (para borrarla)." },
+        { flag: "-c -f", description: "Comprueba un archivo sin aplicarlo." },
+        { flag: "-f", description: "Carga las reglas de un archivo." }
+      ],
+      example: { command: "sudo nft -c -f /etc/nftables.conf && sudo nft -f /etc/nftables.conf && sudo nft -a list ruleset | head -n 30", explanation: "Valida la sintaxis del archivo de reglas antes de cargarlo. Una regla mal puesta puede cortarte el SSH: ten una consola alternativa." },
+      tags: ["cortafuegos", "firewall", "nftables", "reglas", "iptables"]
+    },
+    {
+      id: "linux-date", name: "date", os: "linux", shell: "bash", category: "automation", risk: "safe",
+      description: "Muestra la fecha con el formato que necesites y calcula fechas relativas para scripts.",
+      syntax: "date [+formato] [-d \"expresión\"] [-u] [-r archivo]",
+      flags: [
+        { flag: "+%F_%H%M", description: "Formato 2026-11-08_0915, ideal para nombres de archivo." },
+        { flag: "-d \"7 days ago\"", description: "Fecha relativa." },
+        { flag: "+%s", description: "Segundos desde 1970 (para restar fechas)." },
+        { flag: "-u", description: "En UTC." }
+      ],
+      example: { command: "tar -czf /backups/web-$(date +%F).tar.gz /var/www/html && find /backups -name \"web-*.tar.gz\" -mtime +7 -delete", explanation: "Copia diaria con la fecha en el nombre y borrado de las que tienen más de una semana." },
+      tags: ["fecha", "formato", "timestamp", "backup", "script"]
+    },
+    {
+      id: "linux-ansible", name: "ansible (ad-hoc)", os: "linux", shell: "bash", category: "automation", risk: "caution",
+      description: "Ejecuta una orden o un módulo en muchos servidores a la vez por SSH, sin instalar agentes.",
+      syntax: "ansible grupo -i inventario -m módulo [-a argumentos] [-b] [--check]",
+      requires: "sudo apt install ansible",
+      flags: [
+        { flag: "-m ping", description: "Comprueba el acceso por SSH y que hay Python." },
+        { flag: "-a \"comando\"", description: "Argumentos del módulo o la orden que se ejecuta." },
+        { flag: "-b", description: "Eleva privilegios con sudo." },
+        { flag: "--check", description: "Simula sin cambiar nada." }
+      ],
+      example: { command: "ansible web -i inventario.ini -m ping && ansible web -i inventario.ini -b -m apt -a \"name=apache2 state=latest update_cache=yes\" --check", explanation: "Comprueba que llegas a todos los servidores web y simula la actualización de Apache en todos antes de aplicarla." },
+      tags: ["automatizacion", "inventario", "ssh", "varios servidores", "playbook"]
+    },
+    {
+      id: "linux-fdisk", name: "fdisk / parted", os: "linux", shell: "bash", category: "storage", risk: "danger",
+      description: "Consulta y modifica la tabla de particiones de un disco.",
+      syntax: "fdisk -l [disco] | parted -s disco print | parted -s disco mklabel gpt mkpart nombre ext4 1MiB 100%",
+      flags: [
+        { flag: "fdisk -l", description: "Lista discos y particiones (solo lectura)." },
+        { flag: "parted -s", description: "Modo no interactivo, para scripts." },
+        { flag: "mklabel gpt", description: "Crea una tabla GPT nueva: borra la anterior." },
+        { flag: "mkpart", description: "Crea una partición." }
+      ],
+      example: { command: "sudo fdisk -l /dev/sdb && sudo parted -s /dev/sdb mklabel gpt mkpart datos ext4 1MiB 100% && lsblk /dev/sdb", explanation: "Prepara un disco nuevo con una única partición GPT. Confirma con «fdisk -l» que es el disco correcto: mklabel destruye lo que hubiera." },
+      tags: ["particion", "gpt", "disco nuevo", "tabla de particiones", "mbr"]
+    },
+    {
+      id: "linux-lvcreate", name: "pvcreate / vgcreate / lvcreate", os: "linux", shell: "bash", category: "storage", risk: "danger",
+      description: "Crea almacenamiento LVM desde cero: volumen físico, grupo de volúmenes y volumen lógico.",
+      syntax: "pvcreate disco | vgcreate grupo disco | lvcreate -n nombre -L tamaño|-l 100%FREE grupo | pvs | vgs | lvs",
+      flags: [
+        { flag: "pvcreate", description: "Marca un disco o partición para LVM." },
+        { flag: "vgcreate", description: "Agrupa volúmenes físicos." },
+        { flag: "lvcreate -L 50G", description: "Volumen lógico de 50 GB." },
+        { flag: "pvs / vgs / lvs", description: "Resumen de cada nivel." }
+      ],
+      example: { command: "sudo pvcreate /dev/sdb1 && sudo vgcreate vg_datos /dev/sdb1 && sudo lvcreate -n lv_web -L 50G vg_datos && sudo mkfs.ext4 /dev/vg_datos/lv_web", explanation: "Monta un volumen de 50 GB para la web y deja el resto del grupo libre para ampliarlo en caliente cuando haga falta." },
+      tags: ["lvm", "volumen logico", "grupo de volumenes", "pvs", "vgs", "lvs"]
+    },
+    {
+      id: "linux-findmnt", name: "findmnt", os: "linux", shell: "bash", category: "storage", risk: "safe",
+      description: "Muestra qué está montado y dónde, y valida /etc/fstab antes de reiniciar.",
+      syntax: "findmnt [ruta|dispositivo] [-t tipo] [--verify] [--fstab]",
+      flags: [
+        { flag: "(sin opciones)", description: "Árbol de todos los puntos de montaje." },
+        { flag: "-t ext4,xfs", description: "Filtra por tipo de sistema de archivos." },
+        { flag: "--verify", description: "Comprueba que /etc/fstab no tiene errores." },
+        { flag: "-T ruta", description: "Sistema de archivos que contiene esa ruta." }
+      ],
+      example: { command: "sudo findmnt --verify && findmnt -T /var/www/html", explanation: "Tras editar /etc/fstab, comprueba que no hay errores (un fallo puede impedir el arranque) y confirma en qué volumen vive la web." },
+      tags: ["montaje", "fstab", "verificar", "punto de montaje"]
+    },
+    {
+      id: "linux-resize2fs", name: "resize2fs / xfs_growfs", os: "linux", shell: "bash", category: "storage", risk: "caution",
+      description: "Amplía un sistema de archivos para que ocupe todo el espacio de su partición o volumen.",
+      syntax: "growpart disco N | resize2fs dispositivo | xfs_growfs punto_de_montaje",
+      flags: [
+        { flag: "growpart /dev/sda 2", description: "Amplía la partición 2 al espacio libre del disco." },
+        { flag: "resize2fs", description: "Amplía ext4 (en caliente)." },
+        { flag: "xfs_growfs", description: "Amplía XFS; se indica el punto de montaje." },
+        { flag: "df -h", description: "Comprueba el resultado." }
+      ],
+      example: { command: "sudo growpart /dev/sda 2 && sudo resize2fs /dev/sda2 && df -h /", explanation: "Tras ampliar el disco de una máquina virtual, extiende la partición y el sistema de archivos sin desmontar ni reiniciar." },
+      tags: ["ampliar disco", "crecer", "ext4", "xfs", "growpart"]
+    },
+    {
+      id: "linux-snap", name: "snap", os: "linux", shell: "bash", category: "packages", risk: "caution",
+      description: "Instala y actualiza paquetes snap, con sus dependencias incluidas y versiones por canal.",
+      syntax: "snap list | find nombre | install nombre [--channel=canal] | refresh | revert nombre | remove nombre",
+      flags: [
+        { flag: "list", description: "Paquetes instalados y su versión." },
+        { flag: "refresh --list", description: "Actualizaciones pendientes." },
+        { flag: "revert", description: "Vuelve a la versión anterior." },
+        { flag: "refresh --hold=72h", description: "Aplaza las actualizaciones automáticas." }
+      ],
+      example: { command: "snap list && sudo snap refresh --list && sudo snap refresh --hold=72h", explanation: "Revisa qué snaps hay y qué se va a actualizar, y aplaza tres días las actualizaciones automáticas para que no coincidan con un despliegue." },
+      tags: ["paquetes", "snapd", "actualizar", "canal", "revertir"]
+    },
+    {
+      id: "linux-apt-mark", name: "apt-mark", os: "linux", shell: "bash", category: "packages", risk: "caution",
+      description: "Retiene paquetes para que no se actualicen y marca cuáles se instalaron a mano.",
+      syntax: "apt-mark hold|unhold paquete | showhold | showmanual",
+      flags: [
+        { flag: "hold", description: "Bloquea la versión actual del paquete." },
+        { flag: "unhold", description: "Quita el bloqueo." },
+        { flag: "showhold", description: "Lista los paquetes retenidos." },
+        { flag: "showmanual", description: "Paquetes instalados expresamente." }
+      ],
+      example: { command: "sudo apt-mark hold mariadb-server && apt-mark showhold", explanation: "Evita que una actualización general cambie la versión de la base de datos hasta que la hayas probado. Acuérdate de quitar el bloqueo: retiene también los parches de seguridad." },
+      tags: ["retener", "bloquear version", "hold", "paquete"]
+    },
+    {
+      id: "linux-unattended-upgrade", name: "unattended-upgrade", os: "linux", shell: "bash", category: "packages", risk: "caution",
+      description: "Instala solo las actualizaciones de seguridad, de forma automática o a demanda.",
+      syntax: "unattended-upgrade [--dry-run] [-d] | dpkg-reconfigure -plow unattended-upgrades",
+      flags: [
+        { flag: "--dry-run", description: "Muestra qué instalaría sin hacerlo." },
+        { flag: "-d", description: "Salida detallada." },
+        { flag: "dpkg-reconfigure", description: "Activa o desactiva la ejecución diaria." }
+      ],
+      example: { command: "sudo unattended-upgrade --dry-run -d 2>&1 | grep -E \"Checking|Packages that will be upgraded\" | tail -n 5", explanation: "Comprueba qué parches de seguridad se instalarían esta noche. El registro queda en /var/log/unattended-upgrades/." },
+      tags: ["parches", "seguridad", "automatico", "actualizaciones"]
+    },
+    {
+      id: "linux-git-clone", name: "git clone / remote", os: "linux", shell: "bash", category: "git", risk: "safe",
+      description: "Descarga un repositorio y gestiona los servidores remotos con los que se sincroniza.",
+      syntax: "git clone [--depth N] [-b rama] URL [carpeta] | git remote -v | git remote set-url origin URL",
+      flags: [
+        { flag: "--depth 1", description: "Solo el último commit: descarga rápida." },
+        { flag: "-b rama", description: "Clona y se sitúa en esa rama." },
+        { flag: "remote -v", description: "Muestra las URL de los remotos." },
+        { flag: "remote set-url", description: "Cambia la URL, por ejemplo de HTTPS a SSH." }
+      ],
+      example: { command: "git clone --depth 1 -b main git@github.com:empresa/infra.git /opt/infra && git -C /opt/infra remote -v", explanation: "Trae al servidor la última versión del repositorio de infraestructura sin todo su historial." },
+      tags: ["clonar", "repositorio", "remoto", "origin", "descargar"]
+    },
+    {
+      id: "linux-git-branch", name: "git branch / switch / merge", os: "linux", shell: "bash", category: "git", risk: "caution",
+      description: "Crea ramas, cambia entre ellas y fusiona el trabajo terminado.",
+      syntax: "git switch [-c] rama | git branch [-a] [-d rama] | git merge [--no-ff] rama",
+      flags: [
+        { flag: "switch -c", description: "Crea una rama y se cambia a ella." },
+        { flag: "branch -a", description: "Lista las ramas locales y remotas." },
+        { flag: "merge --no-ff", description: "Fusiona dejando un commit de fusión visible." },
+        { flag: "branch -d", description: "Borra una rama ya fusionada." }
+      ],
+      example: { command: "git switch -c fix/vhost-ssl && git add sites/web.conf && git commit -m \"Corrige el certificado del vhost\" && git switch main && git merge --no-ff fix/vhost-ssl", explanation: "Hace un cambio de configuración en su propia rama y lo incorpora a main dejando constancia en el historial." },
+      tags: ["rama", "fusionar", "checkout", "branch", "merge"]
+    },
+    {
+      id: "linux-git-tag", name: "git tag", os: "linux", shell: "bash", category: "git", risk: "caution",
+      description: "Marca un commit con un nombre de versión para poder desplegarlo o volver a él.",
+      syntax: "git tag [-a nombre -m mensaje] [commit] | git tag -l patrón | git push origin nombre",
+      flags: [
+        { flag: "-a -m", description: "Etiqueta anotada, con autor, fecha y mensaje." },
+        { flag: "-l \"v1.*\"", description: "Lista las etiquetas que coinciden." },
+        { flag: "push origin nombre", description: "Sube la etiqueta al remoto (no va con un push normal)." },
+        { flag: "-d", description: "Borra una etiqueta local." }
+      ],
+      example: { command: "git tag -a v2.4.0 -m \"Versión desplegada el 8 de noviembre\" && git push origin v2.4.0", explanation: "Deja marcada la versión que acabas de desplegar: si algo falla, sabes exactamente a qué commit volver." },
+      tags: ["etiqueta", "version", "release", "despliegue"]
+    },
+    {
+      id: "linux-qm", name: "qm / pct (Proxmox)", os: "linux", shell: "bash", category: "virtualization", risk: "caution",
+      description: "Gestiona máquinas virtuales (qm) y contenedores LXC (pct) desde la consola de un nodo Proxmox VE.",
+      syntax: "qm list | qm start|shutdown|stop ID | qm snapshot ID nombre | qm config ID | pct list | pct enter ID",
+      requires: "Nodo con Proxmox VE",
+      flags: [
+        { flag: "qm list", description: "Máquinas del nodo y su estado." },
+        { flag: "qm shutdown", description: "Apagado ordenado; «stop» corta la alimentación." },
+        { flag: "qm snapshot", description: "Instantánea antes de un cambio." },
+        { flag: "pct enter", description: "Abre una shell dentro del contenedor." }
+      ],
+      example: { command: "qm list && qm snapshot 105 antes-actualizar --description \"Antes de actualizar la aplicación\" && qm listsnapshot 105", explanation: "Antes de actualizar una máquina, toma una instantánea para poder volver atrás con «qm rollback 105 antes-actualizar»." },
+      tags: ["proxmox", "maquina virtual", "lxc", "snapshot", "instantanea"]
+    },
+    {
+      id: "win-add-localgroupmember", name: "Add-LocalGroupMember", os: "windows", shell: "powershell", category: "users", risk: "caution",
+      description: "Añade o quita usuarios y grupos del dominio en un grupo local del equipo.",
+      syntax: "Add-LocalGroupMember -Group <grupo> -Member <cuenta> | Remove-LocalGroupMember -Group <grupo> -Member <cuenta>",
+      flags: [
+        { flag: "-Group", description: "Grupo local: Administradores, Usuarios de escritorio remoto…" },
+        { flag: "-Member", description: "Cuenta local o del dominio (DOMINIO\\usuario)." },
+        { flag: "Remove-LocalGroupMember", description: "Quita el miembro del grupo." }
+      ],
+      example: { command: "Add-LocalGroupMember -Group \"Usuarios de escritorio remoto\" -Member \"CORP\\jlopez\"; Get-LocalGroupMember -Group \"Usuarios de escritorio remoto\"", explanation: "Da acceso por Escritorio remoto a un usuario del dominio sin hacerlo administrador y comprueba el resultado." },
+      tags: ["grupo local", "administradores", "escritorio remoto", "rdp", "miembro"]
+    },
+    {
+      id: "win-get-localuser", name: "Get-LocalUser / Set-LocalUser", os: "windows", shell: "powershell", category: "users", risk: "caution",
+      description: "Lista las cuentas locales del equipo y cambia su contraseña, caducidad o estado.",
+      syntax: "Get-LocalUser [-Name <usuario>] | Set-LocalUser -Name <usuario> [-Password <segura>] [-PasswordNeverExpires <bool>] | Disable-LocalUser -Name <usuario>",
+      flags: [
+        { flag: "Get-LocalUser", description: "Cuentas locales, si están activas y su último inicio de sesión." },
+        { flag: "-Password", description: "Nueva contraseña (SecureString)." },
+        { flag: "-PasswordNeverExpires", description: "Activa o quita la caducidad." },
+        { flag: "Disable-LocalUser", description: "Deshabilita la cuenta sin borrarla." }
+      ],
+      example: { command: "Get-LocalUser | Where-Object Enabled | Select-Object Name, LastLogon, PasswordLastSet, PasswordExpires", explanation: "Auditoría rápida de un servidor: qué cuentas locales están activas, cuándo se usaron por última vez y cuáles tienen la contraseña sin caducidad." },
+      tags: ["cuentas locales", "usuario local", "deshabilitar", "auditoria", "contraseña"]
+    },
+    {
+      id: "win-net-accounts", name: "net accounts", os: "windows", shell: "cmd", category: "users", risk: "caution",
+      description: "Muestra y cambia la directiva local de contraseñas y de bloqueo de cuentas.",
+      syntax: "net accounts [/minpwlen:N] [/maxpwage:días] [/lockoutthreshold:N] [/domain]",
+      flags: [
+        { flag: "(sin opciones)", description: "Directiva vigente." },
+        { flag: "/minpwlen:12", description: "Longitud mínima de la contraseña." },
+        { flag: "/lockoutthreshold:5", description: "Intentos fallidos antes de bloquear." },
+        { flag: "/domain", description: "Consulta la directiva del dominio." }
+      ],
+      example: { command: "net accounts && net accounts /minpwlen:12 /maxpwage:90 /lockoutthreshold:5", explanation: "Endurece un equipo que no está en el dominio: contraseñas de 12 caracteres, caducidad a 90 días y bloqueo tras 5 fallos. En el dominio manda la GPO." },
+      tags: ["directiva", "contraseñas", "bloqueo", "politica", "longitud minima"]
+    },
+    {
+      id: "win-test-path", name: "Test-Path", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Comprueba si existe un archivo, una carpeta o una clave del Registro; devuelve True o False.",
+      syntax: "Test-Path <ruta> [-PathType Leaf|Container] [-NewerThan <fecha>]",
+      flags: [
+        { flag: "-PathType Leaf", description: "Verdadero solo si es un archivo." },
+        { flag: "-PathType Container", description: "Verdadero solo si es una carpeta." },
+        { flag: "-NewerThan", description: "Verdadero si se modificó después de esa fecha." }
+      ],
+      example: { command: "if (-not (Test-Path \"D:\\Backups\\$(Get-Date -Format yyyyMMdd)\")) { New-Item -ItemType Directory -Path \"D:\\Backups\\$(Get-Date -Format yyyyMMdd)\" | Out-Null }", explanation: "En un script de copias, crea la carpeta del día solo si todavía no existe, para que no falle al repetirse." },
+      tags: ["existe", "comprobar", "ruta", "script", "condicion"]
+    },
+    {
+      id: "win-out-file", name: "Out-File / Set-Content / Add-Content", os: "windows", shell: "powershell", category: "filesystem", risk: "caution",
+      description: "Guarda la salida de un comando en un archivo, lo sobrescribe o le añade líneas.",
+      syntax: "<comando> | Out-File <ruta> [-Append] [-Encoding utf8] | Set-Content <ruta> <texto> | Add-Content <ruta> <texto>",
+      flags: [
+        { flag: "Out-File", description: "Guarda la salida tal como se vería en pantalla." },
+        { flag: "Set-Content", description: "Escribe el texto y sustituye el contenido." },
+        { flag: "Add-Content", description: "Añade al final (útil para registros)." },
+        { flag: "-Encoding utf8", description: "Codificación del archivo." }
+      ],
+      example: { command: "Add-Content -Path C:\\Logs\\mantenimiento.log -Value \"$(Get-Date -Format s) Reinicio del servicio Spooler en srv01\"", explanation: "Deja una línea con fecha y hora en un registro propio cada vez que el script hace algo." },
+      tags: ["guardar", "escribir archivo", "log", "redireccion", "append"]
+    },
+    {
+      id: "win-expand-archive", name: "Expand-Archive", os: "windows", shell: "powershell", category: "filesystem", risk: "caution",
+      description: "Extrae un archivo .zip en una carpeta.",
+      syntax: "Expand-Archive -Path <archivo.zip> -DestinationPath <carpeta> [-Force]",
+      flags: [
+        { flag: "-Path", description: "Archivo .zip de origen." },
+        { flag: "-DestinationPath", description: "Carpeta de destino (se crea si no existe)." },
+        { flag: "-Force", description: "Sobrescribe los archivos que ya existan." }
+      ],
+      example: { command: "Expand-Archive -Path C:\\Temp\\despliegue-v2.4.zip -DestinationPath C:\\inetpub\\wwwroot\\intranet -Force", explanation: "Despliega una versión nueva de la intranet descomprimiendo el paquete sobre la carpeta de la web." },
+      tags: ["zip", "descomprimir", "extraer", "desplegar"]
+    },
+    {
+      id: "win-findstr", name: "findstr", os: "windows", shell: "cmd", category: "filesystem", risk: "safe",
+      description: "Busca texto en archivos o en la salida de otro comando: el grep de cmd.",
+      syntax: "findstr [/i] [/s] [/n] [/r] [/c:\"frase\"] cadena [archivos]",
+      flags: [
+        { flag: "/i", description: "No distingue mayúsculas." },
+        { flag: "/s", description: "Busca también en las subcarpetas." },
+        { flag: "/n", description: "Muestra el número de línea." },
+        { flag: "/c:\"frase\"", description: "Busca la frase exacta, con espacios." }
+      ],
+      example: { command: "findstr /s /i /n /c:\"connection string\" C:\\inetpub\\wwwroot\\*.config", explanation: "Localiza en qué archivos de configuración de la web aparece la cadena de conexión a la base de datos." },
+      tags: ["buscar texto", "grep", "filtrar", "cadena"]
+    },
+    {
+      id: "win-where", name: "where / Get-Command", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Localiza qué ejecutable, cmdlet o alias se usará al escribir un comando.",
+      syntax: "where.exe <programa> | Get-Command <nombre> [-All] [-Module <módulo>]",
+      flags: [
+        { flag: "where.exe", description: "Rutas del ejecutable según el PATH." },
+        { flag: "Get-Command -All", description: "Todas las coincidencias: alias, funciones y programas." },
+        { flag: "-Module", description: "Lista los comandos de un módulo." },
+        { flag: "-Noun / -Verb", description: "Busca cmdlets por nombre o verbo." }
+      ],
+      example: { command: "where.exe python; Get-Command curl -All | Select-Object CommandType, Name, Source", explanation: "Averigua qué Python se ejecuta cuando hay varios y descubre que en PowerShell 5.1 «curl» es un alias de Invoke-WebRequest." },
+      tags: ["ruta", "path", "ejecutable", "alias", "localizar"]
+    },
+    {
+      id: "win-folder-size", name: "Measure-Object (tamaño de carpetas)", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Calcula cuánto ocupa cada carpeta para encontrar qué está llenando un disco.",
+      syntax: "Get-ChildItem <ruta> -Recurse -File | Measure-Object -Property Length -Sum",
+      flags: [
+        { flag: "-Recurse -File", description: "Todos los archivos de las subcarpetas." },
+        { flag: "-Property Length -Sum", description: "Suma los tamaños en bytes." },
+        { flag: "-ErrorAction SilentlyContinue", description: "Ignora las carpetas sin permiso." }
+      ],
+      example: { command: "Get-ChildItem D:\\Datos -Directory | ForEach-Object { [pscustomobject]@{ Carpeta = $_.Name; GB = [math]::Round((Get-ChildItem $_.FullName -Recurse -File -ErrorAction SilentlyContinue | Measure-Object Length -Sum).Sum / 1GB, 2) } } | Sort-Object GB -Descending", explanation: "El disco D: se está llenando: lista las carpetas de primer nivel ordenadas por tamaño para ver cuál es la culpable." },
+      tags: ["tamaño", "espacio", "carpeta", "disco lleno", "du"]
+    },
+    {
+      id: "win-where-object", name: "Where-Object / Select-Object / Sort-Object", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Filtra, elige columnas y ordena los objetos que devuelve cualquier cmdlet.",
+      syntax: "<cmdlet> | Where-Object { condición } | Sort-Object <propiedad> [-Descending] | Select-Object <propiedades> [-First N]",
+      flags: [
+        { flag: "Where-Object", description: "Deja pasar solo lo que cumple la condición." },
+        { flag: "Sort-Object -Descending", description: "Ordena de mayor a menor." },
+        { flag: "Select-Object -First 10", description: "Se queda con los 10 primeros." },
+        { flag: "-ExpandProperty", description: "Devuelve solo el valor, sin cabecera." }
+      ],
+      example: { command: "Get-Process | Where-Object { $_.WorkingSet64 -gt 500MB } | Sort-Object WorkingSet64 -Descending | Select-Object -First 10 Name, Id, @{ n = \"RAM_MB\"; e = { [int]($_.WorkingSet64 / 1MB) } }", explanation: "Los 10 procesos que usan más de 500 MB de memoria, con la RAM en megas. El mismo patrón sirve con servicios, archivos o usuarios." },
+      tags: ["filtrar", "ordenar", "columnas", "pipeline", "tuberia"]
+    },
+    {
+      id: "win-get-help", name: "Get-Help / Get-Member", os: "windows", shell: "powershell", category: "filesystem", risk: "safe",
+      description: "Muestra la ayuda y los ejemplos de un cmdlet, y las propiedades de los objetos que devuelve.",
+      syntax: "Get-Help <cmdlet> [-Examples] [-Parameter <nombre>] [-Online] | <cmdlet> | Get-Member",
+      flags: [
+        { flag: "-Examples", description: "Solo los ejemplos de uso." },
+        { flag: "-Parameter", description: "Explica un parámetro concreto." },
+        { flag: "-Online", description: "Abre la documentación en el navegador." },
+        { flag: "Get-Member", description: "Propiedades y métodos disponibles." }
+      ],
+      example: { command: "Get-Help Get-Service -Examples; Get-Service | Get-Member -MemberType Property", explanation: "Antes de filtrar la salida de un cmdlet que no conoces, mira sus ejemplos y qué propiedades puedes usar en Where-Object o Select-Object." },
+      tags: ["ayuda", "ejemplos", "propiedades", "documentacion", "man"]
+    },
+    {
+      id: "win-ping", name: "ping", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Comprueba si un equipo responde por ICMP y mide la latencia y la pérdida de paquetes.",
+      syntax: "ping [-n N] [-t] [-l bytes] [-f] [-4] [-a] destino",
+      flags: [
+        { flag: "-n 10", description: "Envía 10 paquetes en lugar de 4." },
+        { flag: "-t", description: "Continuo hasta pulsar Ctrl+C." },
+        { flag: "-f -l 1472", description: "Sin fragmentar: sirve para probar la MTU." },
+        { flag: "-a", description: "Resuelve el nombre de una dirección IP." }
+      ],
+      example: { command: "ping -n 4 srv01.corp.local && ping -f -l 1472 192.168.10.1", explanation: "Comprueba que un servidor responde y que una MTU de 1500 llega a la puerta de enlace sin fragmentar (útil en problemas con VPN)." },
+      tags: ["icmp", "conectividad", "latencia", "mtu", "perdida de paquetes"]
+    },
+    {
+      id: "win-nslookup", name: "nslookup", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Consulta registros DNS contra el servidor configurado o contra otro que indiques.",
+      syntax: "nslookup [-type=A|MX|TXT|SRV|PTR] nombre [servidor]",
+      flags: [
+        { flag: "-type=MX", description: "Servidores de correo del dominio." },
+        { flag: "-type=SRV", description: "Registros de servicio (por ejemplo, de Active Directory)." },
+        { flag: "-type=TXT", description: "Registros de texto: SPF, verificaciones." },
+        { flag: "nombre servidor", description: "Pregunta a un servidor DNS concreto." }
+      ],
+      example: { command: "nslookup -type=SRV _ldap._tcp.dc._msdcs.corp.local && nslookup -type=MX empresa.com 1.1.1.1", explanation: "Comprueba que el equipo encuentra los controladores de dominio por DNS y consulta el correo de un dominio en un DNS público." },
+      tags: ["dns", "registros", "mx", "srv", "resolver"]
+    },
+    {
+      id: "win-get-netadapter", name: "Get-NetAdapter / Restart-NetAdapter", os: "windows", shell: "powershell", category: "network", risk: "caution",
+      description: "Lista las tarjetas de red con su estado y velocidad, y las reinicia o deshabilita.",
+      syntax: "Get-NetAdapter [-Name <nombre>] [-Physical] | Restart-NetAdapter -Name <nombre> | Disable-NetAdapter -Name <nombre>",
+      flags: [
+        { flag: "-Physical", description: "Solo las tarjetas físicas." },
+        { flag: "Restart-NetAdapter", description: "Deshabilita y vuelve a habilitar la tarjeta." },
+        { flag: "Get-NetAdapterStatistics", description: "Bytes y paquetes descartados." }
+      ],
+      example: { command: "Get-NetAdapter -Physical | Select-Object Name, Status, LinkSpeed, MacAddress; Restart-NetAdapter -Name \"Ethernet0\"", explanation: "Comprueba que la tarjeta tiene enlace a la velocidad esperada y la reinicia. Si estás conectado por esa misma tarjeta, perderás la sesión unos segundos." },
+      tags: ["tarjeta de red", "adaptador", "velocidad", "mac", "reiniciar red"]
+    },
+    {
+      id: "win-get-netipconfiguration", name: "Get-NetIPConfiguration", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Resume la configuración IP de cada adaptador: dirección, puerta de enlace y DNS.",
+      syntax: "Get-NetIPConfiguration [-InterfaceAlias <nombre>] [-Detailed] [-All]",
+      flags: [
+        { flag: "-Detailed", description: "Añade perfil de red, MTU y estado de DHCP." },
+        { flag: "-InterfaceAlias", description: "Solo un adaptador." },
+        { flag: "-All", description: "Incluye los adaptadores desconectados." }
+      ],
+      example: { command: "Get-NetIPConfiguration | Select-Object InterfaceAlias, @{ n = \"IP\"; e = { $_.IPv4Address.IPAddress } }, @{ n = \"Puerta\"; e = { $_.IPv4DefaultGateway.NextHop } }, @{ n = \"DNS\"; e = { $_.DNSServer.ServerAddresses -join \", \" } }", explanation: "El equivalente a «ipconfig /all» en forma de objetos: una tabla limpia que se puede exportar o comparar entre servidores." },
+      tags: ["ip", "puerta de enlace", "dns", "configuracion de red", "ipconfig"]
+    },
+    {
+      id: "win-getmac", name: "getmac / nbtstat", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Muestra las direcciones MAC del equipo o de uno remoto y sus nombres NetBIOS.",
+      syntax: "getmac [/v] [/s equipo] [/fo csv] | nbtstat -A dirección_IP | nbtstat -n",
+      flags: [
+        { flag: "getmac /v", description: "Añade el nombre del adaptador." },
+        { flag: "getmac /s", description: "Consulta un equipo remoto." },
+        { flag: "nbtstat -A", description: "Nombres NetBIOS y MAC de una IP." },
+        { flag: "nbtstat -n", description: "Nombres NetBIOS locales." }
+      ],
+      example: { command: "getmac /v /fo table && nbtstat -A 192.168.10.25", explanation: "Obtiene la MAC para una reserva DHCP y averigua qué equipo hay detrás de una IP que no reconoces." },
+      tags: ["mac", "direccion fisica", "netbios", "reserva dhcp", "identificar equipo"]
+    },
+    {
+      id: "win-curl", name: "curl.exe", os: "windows", shell: "cmd", category: "network", risk: "safe",
+      description: "Cliente HTTP incluido en Windows 10 y 11: prueba webs, API y certificados igual que en Linux.",
+      syntax: "curl.exe [-I] [-L] [-k] [-o archivo] [-H cabecera] [-w formato] URL",
+      flags: [
+        { flag: "-I", description: "Solo las cabeceras de la respuesta." },
+        { flag: "-L", description: "Sigue las redirecciones." },
+        { flag: "-o archivo", description: "Guarda la respuesta en un archivo." },
+        { flag: "-w \"%{http_code}\"", description: "Imprime el código HTTP." }
+      ],
+      example: { command: "curl.exe -s -o NUL -w \"%{http_code} en %{time_total}s\\n\" https://empresa.com", explanation: "Comprueba que una web responde y cuánto tarda. Escribe «curl.exe», con la extensión: en PowerShell 5.1 «curl» a secas es otro comando." },
+      tags: ["http", "api", "web", "codigo de estado", "descargar"]
+    },
+    {
+      id: "win-test-wsman", name: "Test-WSMan", os: "windows", shell: "powershell", category: "network", risk: "safe",
+      description: "Comprueba si la administración remota (WinRM) responde en un equipo.",
+      syntax: "Test-WSMan [-ComputerName <equipo>] [-UseSSL] [-Authentication <tipo>]",
+      flags: [
+        { flag: "-ComputerName", description: "Equipo que se comprueba." },
+        { flag: "-UseSSL", description: "Prueba el puerto HTTPS (5986)." },
+        { flag: "-Authentication Default", description: "Comprueba también que te autentica." }
+      ],
+      example: { command: "Test-WSMan -ComputerName srv02 -Authentication Default", explanation: "Antes de lanzar Invoke-Command contra un servidor, comprueba que WinRM está activo y que tu cuenta puede autenticarse." },
+      tags: ["winrm", "remoto", "psremoting", "5985", "administracion remota"]
+    },
+    {
+      id: "win-tasklist", name: "tasklist", os: "windows", shell: "cmd", category: "processes", risk: "safe",
+      description: "Lista los procesos con su PID, memoria y, si se pide, los servicios que alojan.",
+      syntax: "tasklist [/svc] [/v] [/fi \"filtro\"] [/s equipo] [/fo csv]",
+      flags: [
+        { flag: "/svc", description: "Servicios que se ejecutan en cada proceso." },
+        { flag: "/fi \"PID eq 1234\"", description: "Filtra por PID, nombre, memoria…" },
+        { flag: "/v", description: "Añade usuario, tiempo de CPU y título." },
+        { flag: "/s equipo", description: "Consulta un equipo remoto." }
+      ],
+      example: { command: "netstat -ano | findstr :443 && tasklist /svc /fi \"PID eq 4120\"", explanation: "Averigua qué programa ocupa un puerto: netstat da el PID y tasklist dice qué proceso y qué servicio hay detrás." },
+      tags: ["procesos", "pid", "servicios", "svchost", "puerto ocupado"]
+    },
+    {
+      id: "win-restart-service", name: "Restart-Service / Set-Service", os: "windows", shell: "powershell", category: "processes", risk: "caution",
+      description: "Reinicia, detiene o inicia servicios y cambia su tipo de inicio.",
+      syntax: "Restart-Service -Name <servicio> [-Force] | Stop-Service | Start-Service | Set-Service -Name <servicio> -StartupType Automatic|Manual|Disabled",
+      flags: [
+        { flag: "-Force", description: "Reinicia también los servicios dependientes." },
+        { flag: "-StartupType", description: "Automático, manual o deshabilitado." },
+        { flag: "-PassThru", description: "Devuelve el servicio para ver su estado." }
+      ],
+      example: { command: "Restart-Service -Name Spooler -Force -PassThru; Set-Service -Name Spooler -StartupType Automatic", explanation: "La cola de impresión se ha quedado bloqueada: reinicia el servicio y se asegura de que arranque solo con el sistema." },
+      tags: ["reiniciar servicio", "detener", "iniciar", "tipo de inicio", "automatico"]
+    },
+    {
+      id: "win-w32tm", name: "w32tm", os: "windows", shell: "cmd", category: "processes", risk: "caution",
+      description: "Consulta y fuerza la sincronización de la hora de Windows.",
+      syntax: "w32tm /query /status | /query /source | /resync [/rediscover] | /stripchart /computer:servidor",
+      flags: [
+        { flag: "/query /status", description: "Origen de la hora, desfase y última sincronización." },
+        { flag: "/query /source", description: "De dónde toma la hora el equipo." },
+        { flag: "/resync", description: "Sincroniza ahora." },
+        { flag: "/stripchart", description: "Mide el desfase contra otro servidor." }
+      ],
+      example: { command: "w32tm /query /source && w32tm /resync /rediscover && w32tm /stripchart /computer:dc01.corp.local /samples:3 /dataonly", explanation: "Un equipo no puede iniciar sesión en el dominio: con más de 5 minutos de desfase falla Kerberos. Comprueba el origen de la hora y sincroniza." },
+      tags: ["hora", "ntp", "sincronizar", "kerberos", "reloj"]
+    },
+    {
+      id: "win-get-uptime", name: "Get-Uptime", os: "windows", shell: "powershell", category: "processes", risk: "safe",
+      description: "Indica cuánto tiempo lleva encendido el equipo y cuándo arrancó por última vez.",
+      syntax: "Get-Uptime [-Since] | (Get-CimInstance Win32_OperatingSystem).LastBootUpTime",
+      requires: "Get-Uptime necesita PowerShell 7; la alternativa con Get-CimInstance funciona en 5.1",
+      flags: [
+        { flag: "(sin opciones)", description: "Tiempo transcurrido desde el arranque." },
+        { flag: "-Since", description: "Fecha y hora del último arranque." },
+        { flag: "Win32_OperatingSystem", description: "Alternativa para Windows PowerShell 5.1 y equipos remotos." }
+      ],
+      example: { command: "Get-CimInstance Win32_OperatingSystem -ComputerName srv01, srv02 | Select-Object PSComputerName, LastBootUpTime, @{ n = \"Dias\"; e = { ((Get-Date) - $_.LastBootUpTime).Days } }", explanation: "Comprueba qué servidores llevan demasiado tiempo sin reiniciarse y tienen parches pendientes de aplicar." },
+      tags: ["tiempo encendido", "ultimo arranque", "reinicio", "uptime"]
+    },
+    {
+      id: "win-pnputil", name: "driverquery / pnputil", os: "windows", shell: "cmd", category: "processes", risk: "caution",
+      description: "Lista los controladores instalados y añade o quita paquetes de controladores.",
+      syntax: "driverquery [/v] [/fo csv] | pnputil /enum-drivers | pnputil /add-driver <archivo.inf> /install | pnputil /delete-driver <oemN.inf>",
+      flags: [
+        { flag: "driverquery /v", description: "Controladores con su estado y ruta." },
+        { flag: "/enum-drivers", description: "Paquetes de terceros en el almacén." },
+        { flag: "/add-driver ... /install", description: "Añade e instala un controlador." },
+        { flag: "/delete-driver", description: "Quita un paquete del almacén." }
+      ],
+      example: { command: "pnputil /enum-drivers | findstr /i \"Proveedor Provider Versi\" && pnputil /add-driver C:\\Drivers\\impresora\\*.inf /subdirs /install", explanation: "Instala el controlador de una impresora desde la consola, sin asistente, y revisa qué controladores de terceros hay." },
+      tags: ["controladores", "drivers", "impresora", "inf", "dispositivo"]
+    },
+    {
+      id: "win-env", name: "$env: / setx", os: "windows", shell: "powershell", category: "processes", risk: "caution",
+      description: "Lee y define variables de entorno para la sesión o de forma permanente.",
+      syntax: "$env:VARIABLE | $env:VARIABLE = \"valor\" | Get-ChildItem Env: | setx VARIABLE \"valor\" [/M]",
+      flags: [
+        { flag: "$env:PATH", description: "Lee una variable." },
+        { flag: "$env:VAR = \"x\"", description: "La define solo para la sesión actual." },
+        { flag: "setx", description: "La guarda para el usuario (sesiones nuevas)." },
+        { flag: "setx /M", description: "La guarda para todo el equipo (requiere administrador)." }
+      ],
+      example: { command: "$env:PATH -split \";\"; setx HTTPS_PROXY \"http://proxy.corp.local:3128\" /M", explanation: "Revisa el PATH línea a línea y configura el proxy para todo el equipo. No uses setx con PATH: recorta el valor a 1024 caracteres." },
+      tags: ["variables de entorno", "path", "proxy", "setx", "entorno"]
+    },
+    {
+      id: "win-get-netfirewallrule", name: "Get-NetFirewallRule / Get-NetFirewallProfile", os: "windows", shell: "powershell", category: "security", risk: "safe",
+      description: "Consulta las reglas del cortafuegos de Windows y si cada perfil está activado.",
+      syntax: "Get-NetFirewallProfile | Get-NetFirewallRule [-Enabled True] [-Direction Inbound] [-Action Allow] | Get-NetFirewallPortFilter",
+      flags: [
+        { flag: "Get-NetFirewallProfile", description: "Estado de los perfiles Dominio, Privado y Público." },
+        { flag: "-Direction Inbound", description: "Solo las reglas de entrada." },
+        { flag: "-Enabled True", description: "Solo las reglas activas." },
+        { flag: "Get-NetFirewallPortFilter", description: "Puerto y protocolo de cada regla." }
+      ],
+      example: { command: "Get-NetFirewallProfile | Select-Object Name, Enabled; Get-NetFirewallRule -Enabled True -Direction Inbound -Action Allow | Get-NetFirewallPortFilter | Where-Object LocalPort -eq 3389", explanation: "Comprueba que el cortafuegos está activado en los tres perfiles y busca qué regla permite la entrada por Escritorio remoto." },
+      tags: ["cortafuegos", "firewall", "reglas", "perfil", "puerto abierto"]
+    },
+    {
+      id: "win-start-mpscan", name: "Start-MpScan / Update-MpSignature", os: "windows", shell: "powershell", category: "security", risk: "caution",
+      description: "Actualiza las firmas de Microsoft Defender y lanza un análisis.",
+      syntax: "Update-MpSignature | Start-MpScan -ScanType QuickScan|FullScan|CustomScan [-ScanPath <ruta>] | Get-MpThreatDetection",
+      flags: [
+        { flag: "Update-MpSignature", description: "Descarga las firmas más recientes." },
+        { flag: "-ScanType QuickScan", description: "Análisis rápido de las zonas habituales." },
+        { flag: "-ScanType CustomScan -ScanPath", description: "Analiza solo una carpeta." },
+        { flag: "Get-MpThreatDetection", description: "Amenazas detectadas y qué se hizo con ellas." }
+      ],
+      example: { command: "Update-MpSignature; Start-MpScan -ScanType CustomScan -ScanPath \"D:\\Datos\\Compartido\"; Get-MpThreatDetection | Select-Object -First 5 InitialDetectionTime, Resources", explanation: "Un usuario ha abierto un adjunto sospechoso: actualiza las firmas, analiza la carpeta compartida y revisa si se detectó algo." },
+      tags: ["antivirus", "defender", "analisis", "malware", "firmas"]
+    },
+    {
+      id: "win-failed-logons", name: "Get-WinEvent (inicios de sesión fallidos)", os: "windows", shell: "powershell", category: "security", risk: "safe",
+      description: "Extrae del registro de seguridad los inicios de sesión fallidos (evento 4625) con usuario y origen.",
+      syntax: "Get-WinEvent -FilterHashtable @{ LogName = \"Security\"; Id = 4625; StartTime = <fecha> } [-MaxEvents N]",
+      flags: [
+        { flag: "Id = 4625", description: "Inicio de sesión fallido." },
+        { flag: "Id = 4740", description: "Cuenta bloqueada (consúltalo en el controlador de dominio)." },
+        { flag: "StartTime", description: "Solo los eventos desde esa fecha." },
+        { flag: "Properties[5] / [19]", description: "Usuario e IP de origen del evento 4625." }
+      ],
+      example: { command: "Get-WinEvent -FilterHashtable @{ LogName = \"Security\"; Id = 4625; StartTime = (Get-Date).AddHours(-24) } | Group-Object { $_.Properties[5].Value + \" desde \" + $_.Properties[19].Value } | Sort-Object Count -Descending | Select-Object -First 10 Count, Name", explanation: "Las 10 combinaciones de usuario e IP con más fallos en las últimas 24 horas: distingue un usuario despistado de un ataque de fuerza bruta." },
+      tags: ["4625", "fuerza bruta", "inicio de sesion", "auditoria", "bloqueo"]
+    },
+    {
+      id: "win-unblock-file", name: "Unblock-File", os: "windows", shell: "powershell", category: "security", risk: "caution",
+      description: "Quita la marca de «descargado de Internet» que impide ejecutar scripts y programas bajados.",
+      syntax: "Unblock-File -Path <archivo> | Get-ChildItem <carpeta> -Recurse | Unblock-File | Get-Item <archivo> -Stream Zone.Identifier",
+      flags: [
+        { flag: "-Path", description: "Archivo que se desbloquea." },
+        { flag: "-Stream Zone.Identifier", description: "Comprueba si el archivo está marcado." },
+        { flag: "-WhatIf", description: "Muestra qué haría sin hacerlo." }
+      ],
+      example: { command: "Get-AuthenticodeSignature C:\\Scripts\\inventario.ps1 | Select-Object Status, SignerCertificate; Unblock-File -Path C:\\Scripts\\inventario.ps1", explanation: "Un script descargado no se ejecuta con la directiva RemoteSigned: revisa su firma y, si confías en el origen, lo desbloquea." },
+      tags: ["desbloquear", "zone identifier", "script bloqueado", "remotesigned", "descargado"]
+    },
+    {
+      id: "win-get-scheduledtask", name: "Get-ScheduledTask / Start-ScheduledTask", os: "windows", shell: "powershell", category: "automation", risk: "caution",
+      description: "Lista las tareas programadas, muestra su último resultado y las ejecuta a mano.",
+      syntax: "Get-ScheduledTask [-TaskName <nombre>] [-TaskPath <ruta>] | Get-ScheduledTaskInfo | Start-ScheduledTask -TaskName <nombre>",
+      flags: [
+        { flag: "Get-ScheduledTaskInfo", description: "Última ejecución, resultado y próxima ejecución." },
+        { flag: "-TaskPath \"\\\"", description: "Solo las tareas de la carpeta raíz." },
+        { flag: "Start-ScheduledTask", description: "Ejecuta la tarea ahora." },
+        { flag: "Disable-ScheduledTask", description: "La deja deshabilitada." }
+      ],
+      example: { command: "Get-ScheduledTask -TaskPath \"\\\" | Get-ScheduledTaskInfo | Where-Object LastTaskResult -ne 0 | Select-Object TaskName, LastRunTime, LastTaskResult", explanation: "Revisa qué tareas programadas terminaron con error la última vez (un resultado distinto de 0), como una copia nocturna que no se hizo." },
+      tags: ["tareas programadas", "resultado", "ultima ejecucion", "copia nocturna"]
+    },
+    {
+      id: "win-import-csv", name: "Import-Csv / ForEach-Object", os: "windows", shell: "powershell", category: "automation", risk: "caution",
+      description: "Lee un CSV como objetos y repite una acción por cada fila: la base de cualquier alta masiva.",
+      syntax: "Import-Csv <archivo.csv> [-Delimiter \";\"] [-Encoding UTF8] | ForEach-Object { acción con $_.Columna }",
+      flags: [
+        { flag: "-Delimiter \";\"", description: "Separador (Excel en español usa punto y coma)." },
+        { flag: "-Encoding UTF8", description: "Evita que se rompan tildes y eñes." },
+        { flag: "$_.Columna", description: "Valor de esa columna en la fila actual." },
+        { flag: "-WhatIf", description: "Añádelo a la acción para simular primero." }
+      ],
+      example: { command: "Import-Csv C:\\Temp\\altas.csv -Delimiter \";\" -Encoding UTF8 | ForEach-Object { New-ADUser -Name \"$($_.Nombre) $($_.Apellido)\" -SamAccountName $_.Usuario -Department $_.Departamento -Path \"OU=Usuarios,DC=corp,DC=local\" -WhatIf }", explanation: "Alta de varios empleados desde la hoja de Recursos Humanos. Con -WhatIf solo muestra lo que crearía; quítalo cuando el resultado sea el esperado." },
+      tags: ["csv", "masivo", "bucle", "alta de usuarios", "excel"]
+    },
+    {
+      id: "win-convertfrom-json", name: "ConvertFrom-Json / ConvertTo-Json", os: "windows", shell: "powershell", category: "automation", risk: "safe",
+      description: "Convierte JSON en objetos de PowerShell y al revés, para leer configuraciones y respuestas de API.",
+      syntax: "Get-Content <archivo.json> -Raw | ConvertFrom-Json | <objeto> | ConvertTo-Json [-Depth N] [-Compress]",
+      flags: [
+        { flag: "-Raw", description: "Lee el archivo entero como un solo texto." },
+        { flag: "-Depth 10", description: "Niveles que se convierten (por defecto solo 2)." },
+        { flag: "-Compress", description: "Sin espacios ni saltos de línea." }
+      ],
+      example: { command: "$cfg = Get-Content C:\\App\\appsettings.json -Raw | ConvertFrom-Json; $cfg.Logging.LogLevel.Default = \"Warning\"; $cfg | ConvertTo-Json -Depth 10 | Set-Content C:\\App\\appsettings.json", explanation: "Cambia un valor de la configuración de una aplicación sin editar el archivo a mano. Sin -Depth suficiente, los niveles profundos se pierden." },
+      tags: ["json", "api", "configuracion", "convertir", "objetos"]
+    },
+    {
+      id: "win-try-catch", name: "try / catch / -ErrorAction", os: "windows", shell: "powershell", category: "automation", risk: "safe",
+      description: "Controla los errores de un script para que no siga adelante a ciegas ni falle en silencio.",
+      syntax: "try { <comando> -ErrorAction Stop } catch { <qué hacer>; $_.Exception.Message } finally { <limpieza> }",
+      flags: [
+        { flag: "-ErrorAction Stop", description: "Convierte el error en uno que catch puede capturar." },
+        { flag: "$_.Exception.Message", description: "Texto del error dentro de catch." },
+        { flag: "finally", description: "Se ejecuta siempre, haya error o no." },
+        { flag: "$ErrorActionPreference", description: "Comportamiento por defecto de todo el script." }
+      ],
+      example: { command: "try { Copy-Item D:\\Datos\\contabilidad.bak \\\\srv02\\backup\\ -ErrorAction Stop; Write-Output \"Copia correcta\" } catch { Add-Content C:\\Logs\\backup.log \"$(Get-Date -Format s) ERROR: $($_.Exception.Message)\"; exit 1 }", explanation: "Si la copia falla, lo anota en el registro y termina con código 1 para que la tarea programada aparezca como fallida." },
+      tags: ["errores", "excepciones", "script", "control de errores", "exit"]
+    },
+    {
+      id: "win-measure-command", name: "Measure-Command", os: "windows", shell: "powershell", category: "automation", risk: "safe",
+      description: "Mide cuánto tarda en ejecutarse un comando o un bloque de script.",
+      syntax: "Measure-Command { <comandos> } | Select-Object TotalSeconds",
+      flags: [
+        { flag: "{ ... }", description: "Bloque que se cronometra (su salida no se muestra)." },
+        { flag: "TotalSeconds", description: "Duración en segundos." },
+        { flag: "TotalMilliseconds", description: "Duración en milisegundos." }
+      ],
+      example: { command: "(Measure-Command { robocopy D:\\Datos \\\\srv02\\backup\\Datos /MIR /R:1 /W:1 /NFL /NDL }).TotalMinutes", explanation: "Mide cuánto tarda la copia nocturna para saber si cabe en la ventana de mantenimiento." },
+      tags: ["tiempo", "duracion", "cronometrar", "rendimiento"]
+    },
+    {
+      id: "win-get-psdrive", name: "Get-PSDrive", os: "windows", shell: "powershell", category: "storage", risk: "safe",
+      description: "Lista las unidades de disco y de red con su espacio usado y libre.",
+      syntax: "Get-PSDrive [-PSProvider FileSystem] [-Name <letra>]",
+      flags: [
+        { flag: "-PSProvider FileSystem", description: "Solo discos y unidades de red." },
+        { flag: "-Name C", description: "Una unidad concreta." },
+        { flag: "Used / Free", description: "Bytes usados y libres." }
+      ],
+      example: { command: "Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{ n = \"UsadoGB\"; e = { [math]::Round($_.Used / 1GB, 1) } }, @{ n = \"LibreGB\"; e = { [math]::Round($_.Free / 1GB, 1) } }, Root", explanation: "Vistazo rápido al espacio libre de todas las unidades, incluidas las de red asignadas." },
+      tags: ["espacio libre", "unidades", "disco", "unidad de red"]
+    },
+    {
+      id: "win-repair-volume", name: "Repair-Volume", os: "windows", shell: "powershell", category: "storage", risk: "caution",
+      description: "Comprueba y repara el sistema de archivos de un volumen: el chkdsk de PowerShell.",
+      syntax: "Repair-Volume -DriveLetter <letra> [-Scan] [-SpotFix] [-OfflineScanAndFix]",
+      flags: [
+        { flag: "-Scan", description: "Analiza en caliente, sin desmontar ni reparar." },
+        { flag: "-SpotFix", description: "Repara solo lo detectado, con un corte breve." },
+        { flag: "-OfflineScanAndFix", description: "Desmonta el volumen y lo repara por completo." }
+      ],
+      example: { command: "Repair-Volume -DriveLetter D -Scan", explanation: "Comprueba el volumen de datos sin interrumpir a los usuarios. Si devuelve errores, programa un -SpotFix fuera de horario." },
+      tags: ["chkdsk", "reparar disco", "sistema de archivos", "ntfs", "errores"]
+    },
+    {
+      id: "win-wbadmin", name: "wbadmin", os: "windows", shell: "cmd", category: "storage", risk: "caution",
+      description: "Lanza y consulta copias de seguridad con Copias de seguridad de Windows Server.",
+      syntax: "wbadmin start backup -backupTarget:<destino> -include:<volúmenes> [-allCritical] [-quiet] | wbadmin get versions",
+      requires: "Característica Copias de seguridad de Windows Server: Install-WindowsFeature Windows-Server-Backup",
+      flags: [
+        { flag: "-backupTarget", description: "Disco o carpeta de red de destino." },
+        { flag: "-include:C:,D:", description: "Volúmenes que se copian." },
+        { flag: "-allCritical", description: "Añade lo necesario para restaurar el sistema." },
+        { flag: "get versions", description: "Copias disponibles para restaurar." }
+      ],
+      example: { command: "wbadmin start backup -backupTarget:\\\\srv02\\backup\\srv01 -include:C: -allCritical -quiet && wbadmin get versions", explanation: "Copia completa del sistema a una carpeta de red antes de una actualización importante, y comprobación de que ha quedado registrada." },
+      tags: ["copia de seguridad", "backup", "restaurar", "imagen del sistema"]
+    },
+    {
+      id: "win-install-module", name: "Install-Module / Update-Module", os: "windows", shell: "powershell", category: "packages", risk: "caution",
+      description: "Instala y actualiza módulos de PowerShell desde la Galería de PowerShell.",
+      syntax: "Find-Module <nombre> | Install-Module <nombre> [-Scope CurrentUser|AllUsers] [-RequiredVersion <v>] | Update-Module <nombre> | Get-InstalledModule",
+      flags: [
+        { flag: "-Scope CurrentUser", description: "Solo para tu usuario, sin ser administrador." },
+        { flag: "-RequiredVersion", description: "Instala una versión concreta." },
+        { flag: "Get-InstalledModule", description: "Módulos instalados y su versión." },
+        { flag: "Update-Module", description: "Actualiza a la última versión." }
+      ],
+      example: { command: "Install-Module ExchangeOnlineManagement -Scope CurrentUser; Get-InstalledModule | Select-Object Name, Version", explanation: "Instala el módulo de Exchange Online para tu usuario y revisa qué módulos hay y en qué versión." },
+      tags: ["modulos", "galeria", "psgallery", "instalar", "actualizar"]
+    },
+    {
+      id: "win-choco", name: "choco", os: "windows", shell: "powershell", category: "packages", risk: "caution",
+      description: "Chocolatey: gestor de paquetes de terceros muy usado para instalar y actualizar software en lote.",
+      syntax: "choco install <paquetes> -y | choco upgrade all -y | choco list | choco outdated",
+      requires: "Chocolatey instalado (https://chocolatey.org/install)",
+      flags: [
+        { flag: "install -y", description: "Instala sin pedir confirmación." },
+        { flag: "upgrade all -y", description: "Actualiza todo lo instalado con Chocolatey." },
+        { flag: "outdated", description: "Paquetes con una versión nueva disponible." },
+        { flag: "list", description: "Paquetes instalados." }
+      ],
+      example: { command: "choco outdated; choco install 7zip notepadplusplus git -y", explanation: "Deja listo un equipo nuevo con las herramientas habituales en una sola orden y revisa qué hay pendiente de actualizar." },
+      tags: ["chocolatey", "instalar software", "paquetes", "actualizar", "lote"]
+    },
+    {
+      id: "win-get-adgroupmember", name: "Get-ADGroupMember", os: "windows", shell: "powershell", category: "ad", risk: "safe",
+      description: "Lista los miembros de un grupo de Active Directory, incluidos los de los grupos anidados.",
+      syntax: "Get-ADGroupMember -Identity <grupo> [-Recursive]",
+      requires: "Módulo ActiveDirectory (RSAT)",
+      flags: [
+        { flag: "-Identity", description: "Nombre, DN o SID del grupo." },
+        { flag: "-Recursive", description: "Resuelve los grupos anidados hasta llegar a los usuarios." }
+      ],
+      example: { command: "Get-ADGroupMember -Identity \"Domain Admins\" -Recursive | Get-ADUser -Properties LastLogonDate | Select-Object Name, SamAccountName, Enabled, LastLogonDate", explanation: "Auditoría de los administradores del dominio: quiénes son de verdad, contando los grupos anidados, y cuándo entraron por última vez." },
+      tags: ["miembros", "grupo", "anidados", "auditoria", "domain admins"]
+    },
+    {
+      id: "win-search-adaccount", name: "Search-ADAccount", os: "windows", shell: "powershell", category: "ad", risk: "safe",
+      description: "Busca cuentas bloqueadas, inactivas, caducadas o con la contraseña sin caducidad.",
+      syntax: "Search-ADAccount -LockedOut | -AccountInactive -TimeSpan <días> | -PasswordNeverExpires | -AccountExpired [-UsersOnly]",
+      requires: "Módulo ActiveDirectory (RSAT)",
+      flags: [
+        { flag: "-LockedOut", description: "Cuentas bloqueadas ahora mismo." },
+        { flag: "-AccountInactive -TimeSpan 90", description: "Sin iniciar sesión en 90 días." },
+        { flag: "-PasswordNeverExpires", description: "Contraseña sin caducidad." },
+        { flag: "-UsersOnly", description: "Excluye las cuentas de equipo." }
+      ],
+      example: { command: "Search-ADAccount -LockedOut -UsersOnly | Select-Object Name, SamAccountName, LastLogonDate; Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly | Where-Object Enabled | Measure-Object", explanation: "Lista quién está bloqueado ahora mismo y cuenta las cuentas activas que llevan 90 días sin usarse, candidatas a deshabilitar." },
+      tags: ["cuentas bloqueadas", "inactivas", "caducadas", "limpieza", "auditoria"]
+    },
+    {
+      id: "win-nltest", name: "nltest", os: "windows", shell: "cmd", category: "ad", risk: "safe",
+      description: "Diagnostica la relación del equipo con el dominio: controlador en uso, canal seguro y confianzas.",
+      syntax: "nltest /dsgetdc:<dominio> | /sc_verify:<dominio> | /dclist:<dominio> | /domain_trusts",
+      flags: [
+        { flag: "/dsgetdc", description: "Controlador de dominio que encuentra el equipo y su sitio." },
+        { flag: "/sc_verify", description: "Comprueba el canal seguro con el dominio." },
+        { flag: "/dclist", description: "Lista los controladores del dominio." },
+        { flag: "/domain_trusts", description: "Relaciones de confianza." }
+      ],
+      example: { command: "nltest /dsgetdc:corp.local && nltest /sc_verify:corp.local", explanation: "Un equipo tarda en iniciar sesión o no aplica las directivas: comprueba qué controlador usa, si es el de su sitio y si el canal seguro está bien." },
+      tags: ["controlador de dominio", "canal seguro", "confianza", "sitio", "diagnostico"]
+    },
+    {
+      id: "win-get-adprincipalgroupmembership", name: "Get-ADPrincipalGroupMembership", os: "windows", shell: "powershell", category: "ad", risk: "safe",
+      description: "Muestra a qué grupos pertenece un usuario o equipo de Active Directory.",
+      syntax: "Get-ADPrincipalGroupMembership -Identity <usuario> | Select-Object Name, GroupScope",
+      requires: "Módulo ActiveDirectory (RSAT)",
+      flags: [
+        { flag: "-Identity", description: "Usuario, equipo o grupo que se consulta." },
+        { flag: "Compare-Object", description: "Compara los grupos de dos usuarios." }
+      ],
+      example: { command: "Compare-Object (Get-ADPrincipalGroupMembership jlopez).Name (Get-ADPrincipalGroupMembership aruiz).Name", explanation: "«Dame los mismos permisos que a mi compañera»: compara los grupos de los dos usuarios para ver exactamente cuáles le faltan." },
+      tags: ["grupos del usuario", "pertenencia", "permisos", "comparar", "memberof"]
+    },
+    {
+      id: "win-restore-adobject", name: "Restore-ADObject", os: "windows", shell: "powershell", category: "ad", risk: "caution",
+      description: "Recupera usuarios, grupos o unidades organizativas borrados, desde la papelera de reciclaje de AD.",
+      syntax: "Get-ADObject -Filter 'isDeleted -eq $true' -IncludeDeletedObjects | Restore-ADObject [-NewName <nombre>] [-TargetPath <OU>]",
+      requires: "Papelera de reciclaje de AD habilitada antes del borrado",
+      flags: [
+        { flag: "-IncludeDeletedObjects", description: "Incluye los objetos borrados en la búsqueda." },
+        { flag: "-TargetPath", description: "Restaura en otra unidad organizativa." },
+        { flag: "-NewName", description: "Restaura con otro nombre si hay conflicto." }
+      ],
+      example: { command: "Get-ADObject -Filter 'samAccountName -eq \"jlopez\" -and isDeleted -eq $true' -IncludeDeletedObjects -Properties whenChanged | Restore-ADObject", explanation: "Se ha borrado por error la cuenta de un usuario: la recupera con sus grupos y atributos, sin tener que crearla de nuevo." },
+      tags: ["recuperar", "borrado", "papelera de reciclaje", "restaurar usuario"]
     }
   ]
 };

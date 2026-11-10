@@ -170,7 +170,7 @@ window.SYS_TERMINAL_DATA = {
     },
 
     ping: {
-      libraryId: "linux-mtr",
+      libraryId: "linux-ping",
       summary: { es: "Comprueba la conectividad ICMP.", en: "Checks ICMP connectivity." },
       flags: { "-c": { description: { es: "Número de paquetes.", en: "Number of packets." }, takesValue: true } },
       requiresArgs: 1,
@@ -415,7 +415,7 @@ window.SYS_TERMINAL_DATA = {
       },
 
       "Restart-Service": {
-        libraryId: "win-get-service",
+        libraryId: "win-restart-service",
         summary: { es: "Reinicia un servicio (simulado).", en: "Restarts a service (simulated)." },
         flags: { "-Name": { es: "Nombre del servicio.", en: "Service name." }, "-Force": { es: "Reinicia también los dependientes.", en: "Also restarts dependent services." } },
         requiresArgs: 1,
@@ -535,7 +535,7 @@ window.SYS_TERMINAL_DATA = {
       },
 
       ping: {
-        libraryId: "win-test-connection",
+        libraryId: "win-ping",
         summary: { es: "Comprueba la conectividad ICMP (4 paquetes).", en: "Checks ICMP connectivity (4 packets)." },
         flags: {
           "-n": { description: { es: "Número de paquetes.", en: "Number of packets." }, takesValue: true },
