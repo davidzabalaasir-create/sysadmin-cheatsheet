@@ -930,7 +930,7 @@
   narrow.addEventListener("change", shortPlaceholder);
   // ------------------------------------------------------------ Tema claro / oscuro
   // assets/theme.js ya puso <html data-theme> antes del primer pintado; aquí va el botón.
-  const THEME_COLOR = { dark: "#0f1115", light: "#ffffff" };
+  const THEME_COLOR = { dark: "#0d1412", light: "#fbfdfc" };
   const systemLight = window.matchMedia("(prefers-color-scheme: light)");
   function setTheme(theme, remember) {
     document.documentElement.dataset.theme = theme;

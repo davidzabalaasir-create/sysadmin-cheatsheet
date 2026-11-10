@@ -1,24 +1,24 @@
 /* Sysadmin — estilos complementarios a Tailwind */
 
-/* ------------------------------------------------------------ Temas
+/* ------------------------------------------------------------ Temas (paleta «Esmeralda»)
  * Los colores de Tailwind (tailwind.config.js) leen estas variables, en formato «R G B».
  * El tema lo fija assets/theme.js en <html data-theme="dark|light"> antes del primer pintado. */
 :root, [data-theme="dark"] {
   color-scheme: dark;
-  --c-paper: 15 17 21;      --c-paper-2: 21 24 33;    --c-paper-3: 28 32 43;
-  --c-line: 37 42 54;       --c-line-2: 52 59 74;
-  --c-bone: 230 233 239;    --c-bone-dim: 167 175 189; --c-bone-mute: 136 145 161;
-  --c-accent: 122 162 255;  --c-warn: 245 183 89;     --c-sky: 125 211 252;
-  --c-sage: 134 217 160;    --c-blood: 255 123 114;   --c-code: 10 12 16;
+  --c-paper: 13 20 18;      --c-paper-2: 19 28 25;    --c-paper-3: 26 38 34;
+  --c-line: 34 48 43;       --c-line-2: 49 68 61;
+  --c-bone: 227 236 232;    --c-bone-dim: 165 181 174; --c-bone-mute: 138 154 148;
+  --c-accent: 52 211 153;   --c-warn: 245 183 89;     --c-sky: 125 211 252;
+  --c-sage: 163 230 130;    --c-blood: 255 123 114;   --c-code: 8 13 11;
   --c-tk-var: 216 160 255;  --c-tk-op: 255 138 122;
 }
 [data-theme="light"] {
   color-scheme: light;
-  --c-paper: 255 255 255;   --c-paper-2: 247 248 250; --c-paper-3: 238 240 244;
-  --c-line: 227 230 236;    --c-line-2: 207 212 221;
-  --c-bone: 23 26 33;       --c-bone-dim: 74 82 97;   --c-bone-mute: 98 107 123;
-  --c-accent: 47 95 224;    --c-warn: 154 91 0;       --c-sky: 11 107 176;
-  --c-sage: 26 127 60;      --c-blood: 198 40 40;     --c-code: 246 247 249;
+  --c-paper: 251 253 252;   --c-paper-2: 241 246 243; --c-paper-3: 230 238 234;
+  --c-line: 217 228 222;    --c-line-2: 194 209 201;
+  --c-bone: 20 32 27;       --c-bone-dim: 69 84 77;   --c-bone-mute: 86 100 94;
+  --c-accent: 12 112 78;    --c-warn: 146 86 0;       --c-sky: 11 100 166;
+  --c-sage: 60 110 20;      --c-blood: 190 38 38;     --c-code: 238 244 241;
   --c-tk-var: 130 60 190;   --c-tk-op: 190 60 40;
 }
 
