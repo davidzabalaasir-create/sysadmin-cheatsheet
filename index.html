@@ -51,9 +51,17 @@
     <aside class="contents lg:flex lg:flex-col lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-paper-line lg:bg-paper-2">
       <header class="order-1 lg:order-none flex items-center gap-2 px-5 pt-4 pb-1 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-2 lg:gap-y-4 lg:px-4 lg:pt-5 lg:pb-4">
         <div class="min-w-0 flex-1">
-          <h1 id="brand" aria-label="Sysadmin" class="font-sans font-semibold tracking-tight text-[1.7rem] leading-none lg:text-2xl text-bone">
-            Sys<em class="not-italic text-accent">admin</em>
-          </h1>
+          <div class="flex items-center gap-2.5">
+            <!-- Logo: el prompt de la terminal (mismo dibujo que assets/icons/favicon.svg, con los colores del tema) -->
+            <svg class="w-8 h-8 shrink-0" viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="1" y="1" width="62" height="62" rx="14" class="fill-paper-3 stroke-paper-line2" stroke-width="2"/>
+              <path d="M19 21 L31 32 L19 43" fill="none" class="stroke-accent" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M36 44 H46" fill="none" class="stroke-bone" stroke-width="6.5" stroke-linecap="round"/>
+            </svg>
+            <h1 id="brand" aria-label="Sysadmin" class="font-sans font-semibold tracking-tight text-[1.7rem] leading-none lg:text-2xl text-bone">
+              Sys<em class="not-italic text-accent">admin</em>
+            </h1>
+          </div>
           <p class="hidden lg:block mt-1.5 font-mono text-[11px] text-bone-mute" data-i18n="kicker">Vol. 1 — Linux · Windows · Redes</p>
         </div>
 

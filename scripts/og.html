@@ -8,8 +8,10 @@
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; background: #0d1412; color: #e3ece8; }
   .wrap { position: relative; width: 1200px; height: 630px; box-sizing: border-box; padding: 64px 72px; }
   .kicker { font-family: "IBM Plex Mono", monospace; font-size: 20px; letter-spacing: .3em; text-transform: uppercase; color: #8a9a94; }
-  h1 { font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600; font-size: 150px; line-height: .95; margin: 22px 0 0; letter-spacing: -5px; }
+  h1 { font-family: "IBM Plex Sans", system-ui, sans-serif; font-weight: 600; font-size: 116px; line-height: .95; margin: 22px 0 0; letter-spacing: -4px; }
   h1 em { color: #34d399; font-style: normal; }
+  h1 { display: flex; align-items: center; }
+  .logo { width: 104px; height: 104px; margin-right: 26px; }
   .rule { width: 260px; height: 6px; background: #34d399; margin: 26px 0 30px; }
   .tag { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 34px; line-height: 1.2; color: #a5b5ae; max-width: 660px; }
   .term { position: absolute; right: 72px; top: 150px; width: 330px; border: 1px solid #31443d; border-radius: 16px; background: #080d0b; font-family: "IBM Plex Mono", monospace; font-size: 17px; line-height: 1.75; }
@@ -21,7 +23,7 @@
 </style></head>
 <body><div class="wrap">
   <div class="kicker">Linux · Windows · Redes</div>
-  <h1>Sys<em>admin</em></h1>
+  <h1><img class="logo" src="../assets/icons/favicon.svg" alt="">Sys<em>admin</em></h1>
   <div class="rule"></div>
   <div class="tag">Biblioteca de comandos para administradores de sistemas, con ejemplos reales.</div>
   <div class="term"><div class="bar">root@srv01:~#</div><pre><span class="c">ss</span> <span class="f">-tulnp</span>
