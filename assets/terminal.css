@@ -1,86 +1,115 @@
 /* =========================================================================
  * Terminal simulada — estilos del componente (web y prototipo de docs/terminal).
- * Consola oscura «retro» con fósforo ámbar y los tokens de Sysadmin; sin neón.
+ * Usa los mismos colores que la web (variables --c-* de assets/styles.css), así que
+ * sigue el tema claro u oscuro. Sin styles.css (prototipo) se aplican los valores de
+ * reserva, que son los del tema oscuro «Esmeralda».
  * La línea de entrada queda fija abajo y solo se desplaza la salida.
  * ========================================================================= */
 .term {
-  --term-bg: #0d0c0a; --term-bar: #1b1a16; --term-line: #2f2c25; --term-line2: #3d3930;
-  --term-text: #ece6d9; --term-mute: #8f897c;
-  --term-amber: #ffb454; --term-sky: #8cc4ff; --term-sage: #9fd8a6; --term-blood: #ff6b5e;
-  --term-font: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-  --term-size: 14px;
+  /* Canales «R G B» para poder aplicar transparencia: rgb(var(--t-accent-rgb) / .5) */
+  --t-accent-rgb: var(--c-accent, 52 211 153);
+  --t-bg:     rgb(var(--c-code, 8 13 11));
+  --t-bar:    rgb(var(--c-paper-2, 19 28 25));
+  --t-hover:  rgb(var(--c-paper-3, 26 38 34));
+  --t-line:   rgb(var(--c-line, 34 48 43));
+  --t-line2:  rgb(var(--c-line-2, 49 68 61));
+  --t-text:   rgb(var(--c-bone, 227 236 232));
+  --t-dim:    rgb(var(--c-bone-dim, 165 181 174));
+  --t-mute:   rgb(var(--c-bone-mute, 138 154 148));
+  --t-paper:  rgb(var(--c-paper, 13 20 18));
+  --t-accent: rgb(var(--t-accent-rgb));
+  --t-warn:   rgb(var(--c-warn, 245 183 89));
+  --t-sky:    rgb(var(--c-sky, 125 211 252));
+  --t-sage:   rgb(var(--c-sage, 163 230 130));
+  --t-blood:  rgb(var(--c-blood, 255 123 114));
+  --t-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --t-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --t-size: 14px;
 
   display: flex; flex-direction: column;
   height: min(60vh, 560px);
-  border: 1px solid var(--term-line); border-radius: 16px; overflow: hidden;
-  color: var(--term-text);
-  background: var(--term-bg) repeating-linear-gradient(to bottom, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 180, 84, .04);
+  border: 1px solid var(--t-line); border-radius: 16px; overflow: hidden;
+  color: var(--t-text); background: var(--t-bg);
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / .45);
+  transition: border-color .15s;
 }
-.term:focus-within { border-color: rgba(255, 180, 84, .55); }
+.term:focus-within { border-color: rgb(var(--t-accent-rgb) / .6); }
 
-/* Barra superior */
+/* Barra superior: misma tipografía y controles que la web */
 .term-bar {
   display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-  padding: 8px 12px 8px 16px; border-bottom: 1px solid var(--term-line); background: var(--term-bar);
+  padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--t-line); background: var(--t-bar);
+  font-family: var(--t-sans);
 }
 .term-bar .dots { display: flex; gap: 6px; }
-.term-bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--term-line2); }
-.term-bar .dots i:nth-child(1) { background: rgba(255, 107, 94, .7); }
-.term-bar .dots i:nth-child(2) { background: rgba(255, 180, 84, .7); }
-.term-bar .dots i:nth-child(3) { background: rgba(159, 216, 166, .7); }
-.term-bar h2 { margin: 0; flex: 1; min-width: 0; font: 400 12px var(--term-font); color: var(--term-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.term-bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--t-line2); }
+.term-bar .dots i:nth-child(1) { background: var(--t-blood); opacity: .75; }
+.term-bar .dots i:nth-child(2) { background: var(--t-warn); opacity: .75; }
+.term-bar .dots i:nth-child(3) { background: var(--t-accent); opacity: .75; }
+.term-bar h2 {
+  margin: 0; flex: 1; min-width: 0; font: 600 14px var(--t-sans); letter-spacing: -.01em; color: var(--t-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .term-bar .badge {
-  font: 11px var(--term-font); text-transform: uppercase; letter-spacing: .12em; white-space: nowrap;
-  color: var(--term-sage); border: 1px solid rgba(159, 216, 166, .4); border-radius: 999px; padding: 2px 8px;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font: 11px var(--t-mono); text-transform: uppercase; letter-spacing: .08em;
+  color: var(--t-sage); border: 1px solid currentColor; border-radius: 999px; padding: 3px 10px;
 }
-/* Selector Linux / Windows */
-.term-os { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--term-line2); border-radius: 999px; }
+.term-bar .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Selector Linux / Windows: como el selector de sistema de la web */
+.term-os { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--t-line2); border-radius: 10px; }
 .term-os button {
-  font: 11px var(--term-font); letter-spacing: .06em; color: var(--term-mute); cursor: pointer;
-  border: 0; border-radius: 999px; padding: 3px 10px; background: transparent; transition: color .15s, background-color .15s;
+  font: 500 12px var(--t-sans); color: var(--t-dim); cursor: pointer;
+  border: 0; border-radius: 7px; padding: 4px 12px; background: transparent; transition: color .15s, background-color .15s;
 }
-.term-os button:hover { color: var(--term-text); }
-.term-os button[aria-pressed="true"] { color: #141310; background: var(--term-amber); }
-.term-os button:focus-visible, .term-close:focus-visible { outline: 2px solid var(--term-amber); outline-offset: 2px; }
-/* PowerShell: prompt en azul cielo para distinguir el sistema de un vistazo */
-.t-prompt.is-win, .term[data-os="windows"] .term-prompt { color: var(--term-sky); }
-.term[data-os="windows"] .term-input input { caret-color: var(--term-sky); }
+.term-os button:hover { color: var(--t-text); }
+.term-os button[aria-pressed="true"] { color: var(--t-paper); background: var(--t-text); }
+.term-os button:focus-visible, .term-close:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 2px; }
+/* PowerShell: prompt en azul para distinguir el sistema de un vistazo */
+.t-prompt.is-win, .term[data-os="windows"] .term-prompt { color: var(--t-sky); }
+.term[data-os="windows"] .term-input input { caret-color: var(--t-sky); }
 
 .term-close {
-  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
-  border: 0; background: transparent; color: var(--term-mute); cursor: pointer;
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px;
+  border: 1px solid var(--t-line2); background: transparent; color: var(--t-dim); cursor: pointer;
+  transition: color .15s, border-color .15s;
 }
-.term-close:hover { color: var(--term-text); background: rgba(255, 255, 255, .05); }
+.term-close:hover { color: var(--t-accent); border-color: rgb(var(--t-accent-rgb) / .6); }
 
 /* Cuerpo: salida desplazable + entrada fija */
 .term-body {
+  position: relative; overflow: hidden;
   flex: 1; min-height: 0; display: flex; flex-direction: column;
-  padding: 12px 16px 14px;
-  font: var(--term-size)/1.6 var(--term-font);
+  padding: 14px 18px 16px;
+  font: var(--t-size)/1.6 var(--t-mono);
 }
 .term-output {
   flex: 1; min-height: 0; overflow-y: auto; cursor: text;
-  scrollbar-width: thin; scrollbar-color: var(--term-line2) transparent;
+  scrollbar-width: thin; scrollbar-color: var(--t-line2) transparent;
 }
 .t-line { white-space: pre-wrap; word-break: break-word; min-height: 1.6em; }
-.t-echo { margin-top: 4px; }
-.t-prompt, .term-prompt { color: var(--term-amber); font-weight: 600; }
-.t-ok { color: var(--term-sage); }
-.t-error { color: var(--term-blood); }
-.t-warn { color: var(--term-amber); }
-.t-info { color: var(--term-sky); }
-.t-dim { color: var(--term-mute); }
-.t-line a { color: var(--term-amber); text-underline-offset: 3px; }
+.t-echo { margin-top: 6px; }
+.t-prompt, .term-prompt { color: var(--t-accent); font-weight: 600; }
+.t-ok { color: var(--t-sage); }
+.t-error { color: var(--t-blood); }
+.t-warn { color: var(--t-warn); }
+.t-info { color: var(--t-sky); }
+.t-dim { color: var(--t-mute); }
+.t-line a { color: var(--t-accent); text-underline-offset: 3px; }
 
+/* Entrada: recuadro como el buscador de la web */
 .term-input {
-  display: flex; align-items: baseline; gap: 8px; flex-shrink: 0;
-  margin: 8px 0 0; padding-top: 8px; border-top: 1px dashed var(--term-line);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  margin: 10px 0 0; padding: 8px 12px;
+  border: 1px solid var(--t-line2); border-radius: 10px; background: var(--t-bar);
+  transition: border-color .15s, box-shadow .15s;
 }
+.term-input:focus-within { border-color: var(--t-accent); box-shadow: 0 0 0 3px rgb(var(--t-accent-rgb) / .2); }
 .term-prompt { white-space: nowrap; }
 .term-input input {
   flex: 1; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent;
-  font: inherit; color: var(--term-text); caret-color: var(--term-amber); outline: none;
+  font: inherit; color: var(--t-text); caret-color: var(--t-accent); outline: none;
 }
 .term-input input[aria-busy="true"] { caret-color: transparent; }
 
@@ -89,11 +118,12 @@
   width: min(980px, calc(100vw - 2rem)); height: min(680px, calc(100vh - 2rem));
   max-width: none; max-height: none; padding: 0; border: 0; background: transparent; overflow: visible;
 }
-.term-dialog::backdrop { background: rgba(0, 0, 0, .7); }
+.term-dialog::backdrop { background: rgb(0 0 0 / .6); }
+[data-theme="light"] .term-dialog::backdrop { background: rgb(16 24 20 / .4); }
 .term-dialog .term { height: 100%; }
 
 @media (max-width: 640px) {
-  .term { --term-size: 13px; }
+  .term { --t-size: 13px; }
   .term-bar .badge { display: none; }
   /* 16px evita que iOS haga zoom al enfocar la entrada */
   .term-input input { font-size: 16px; }
@@ -102,36 +132,25 @@
 }
 
 /* ------------------------------------------------------------------ Animaciones
- * Encendido del panel (fósforo que se estabiliza), líneas en cascada y cursor de bloque.
+ * Aparición del panel, líneas en cascada y orden que se teclea sola.
  * Todo se desactiva con prefers-reduced-motion. */
-@keyframes term-power {
-  0%   { opacity: 0; transform: scale(.97, .9); filter: brightness(1.8) saturate(.4); }
-  45%  { opacity: 1; transform: scale(1.005, 1.01); filter: brightness(1.25); }
-  100% { opacity: 1; transform: none; filter: none; }
+@keyframes term-open {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes term-backdrop { from { opacity: 0; } to { opacity: 1; } }
 @keyframes term-line-in {
-  from { opacity: 0; transform: translateY(4px); text-shadow: 0 0 8px rgba(255, 180, 84, .55); }
-  to   { opacity: 1; transform: none; text-shadow: none; }
-}
-@keyframes term-scan { from { transform: translateY(-100%); } to { transform: translateY(100vh); } }
-
-.term-dialog[open] .term { animation: term-power .38s cubic-bezier(.2, .8, .2, 1) both; }
-.term-dialog[open]::backdrop { animation: term-backdrop .25s ease-out both; }
-.t-in { animation: term-line-in .22s ease-out var(--t-delay, 0ms) both; }
-
-/* Barrido de luz suave que recorre la pantalla de vez en cuando (efecto CRT discreto) */
-.term-body { position: relative; overflow: hidden; }
-.term-body::after {
-  content: ""; position: absolute; inset: 0 0 auto; height: 90px; pointer-events: none;
-  background: linear-gradient(to bottom, transparent, rgba(255, 180, 84, .035), transparent);
-  animation: term-scan 7s linear infinite;
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* Mientras se «teclea» una orden de ejemplo, el texto brilla un poco y el cursor queda en ámbar */
-.term-input input[data-typing] { caret-color: var(--term-amber); text-shadow: 0 0 6px rgba(255, 180, 84, .35); }
+.term-dialog[open] .term { animation: term-open .28s cubic-bezier(.2, .8, .2, 1) both; }
+.term-dialog[open]::backdrop { animation: term-backdrop .2s ease-out both; }
+.t-in { animation: term-line-in .2s ease-out var(--t-delay, 0ms) both; }
+
+/* Mientras se «teclea» una orden de ejemplo, el cursor queda en el color de acento */
+.term-input input[data-typing] { caret-color: var(--t-accent); }
 
 @media (prefers-reduced-motion: reduce) {
-  .term-dialog[open] .term, .term-dialog[open]::backdrop, .t-in, .term-body::after { animation: none; }
-  .term-body::after { display: none; }
+  .term-dialog[open] .term, .term-dialog[open]::backdrop, .t-in { animation: none; }
 }

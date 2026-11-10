@@ -182,6 +182,9 @@ form.addEventListener("submit", (e) => {
 
 ## Design Tokens Used
 
+> Desde v1.9.1 la terminal no tiene paleta propia: sus variables `--t-*` leen los colores de la web (`--c-*` de `assets/styles.css`), así que comparte la paleta «Esmeralda», la tipografía IBM Plex y sigue el tema claro u oscuro. La tabla siguiente describe la versión inicial.
+
+
 | Token | Valor | Uso |
 |---|---|---|
 | `--term-bg` | `#0d0c0a` | Fondo de la consola (el mismo que los ejemplos de las fichas). |
